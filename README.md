@@ -9,7 +9,7 @@ Repository ini dikembangkan oleh Tim sotodiensracing (Universitas Dian Nuswantor
 ## Tech Stack
 
 ### Frontend & Backend (Fullstack)
-- Framework: Astro 4.x & React 18 (Island Architecture)
+- Framework: Next.js 14 (App Router) & React 18
 - Bahasa: TypeScript / JavaScript
 - Styling: Tailwind CSS 3.4
 - Komponen & Ikon: Lucide React & Framer Motion
