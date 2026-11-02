@@ -3,18 +3,20 @@
 > **Platform Terpadu Transparansi Anggaran Kas Desa Wisata, Pengawasan Fasilitas Publik, dan Mitigasi Risiko Kepatuhan di Jawa Tengah**  
 > **Kompetisi:** Web In Action (WIA) 2026 / Multimedia In Action (MIA) 2026, UPN "Veteran" Jakarta  
 > **Tim Pengembang:** Tim sotodiensracing — Universitas Dian Nuswantoro (UDINUS), Semarang  
-> - **Lead Backend & System Architecture:** Muhammad Ilham Maulana (*Hacker*)  
-> - **Lead Frontend & System Analyst:** Muhammad Iqbal Junialdi (*Hustler*)  
-> - **Lead UI/UX & Product Designer:** Delvia Mareta Dealova (*Hipster*)
+> - **Lead Frontend & System Analyst:** Muhammad Iqbal Junialdi (*Hustler & Frontend Developer*) — Fokus Antarmuka Pengguna, Layout, Motion & Integrasi Klien  
+> - **Lead Backend & System Architecture:** Muhammad Ilham Maulana (*Hacker & Backend Developer*) — Fokus Basis Data, PostGIS, Server Actions & Route Handlers  
+> - **Lead UI/UX & Product Designer:** Delvia Mareta Dealova (*Hipster & Product Designer*) — Fokus Design System, Prototype Figma MBG & Audit Interaksi
 
 ---
 
 ## 🏛️ 1. Ikhtisar Arsitektur & Prinsip Desain
 
-Arsitektur DEWI JATENG dirancang untuk memecahkan dilema mendasar sistem tata kelola desa:
-1. **Performa Ekstrem di Jaringan Pedesaan (Astro Islands):** Menggunakan *Astro 4+ Islands Architecture* dengan 0 KB initial JavaScript. Komponen HTML dikirim murni secara statis, dan hidrasi React (`client:visible`, `client:load`) hanya terjadi pada elemen interaktif. Skor Google Lighthouse ditargetkan 95–100 pada jaringan seluler pedesaan Jawa Tengah.
-2. **Akuntabilitas Fiskal Real-Time (PostgreSQL + PostGIS):** Setiap rupiah anggaran Bantuan Keuangan (Bankeu) Provinsi, APBDes, dan PADes dicatat dalam buku kas terbuka (*Cashbook*) dengan bukti kuitansi fisik dan validasi geolokasi.
-3. **Mekanisme Closed-Loop Civic Reporting:** Setiap aduan warga/wisatawan terikat dengan koordinat GPS presisi radius <500 meter, countdown timer SLA otomatis (24 Jam Pungli / 7 Hari Fasilitas), dan tidak dapat ditutup (*Resolved*) tanpa bukti foto perbaikan (*Proof-of-Fix*).
+Platform DEWI JATENG dibangun dengan arsitektur **Next.js 14/15 App Router (Fullstack)** yang memisahkan tanggung jawab secara tegas (*Separation of Concerns*) antara Frontend dan Backend:
+1. **Next.js App Router & React Server Components (RSC):** Halaman publik dasar (Beranda statis, Transparansi, Edukasi) dirender di sisi server tanpa JavaScript klien berlebih, menjaga kecepatan First Contentful Paint (<1.2 detik).
+2. **Interactive Motion Islands (`'use client'` + Framer Motion):** Elemen dinamis seperti counter angka bergerak, peta pin GPS Jawa Tengah, form aduan interaktif, slider Sebelum-Sesudah, dan modal inspeksi nota diisolasi sebagai Client Components beranotasi `'use client'`.
+3. **Demarkasi Frontend & Backend Terstandarisasi:**
+   - **Frontend (Iqbal):** Menangani antarmuka visual (`app/**/page.tsx`, `components/**`), micro-interactions Framer Motion, styling 1:1 Figma MBG, dan validasi form sisi klien.
+   - **Backend (Ilham):** Menangani basis data PostgreSQL 16 + PostGIS 3.4 di Supabase, Row-Level Security (RLS), Route Handlers (`app/api/**/route.ts`), Server Actions untuk mutasi data kas & aduan, serta integrasi AI Vision/OCR.
 
 ---
 
@@ -37,12 +39,20 @@ Arsitektur DEWI JATENG dirancang untuk memecahkan dilema mendasar sistem tata ke
 │                        DEWI JATENG PLATFORM                            │
 │                                                                        │
 │  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │  Astro 4+ Hybrid Engine (Static HTML + React Dynamic Islands)    │  │
-│  │  - Halaman Beranda (KPI Counters, Pin Map GPS, Before-After)     │  │
-│  │  - Halaman Transparansi (Donut Chart, Serapan 70%, Nota Kuitansi)│  │
-│  │  - Halaman Lapor (Geolokasi, Dropzone Bukti, Tiket Otomatis)     │  │
-│  │  - Halaman Edukasi (Regulasi KIP, Klasifikasi Desa Wisata)       │  │
-│  │  - Halaman Pengelola (Papan Tiket SLA, Input Belanja)            │  │
+│  │  Next.js 14/15 App Router (Frontend Domain - Iqbal)              │  │
+│  │  - Server Components (app/page.tsx, app/transparansi/page.tsx)   │  │
+│  │  - Client Components ('use client' + Framer Motion)              │  │
+│  │    * HomeKpiCounters (Viewport animated counter)                 │  │
+│  │    * HomeReportForm (Peta Pin GPS + Dropzone Upload)             │  │
+│  │    * HomeReportFeed (Before-After Drag Slider & Lightbox)        │  │
+│  │    * Donut & Bar Visualizer (Alokasi Dana Desa)                  │  │
+│  └──────────────────────────────────┬───────────────────────────────┘  │
+│                                     │ Fetch Data / Server Actions      │
+│  ┌──────────────────────────────────▼───────────────────────────────┐  │
+│  │  Next.js API & Server Layer (Backend Domain - Ilham)             │  │
+│  │  - Route Handlers (app/api/villages/route.ts, etc.)              │  │
+│  │  - Server Actions (createReportAction, resolveTicketAction)      │  │
+│  │  - AI Service (Vision OCR vs Standar Satuan Harga Jateng)        │  │
 │  └──────────────────────────────────┬───────────────────────────────┘  │
 └─────────────────────────────────────┼──────────────────────────────────┘
                                       │
@@ -58,21 +68,24 @@ Arsitektur DEWI JATENG dirancang untuk memecahkan dilema mendasar sistem tata ke
 
 ---
 
-## ⚡ 3. Astro 4+ Islands & Hydration Strategy
+## ⚡ 3. Strategi Rendering Next.js (RSC vs Client Components)
 
-| Halaman & Rute | Tipe Rendering | Komponen Island (React 18) | Direktif Hidrasi | Alasan Teknis |
-| :--- | :--- | :--- | :--- | :--- |
-| **Beranda (`/`)** | Static + Dynamic Islands | `HomeKpiCounters.tsx` | `client:visible` | Animasi counter angka dimulai saat digulir ke viewport pengunjung. |
-| **Beranda (`/`)** | Static + Dynamic Islands | `HomeReportForm.tsx` | `client:load` | Interaksi form laporan aduan dan pin peta Jateng siap segera saat halaman selesai dimuat. |
-| **Beranda (`/`)** | Static + Dynamic Islands | `HomeReportFeed.tsx` | `client:visible` | Drag slider komparasi Before/After dan modal foto dihidrasi saat terlihat. |
-| **Transparansi (`/transparansi`)** | Static Layout + SSR Data | Native SVG Donut & Table | HTML Murni (0 KB JS) | Ringan, grafik SVG rendered server-side, modal foto murni CSS/JS minimal. |
-| **Lapor (`/lapor`)** | Static Shell + Client Island| `ReportFormMotion.tsx` | `client:load` | Membutuhkan akses sensor geolokasi browser dan dropzone interaktif. |
-| **Edukasi (`/edukasi`)** | 100% Static HTML | Tidak ada JS eksternal | Tanpa Hidrasi (0 KB JS) | Artikel edukasi regulasi UU KIP dan SOP K3 dapat dibaca instan. |
-| **Pengelola (`/pengelola`)** | SSR / Protected Client | `PengelolaTicketBoard.tsx` | `client:load` | Papan kanban tiket aduan dan filter urgensi SLA dinamis. |
+| Halaman & Rute | File Komponen | Tipe Komponen | Tanggung Jawab & Logika |
+| :--- | :--- | :--- | :--- |
+| **Beranda (`/`)** | `app/page.tsx` | Server Component (RSC) | Layout dasar, metadata SEO, pemanggilan data awal. |
+| **Beranda (`/`)** | `components/HomeKpiCounters.tsx` | Client Component (`'use client'`) | Animasi viewport-triggered counter Framer Motion. |
+| **Beranda (`/`)** | `components/HomeReportForm.tsx` | Client Component (`'use client'`) | Interaksi peta pin Jateng, state input, modal tiket. |
+| **Beranda (`/`)** | `components/HomeReportFeed.tsx` | Client Component (`'use client'`) | Slider komparasi Before/After, lightbox modal zoom. |
+| **Transparansi (`/transparansi`)** | `app/transparansi/page.tsx` | Server Component (RSC) | Server-rendered SVG Donut, query buku kas. |
+| **Lapor (`/lapor`)** | `app/lapor/page.tsx` | Client Component (`'use client'`) | Integrasi Leaflet.js GPS map, dropzone foto & suara. |
+| **Edukasi (`/edukasi`)** | `app/edukasi/page.tsx` | Server Component (RSC) | 100% static reading page panduan UU KIP & SOP K3. |
+| **Pengelola (`/pengelola`)** | `app/pengelola/page.tsx` | Client/SSR Protected | Papan kanban tiket SLA dan form upload bukti fisik. |
 
 ---
 
-## 🗄️ 4. Skema Basis Data (PostgreSQL 16 & PostGIS)
+## 🗄️ 4. Skema Basis Data & Tanggung Jawab Backend (Ilham)
+
+*(Dikelola secara independen oleh Muhammad Ilham Maulana)*
 
 ### Diagram Relasi Entitas (ERD)
 
@@ -116,33 +129,13 @@ Arsitektur DEWI JATENG dirancang untuk memecahkan dilema mendasar sistem tata ke
                                              └──────────────────────┘
 ```
 
-### Kueri Spasial PostGIS Kunci:
-```sql
--- Validasi aduan berada di dalam radius desa wisata (<500 meter)
-SELECT v.name, v.regency
-FROM villages v
-WHERE ST_DWithin(
-  v.geom::geography,
-  ST_SetSRID(ST_MakePoint(:lng, :lat), 4321)::geography,
-  500
-);
-```
-
 ---
 
-## 🔌 5. Kontrak Data & Astro API Endpoints (`src/pages/api/...ts`)
+## 🔌 5. Kontrak Data API Endpoints (Next.js Route Handlers)
 
-1. **`GET /api/villages/stats`:** Mengembalikan metrik makro Jawa Tengah (776 desa wisata, realisasi Bankeu Rp83,1 M, tingkat SLA 94,2%).
-2. **`GET /api/transparansi?villageId=...`:** Mengembalikan rincian anggaran, persentase serapan (70%), dan daftar buku kas belanja beserta tautan nota.
-3. **`POST /api/reports`:** Endpoint submit aduan publik (menghasilkan kode tiket `DS-JTG-2026-XXXX` dan menentukan batas SLA otomatis: 24 Jam Pungli / 7 Hari Fasilitas).
-4. **`POST /api/pengelola/resolve-report`:** Endpoint penutupan tiket aduan yang memvalidasi keberadaan foto *After* (*Proof-of-Fix*).
+Frontend (Iqbal) mengonsumsi endpoint yang disediakan oleh Backend (Ilham):
 
----
-
-## 🛡️ 6. Keamanan, Tata Kelola & Whistleblower Privacy
-
-1. **Whistleblower Anonymity:** Pelapor dapat mencentang opsi *"Lapor secara Anonim"*. Identitas, nama, dan kontak pelapor tidak disimpan dalam database publik; hanya data laporan, foto bukti, dan koordinat insiden yang dipublikasikan.
-2. **Row-Level Security (Supabase RLS):**
-   - Akses tabel `villages`, `reports`, dan `cashbook_entries` bersifat `SELECT` publik untuk menjamin transparansi 100%.
-   - Mutasi data (`INSERT`, `UPDATE`) pada buku kas dan penutupan tiket dibatasi hanya untuk pengguna terautentikasi pengelola desa terkait.
-3. **Integritas Bukti Foto:** Foto kuitansi dan foto fisik perbaikan disimpan di Supabase Storage dengan metadata hash anti-manipulasi.
+1. **`GET /api/villages/stats`:** Mengembalikan metrik agregat Jawa Tengah (Total desa, dana terserap, persentase SLA).
+2. **`GET /api/transparansi?villageId=...`:** Mengembalikan buku kas, distribusi donat anggaran, dan daftar nota kuitansi.
+3. **`POST /api/reports`:** Endpoint submit aduan warga dengan kalkulasi SLA otomatis (24 Jam Pungli / 7 Hari Fisik).
+4. **`POST /api/pengelola/resolve-report`:** Endpoint penutupan tiket aduan dengan validasi wajib foto bukti fisik (*Proof-of-Fix*).

@@ -3,7 +3,7 @@ type: project-note
 project_id: "DEWI-JATENG"
 status: active
 created: 2026-10-23
-updated: 2026-11-01
+updated: 2026-11-02
 tags:
   - dewi-jateng
   - brd
@@ -13,6 +13,7 @@ tags:
   - fiscal-transparency
   - civic-reporting
   - proof-of-fix
+  - nextjs-fullstack
 ---
 
 # Business Requirements Document (BRD)
@@ -23,12 +24,16 @@ tags:
 
 **Identifikasi Dokumen:**
 - **Nama Proyek:** DEWI JATENG (*Platform Terpadu Transparansi Anggaran Kas Desa Wisata, Pengawasan Fasilitas Publik, dan Mitigasi Risiko Kepatuhan di Jawa Tengah*)
-- **Nomor Dokumen:** BRD-DEWIJATENG-2026-V3.0
-- **Versi:** 3.0 (Full Alignment: WIA 2026 Scope, 5 Halaman Utama, Data Riil Disporapar Jateng & Kasus The Geong Limpakuwus)
+- **Nomor Dokumen:** BRD-DEWIJATENG-2026-V3.1
+- **Versi:** 3.1 (Full Alignment: WIA 2026 Scope, Next.js 14/15 Fullstack Architecture, 5 Halaman Utama, Data Riil Disporapar Jateng & Kasus The Geong Limpakuwus)
 - **Status:** Disetujui (Approved)
 - **Klasifikasi:** Dokumen Spesifikasi Kebutuhan Bisnis dan Kebijakan Publik
 - **Sasaran Pembaca:** Dinas Kepemudaan, Olahraga dan Pariwisata (Disporapar) Provinsi Jawa Tengah, Dinas Pemberdayaan Masyarakat, Desa, Kependudukan dan Pencatatan Sipil (Dispermadesdukcapil), Pemerintah Desa, Kelompok Sadar Wisata (Pokdarwis), Badan Permusyawaratan Desa (BPD), Dewan Juri Kompetisi Web In Action (WIA) 2026 / MIA 2026 UPN "Veteran" Jakarta, serta Tim Pengembang **sotodiensracing** (Universitas Dian Nuswantoro)
-- **Dokumen Terkait:** Product Requirements Document (PRD-DEWIJATENG-2026-V3.0)
+- **Struktur Tim Teknis:**
+  * **Muhammad Iqbal Junialdi** — Hustler & Frontend Developer (Fokus: UI/UX, Next.js Pages, Framer Motion, Client Forms)
+  * **Muhammad Ilham Maulana** — Hacker & Backend Developer (Fokus: PostgreSQL, PostGIS, Next.js Route Handlers, Server Actions, Supabase)
+  * **Delvia Mareta Dealova** — Hipster & Product Designer (Fokus: Figma Design System MBG, User Flow, Visual Identity)
+- **Dokumen Terkait:** Product Requirements Document (PRD-DEWIJATENG-2026-V3.1)
 
 ---
 
@@ -72,12 +77,12 @@ Mengangkat tema kompetisi WIA 2026: **"From Visionaries to Architects of Change 
 Platform **DEWI JATENG** membatasi ruang lingkup pada 5 halaman web terintegrasi tanpa fitur komersial tiket/booking, guna memastikan fokus 100% pada transparansi anggaran dan keselamatan publik:
 
 ```text
-DEWI JATENG (5 Halaman Terpadu)
-├── 1.0 Beranda (/)                -> Hero transparansi, KPI 776 Desa, Form Aduan Cepat, Feed Proof-of-Fix
-├── 2.0 Transparansi (/transparansi) -> Filter 35 Kab/Kota, Visualisasi Sumber Dana, Bar Serapan, Buku Kas & Modal Nota
-├── 3.0 Lapor Aduan (/lapor)        -> Peta Koordinat GPS Leaflet, Upload Bukti, Timer SLA Dinamis (24 Jam / 7 Hari)
-├── 4.0 Edukasi & Panduan (/edukasi)-> Panduan UU KIP No. 14/2008 & Perda Jateng No. 2/2019, SOP Penanganan Bahaya
-└── 5.0 Portal Pengelola (/pengelola)-> Verifikasi Nota Belanja, Disposisi Tiket Aduan, Wajib Upload Bukti Perbaikan
+DEWI JATENG (5 Halaman Terpadu - Next.js 14/15 App Router)
+├── 1.0 Beranda (app/page.tsx)                -> Hero transparansi, KPI 776 Desa, Form Aduan Cepat, Feed Proof-of-Fix
+├── 2.0 Transparansi (app/transparansi/page.tsx) -> Filter 35 Kab/Kota, Visualisasi Sumber Dana, Bar Serapan, Buku Kas & Modal Nota
+├── 3.0 Lapor Aduan (app/lapor/page.tsx)        -> Peta Koordinat GPS Leaflet, Upload Bukti, Timer SLA Dinamis (24 Jam / 7 Hari)
+├── 4.0 Edukasi & Panduan (app/edukasi/page.tsx)-> Panduan UU KIP No. 14/2008 & Perda Jateng No. 2/2019, SOP Penanganan Bahaya
+└── 5.0 Portal Pengelola (app/pengelola/page.tsx)-> Verifikasi Nota Belanja, Disposisi Tiket Aduan, Wajib Upload Bukti Perbaikan
 ```
 
 ### 3.1 Rincian Modul Per Halaman

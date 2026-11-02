@@ -3,14 +3,14 @@ type: project-note
 project_id: "DEWI-JATENG"
 status: active
 created: 2026-10-23
-updated: 2026-11-01
+updated: 2026-11-02
 tags:
   - dewi-jateng
   - prd
   - product-requirements
   - user-stories
   - specifications
-  - astro-islands
+  - nextjs-app-router
   - framer-motion
   - fiscal-transparency
   - civic-reporting
@@ -24,20 +24,26 @@ tags:
 
 **Identifikasi Dokumen:**
 - **Nama Produk:** DEWI JATENG (*Platform Terpadu Transparansi Anggaran Kas Desa Wisata, Pengawasan Fasilitas Publik, dan Mitigasi Risiko Kepatuhan di Jawa Tengah*)
-- **Nomor Dokumen:** PRD-DEWIJATENG-2026-V3.0
-- **Versi:** 3.0 (Astro 4+ Islands Architecture, React, Framer Motion, Supabase, PostGIS, 5 Halaman Terpadu, Zero POS/Booking)
+- **Nomor Dokumen:** PRD-DEWIJATENG-2026-V3.1
+- **Versi:** 3.1 (Next.js 14/15 App Router, React Server Components, Client Components `'use client'`, Framer Motion, Supabase, PostGIS, Zero POS/Booking)
 - **Status:** Disetujui (Approved)
-- **Lead Product Manager & System Analyst:** Muhammad Iqbal Junialdi (Hustler & System Analyst) & Tim sotodiensracing (Universitas Dian Nuswantoro)
-- **Dokumen Induk:** Business Requirements Document (BRD-DEWIJATENG-2026-V3.0)
-- **Dokumen Terkait:** Database Schema & Models, System Architecture Specification, UI/UX Per-Page Guide
+- **Lead Frontend & System Analyst:** Muhammad Iqbal Junialdi (*Hustler & Frontend Developer, Tim sotodiensracing UDINUS*)
+- **Lead Backend & System Architecture:** Muhammad Ilham Maulana (*Hacker & Backend Developer*)
+- **Lead UI/UX & Product Designer:** Delvia Mareta Dealova (*Hipster & Product Designer*)
+- **Dokumen Induk:** Business Requirements Document (BRD-DEWIJATENG-2026-V3.1)
+- **Dokumen Terkait:** Database Schema & Models, System Architecture Specification, UI/UX Guidelines (DESIGN.md)
 
 ---
 
 ## 1. Ikhtisar Produk (Product Overview)
 
-**DEWI JATENG** adalah platform tata kelola terpadu berbasis web modern (*Astro 4+ Islands Architecture*) yang menghubungkan transparansi pendanaan desa wisata (Bantuan Keuangan Pemprov Jateng, APBDes, dan PADes) dengan sistem pengawasan fasilitas publik partisipatif berbasis geolokasi dan mekanisme garansi perbaikan fisik (*Proof-of-Fix*).
+**DEWI JATENG** adalah platform tata kelola terpadu berbasis web modern (**Next.js 14/15 App Router Fullstack Architecture**) yang menghubungkan transparansi pendanaan desa wisata (Bantuan Keuangan Pemprov Jateng, APBDes, dan PADes) dengan sistem pengawasan fasilitas publik partisipatif berbasis geolokasi dan mekanisme garansi perbaikan fisik (*Proof-of-Fix*).
 
-Platform ini dibangun di atas arsitektur **Astro 4+ (Islands Architecture, Hybrid Rendering, Astro Endpoints, TypeScript), React 18 (`@astrojs/react`), Framer Motion (`framer-motion`), Tailwind CSS 3.4, Lucide React, Leaflet.js / React-Leaflet, PostgreSQL + PostGIS, dan Supabase BaaS**, dengan pengayaan layanan AI (OCR Receipt Audit vs SSH Jateng, EXIF Validator, Whisper Voice Transcription, serta Dynamic Trust Score Engine).
+Platform ini dibangun di atas arsitektur **Next.js 14/15 (App Router, React Server Components, Server Actions, Route Handlers, TypeScript), React 18, Framer Motion 11 (`framer-motion`), Tailwind CSS 3.4, Lucide React, Leaflet.js / React-Leaflet, PostgreSQL + PostGIS, dan Supabase BaaS**, dengan pengayaan layanan AI (OCR Receipt Audit vs SSH Jateng, EXIF Validator, Whisper Voice Transcription, serta Dynamic Trust Score Engine).
+
+### Pembagian Domain Pengembangan (Tim sotodiensracing):
+- **Frontend Domain (Muhammad Iqbal Junialdi):** Mengembangkan seluruh antarmuka pengguna (`app/**/page.tsx`, `components/**`), micro-interactions Framer Motion (animated counter, before-after slider, lightbox zoom, interactive map pins), integrasi form, dan implementasi presisi 1:1 token Figma MBG (`#0D2453`, `#F7F9FC`, `#FFFFFF`, `#EBEBEB`, `#767676`).
+- **Backend & Database Domain (Muhammad Ilham Maulana):** Mengembangkan arsitektur basis data PostgreSQL/PostGIS di Supabase, Row-Level Security (RLS), endpoint API / Route Handlers (`app/api/**/route.ts`), Server Actions untuk mutasi data, dan pipeline AI OCR kuitansi.
 
 ### Nilai Diferensiasi Kunci:
 1. **Transparansi Fiskal Baris-demi-Baris:** Membuka buku kas desa wisata beserta foto nota fisik kuitansi belanja riil yang diaudit terhadap Standar Satuan Harga (SSH) Pemprov Jawa Tengah.
@@ -52,35 +58,35 @@ Platform ini dibangun di atas arsitektur **Astro 4+ (Islands Architecture, Hybri
 Sitemap resmi DEWI JATENG dirancang presisi dengan 5 rute halaman tanpa modul e-commerce atau booking komersial:
 
 ```text
-DEWI JATENG PLATFORM (Astro 4+ Islands Architecture)
+DEWI JATENG PLATFORM (Next.js 14/15 App Router Architecture)
 │
-├── 1.0 BERANDA PUBLIK (src/pages/index.astro) [Route: /]
+├── 1.0 BERANDA PUBLIK (app/page.tsx) [Route: /]
 │   ├── Hero Akuntabilitas & Transparansi Tata Kelola Wisata Jateng (Framer Motion)
 │   ├── KPI Makro Jawa Tengah (776 Desa Wisata, Realisasi Rp83,1 M Bankeu, Avg Trust Score)
 │   ├── Quick Report Box (Form Aduan Cepat)
 │   └── Feed Proof-of-Fix (Galeri Komparasi Before-After Hasil Perbaikan Nyata - Motion Slider)
 │
-├── 2.0 TRANSPARANSI DANA DESA (src/pages/transparansi.astro) [Route: /transparansi]
+├── 2.0 TRANSPARANSI DANA DESA (app/transparansi/page.tsx) [Route: /transparansi]
 │   ├── Filter Interaktif 35 Kabupaten/Kota Jawa Tengah
 │   ├── Visualisasi Komposisi Anggaran (APBDes, Bankeu Provinsi, PADes Wisata)
 │   ├── Progress Bar Serapan Anggaran & Realisasi Fisik
 │   ├── Buku Kas Terbuka Baris-demi-Baris (Pemasukan & Pengeluaran Kas Riil)
 │   └── Modal Inspeksi Kuitansi & Nota Belanja Riil (dengan Audit AI OCR vs SSH Jateng)
 │
-├── 3.0 KANAL LAPOR ADUAN (src/pages/lapor.astro) [Route: /lapor]
+├── 3.0 KANAL LAPOR ADUAN (app/lapor/page.tsx) [Route: /lapor]
 │   ├── Formulir Pelaporan Berstandar (Pungli, Fasilitas Rusak, Bahaya K3, Kebersihan)
-│   ├── Peta Penentuan Koordinat GPS Interaktif (Leaflet.js + OpenStreetMap client:only="react")
+│   ├── Peta Penentuan Koordinat GPS Interaktif (Leaflet.js + OpenStreetMap 'use client')
 │   ├── Unggah Bukti Foto/Video & Input Suara (Whisper Voice-to-Text)
 │   ├── Dynamic SLA Countdown Preview (24 Jam Pungli / 7 Hari Fasilitas - Framer Motion Badge)
 │   └── Opsi Perlindungan Whistleblower Anonim
 │
-├── 4.0 PUSAT EDUKASI & PANDUAN (src/pages/edukasi.astro) [Route: /edukasi]
+├── 4.0 PUSAT EDUKASI & PANDUAN (app/edukasi/page.tsx) [Route: /edukasi]
 │   ├── Panduan Hak Keterbukaan Informasi Publik (UU KIP No. 14/2008)
 │   ├── Sosialisasi Klasifikasi & Tata Kelola Desa Wisata (Perda Jateng No. 2/2019)
 │   ├── Standard Operating Procedure (SOP) Keselamatan Wahana & Mitigasi Risiko K3
 │   └── Diagram Alur Penanganan Aduan (Closed-Loop Workflow)
 │
-└── 5.0 PORTAL PENGELOLA DESA (src/pages/pengelola/index.astro) [Route: /pengelola]
+└── 5.0 PORTAL PENGELOLA DESA (app/pengelola/page.tsx) [Route: /pengelola]
     ├── Verifikasi & Input Nota Belanja Kasir/Material
     ├── Papan Disposisi Tiket Aduan Berdasarkan Urgensi SLA (Merah, Kuning, Hijau)
     ├── Modal Eksekusi Tiket & Wajib Unggah Foto Hasil Perbaikan (Proof-of-Fix)
@@ -139,10 +145,10 @@ DEWI JATENG PLATFORM (Astro 4+ Islands Architecture)
 ## 5. Kebutuhan Non-Fungsional (Non-Functional Requirements)
 
 1. **Kecepatan & Responsivitas (Performance):**
-   - Waktu muat halaman pertama (*First Contentful Paint*) < 1.5 detik.
-   - Peta Leaflet.js memuat GeoJSON 35 kabupaten/kota secara ringan dengan *dynamic chunking*.
+   - First Contentful Paint < 1.2 detik menggunakan React Server Components.
+   - Peta Leaflet.js di-load secara dinamis dengan Next.js `dynamic(() => import(...), { ssr: false })`.
 2. **Ketersediaan & Skalabilitas (Scalability):**
-   - Mendukung akses serentak publik di seluruh Jawa Tengah melalui arsitektur Astro Islands dengan 0 KB initial JS dan Supabase Connection Pooling.
+   - Mendukung akses serentak publik di seluruh Jawa Tengah melalui arsitektur Next.js Edge / Node.js Serverless runtime dan Supabase Connection Pooling.
 3. **Integritas Spasial & Keamanan (Security & GIS):**
    - Validasi batas wilayah Jawa Tengah pada koordinat laporan menggunakan kueri PostGIS `ST_Contains`.
    - Penerapan Row-Level Security (RLS) pada tabel basis data Supabase sehingga pengelola hanya dapat mengedit data desa masing-masing.
