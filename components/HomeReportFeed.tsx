@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowUpRight,
@@ -177,13 +180,13 @@ export default function HomeReportFeed() {
                         <h3 className="text-lg sm:text-xl font-bold text-[#0D2453] leading-snug">
                           {item.title}
                         </h3>
-                        <a
+                        <Link
                           href="/#buat-laporan"
                           className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline group"
                         >
                           <span>{item.ticketCode}</span>
                           <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                        </a>
+                        </Link>
                       </div>
 
                       <div className="flex items-center gap-2 self-start">
@@ -354,13 +357,13 @@ export default function HomeReportFeed() {
                           <p className="text-xs text-[#4A5568] leading-relaxed">
                             {entry.desc}
                           </p>
-                          <a
+                          <Link
                             href="/transparansi"
                             className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline"
                           >
                             <span>{entry.villageLink}</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
-                          </a>
+                          </Link>
 
                           {idx < item.timeline.length - 1 && (
                             <div className="border-t border-[#EBEBEB] pt-4"></div>

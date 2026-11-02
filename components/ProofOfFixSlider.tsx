@@ -1,9 +1,11 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ShieldCheck, Clock, MapPin, ChevronLeft, ChevronRight, UserCheck, AlertTriangle } from 'lucide-react';
-import { RESOLVED_REPORTS } from '../../lib/mockData';
-import { formatDateIndo } from '../../lib/utils';
-import type { IncidentReport } from '../../types';
+import { RESOLVED_REPORTS } from '@/lib/mockData';
+import { formatDateIndo } from '@/lib/utils';
+import type { IncidentReport } from '@/types';
 
 export default function ProofOfFixSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -150,7 +152,7 @@ export default function ProofOfFixSlider() {
                 {report.title}
               </h4>
               <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                "{report.description}"
+                &ldquo;{report.description}&rdquo;
               </p>
             </div>
 

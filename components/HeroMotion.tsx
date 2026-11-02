@@ -1,8 +1,10 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldAlert, FileText, ArrowRight, CheckCircle2, TrendingUp, Building2, AlertTriangle } from 'lucide-react';
-import { MACRO_STATS } from '../../lib/mockData';
-import { formatRupiah } from '../../lib/utils';
+import { MACRO_STATS } from '@/lib/mockData';
+import { formatRupiah } from '@/lib/utils';
 
 export default function HeroMotion() {
   const containerVariants = {

@@ -1,4 +1,4 @@
-import type { MacroStats, TouristVillage, CashbookEntry, IncidentReport } from '../types';
+import type { MacroStats, TouristVillage, CashbookEntry, IncidentReport } from '@/types';
 
 export const MACRO_STATS: MacroStats = {
   totalVillages: 776,

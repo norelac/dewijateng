@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'leaflet/dist/leaflet.css';
+
+:root {
+  --color-brand-navy: #0D2453;
+  --color-brand-red: #EA4335;
+  --color-brand-canvas: #F7F9FC;
+  --color-brand-muted: #767676;
+  --color-brand-border: #EBEBEB;
+  --color-brand-blue: #3B82F6;
+  --color-brand-light-blue: #DCE7F5;
+}
+
+html,
+body {
+  overflow-x: clip;
+  background-color: var(--color-brand-canvas);
+  color: var(--color-brand-navy);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-navy);
+  outline-offset: 2px;
+}
+
+/* Custom leaflet pin marker adjustments */
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}

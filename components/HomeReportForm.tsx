@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -271,7 +273,7 @@ export default function HomeReportForm() {
                 className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer font-medium"
               >
                 <option value="" disabled>Contoh: Pohon tumbang</option>
-                <option value="Akses ke curug buruk">Akses ke curug buruk & pagar pengaman lapuk</option>
+                <option value="Akses ke curug buruk">Akses ke curug buruk &amp; pagar pengaman lapuk</option>
                 <option value="Wastafel dan toilet kotor sekali">Wastafel dan toilet kotor sekali / kran mati</option>
                 <option value="Pungli parkir liar">Pungutan liar parkir tanpa karcis resmi BUMDes</option>
                 <option value="Jembatan goyang">Jembatan titian kayu goyang dan berbahaya</option>
@@ -468,7 +470,7 @@ export default function HomeReportForm() {
                 }}
                 className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs transition-colors"
               >
-                Selesai & Tutup
+                Selesai &amp; Tutup
               </button>
             </motion.div>
           </div>

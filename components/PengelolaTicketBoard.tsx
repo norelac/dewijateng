@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -13,9 +15,9 @@ import {
   Lock,
   ChevronRight
 } from 'lucide-react';
-import { RESOLVED_REPORTS } from '../../lib/mockData';
-import { formatDateIndo } from '../../lib/utils';
-import type { IncidentReport } from '../../types';
+import { RESOLVED_REPORTS } from '@/lib/mockData';
+import { formatDateIndo } from '@/lib/utils';
+import type { IncidentReport } from '@/types';
 
 export default function PengelolaTicketBoard() {
   const [tickets, setTickets] = useState<IncidentReport[]>([
@@ -132,7 +134,7 @@ export default function PengelolaTicketBoard() {
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900">
-            Daftar Tiket Aduan & Penugasan Lapangan
+            Daftar Tiket Aduan &amp; Penugasan Lapangan
           </h3>
           <span className="text-xs text-slate-500">
             Mandat Perda Jateng No. 2/2019
@@ -181,7 +183,7 @@ export default function PengelolaTicketBoard() {
                   </h4>
 
                   <p className="text-xs text-slate-500 line-clamp-2">
-                    "{ticket.description}"
+                    &ldquo;{ticket.description}&rdquo;
                   </p>
 
                   <div className="flex items-center gap-3 text-xs text-slate-400">
@@ -310,7 +312,7 @@ export default function PengelolaTicketBoard() {
                     className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-700/20 flex items-center gap-1.5"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Terbitkan Bukti Fisik & Tuntaskan Tiket</span>
+                    <span>Terbitkan Bukti Fisik &amp; Tuntaskan Tiket</span>
                   </button>
                 </div>
               </form>

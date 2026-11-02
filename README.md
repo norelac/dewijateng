@@ -57,7 +57,7 @@ cp .env.example .env.local
 
 Isi variabel konfigurasi di dalam `.env.local`:
 ```env
-NEXT_PUBLIC_APP_URL=http://localhost:4321
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Konfigurasi Supabase / PostgreSQL
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -76,7 +76,7 @@ AI_VISION_API_KEY=your-api-key
 npm run dev
 ```
 
-Aplikasi dapat diakses melalui peramban di `http://localhost:4321`.
+Aplikasi dapat diakses melalui peramban di `http://localhost:3000`.
 
 ---
 
@@ -86,7 +86,7 @@ Proyek saat ini berada pada tahap **First Draft Submission (01 November 2026)**:
 
 - [x] **Perancangan Sistem & Dokumen Teknis**: Penyusunan PRD, BRD, Desain Sistem, dan Arsitektur Aplikasi di direktori `/docs`.
 - [x] **Desain UI/UX**: Mockup antarmuka multi-peran dan prototipe interaktif di Figma.
-- [x] **Setup Repositori & Arsitektur Kode**: Konfigurasi framework (Astro + React Islands), Tailwind CSS, dan komponen pustaka UI.
+- [x] **Setup Repositori & Arsitektur Kode**: Konfigurasi framework (Next.js 14 App Router + React 18), Tailwind CSS, dan komponen pustaka UI.
 - [x] **Halaman Beranda (`/`)**:
   - Hero banner responsif dengan CTA pelaporan cepat.
   - KPI Counter statistik real-time (desa binaan aktif, realisasi anggaran, SLA tuntas, indeks kepatuhan).

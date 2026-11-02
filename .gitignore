@@ -2,6 +2,9 @@
 node_modules/
 dist/
 .astro/
+.next/
+out/
+build/
 
 # Environment Variables
 .env

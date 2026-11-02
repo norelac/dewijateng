@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,8 +13,8 @@ import {
   Send,
   Info
 } from 'lucide-react';
-import { SAMPLE_VILLAGES } from '../../lib/mockData';
-import type { ReportCategory } from '../../types';
+import { SAMPLE_VILLAGES } from '@/lib/mockData';
+import type { ReportCategory } from '@/types';
 
 export default function ReportFormMotion() {
   const [category, setCategory] = useState<ReportCategory>('PUNGLI');
