@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { Coins, Compass, CheckCircle2, Clock, LucideIcon } from 'lucide-react';
 
 interface MetricItem {
   value: string;
@@ -10,6 +11,7 @@ interface MetricItem {
   suffix?: string;
   decimals?: number;
   label: string;
+  icon: LucideIcon;
 }
 
 export default function HomeKpiCounters() {
@@ -23,11 +25,13 @@ export default function HomeKpiCounters() {
       prefix: 'Rp ',
       suffix: ' Miliar',
       label: 'Total Dana Desa',
+      icon: Coins,
     },
     {
       value: '889',
       targetNumber: 889,
       label: 'Desa Wisata',
+      icon: Compass,
     },
     {
       value: '94,2%',
@@ -35,6 +39,7 @@ export default function HomeKpiCounters() {
       suffix: '%',
       decimals: 1,
       label: 'Tingkat Penyelesaian Laporan',
+      icon: CheckCircle2,
     },
     {
       value: '< 24 Jam',
@@ -42,6 +47,7 @@ export default function HomeKpiCounters() {
       targetNumber: 24,
       suffix: ' Jam',
       label: 'Rata-rata Respon oleh Dinas',
+      icon: Clock,
     },
   ];
 
@@ -53,8 +59,13 @@ export default function HomeKpiCounters() {
           initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.4, delay: idx * 0.1 }}
-          className="bg-white rounded-2xl border border-[#EBEBEB] p-6 shadow-xs flex flex-col justify-center items-center text-center h-32 hover:shadow-sm hover:border-slate-300 transition-all group"
+          className="relative bg-white rounded-2xl border border-[#EBEBEB] p-6 shadow-xs flex flex-col justify-center items-center text-center min-h-[136px] hover:shadow-sm hover:border-slate-300 transition-all group"
         >
+          {/* ponytail: circular accent badge, replace with custom SVG badge if figma asset exported */}
+          <div className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#DCE7F5]/60 text-[#0D2453] flex items-center justify-center transition-transform group-hover:scale-110">
+            <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0D2453]" />
+          </div>
+
           <div className="text-2xl sm:text-3xl font-extrabold text-[#0D2453] tracking-tight font-sans">
             <Counter
               isInView={isInView}

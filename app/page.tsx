@@ -6,7 +6,7 @@ import HomeReportFeed from '@/components/HomeReportFeed';
 
 export default function HomePage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8 mt-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-[44px]">
       {/* 1. Hero Section Banner Card with Terrace Mountain Background */}
       <section className="relative rounded-[32px] overflow-hidden shadow-sm border border-[#EBEBEB]">
         {/* Landscape Background Image with Navy Overlay matching Figma */}
@@ -54,12 +54,12 @@ export default function HomePage() {
       </section>
 
       {/* 2. Four Metric KPI Cards */}
-      <section>
+      <section className="mt-[44px]">
         <HomeKpiCounters />
       </section>
 
       {/* 3. Section Buat Laporan Card */}
-      <section id="buat-laporan" className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-10 shadow-xs">
+      <section id="buat-laporan" className="mt-[44px] bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-10 shadow-xs">
         {/* Card Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-[#0D2453]">
@@ -77,7 +77,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. Section Dari Laporan, Menjadi Perbaikan */}
-      <section className="pt-8 sm:pt-10 space-y-8">
+      <section className="mt-[44px] pt-4 sm:pt-6 space-y-8">
         <div className="mb-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#0D2453] tracking-tight">
             Dari Laporan, Menjadi Perbaikan
