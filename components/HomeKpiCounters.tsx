@@ -18,9 +18,6 @@ interface MetricItem {
   decimals?: number;
   label: string;
   icon: LucideIcon;
-  badgeBg: string;
-  badgeText: string;
-  valueColor: string;
 }
 
 export default function HomeKpiCounters() {
@@ -35,27 +32,18 @@ export default function HomeKpiCounters() {
       suffix: ' Miliar',
       label: 'Total Dana Desa',
       icon: Landmark,
-      badgeBg: 'bg-[#EBF2FF]',
-      badgeText: 'text-[#1D4ED8]',
-      valueColor: 'text-[#0D2453]',
     },
     {
       value: '9607',
       targetNumber: 9607,
       label: 'Total Laporan',
       icon: FileText,
-      badgeBg: 'bg-[#FEECEC]',
-      badgeText: 'text-[#B91C1C]',
-      valueColor: 'text-[#991B1B]',
     },
     {
       value: '889',
       targetNumber: 889,
       label: 'Desa Wisata',
       icon: MapPin,
-      badgeBg: 'bg-[#ECFDF5]',
-      badgeText: 'text-[#047857]',
-      valueColor: 'text-[#065F46]',
     },
     {
       value: '94,2%',
@@ -64,9 +52,6 @@ export default function HomeKpiCounters() {
       decimals: 1,
       label: 'Tingkat Penyelesaian Laporan',
       icon: CheckCheck,
-      badgeBg: 'bg-[#EEF2FF]',
-      badgeText: 'text-[#4F46E5]',
-      valueColor: 'text-[#3730A3]',
     },
   ];
 
@@ -78,24 +63,20 @@ export default function HomeKpiCounters() {
       {metrics.map((item, idx) => (
         <motion.div
           key={item.label}
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.4, delay: idx * 0.08, ease: 'easeOut' }}
+          transition={{ duration: 0.35, delay: idx * 0.08, ease: 'easeOut' }}
           whileHover={{ y: -3, transition: { duration: 0.2 } }}
           className="bg-white rounded-[20px] border border-[#E6ECF5] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-slate-300 transition-all group flex items-center gap-4 cursor-default"
         >
-          {/* Squircle Icon Badge matching Image 3 */}
-          <div
-            className={`w-12 h-12 rounded-[16px] ${item.badgeBg} ${item.badgeText} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 shadow-2xs`}
-          >
+          {/* Unified Squircle Icon Badge in Navy / Soft Blue */}
+          <div className="w-12 h-12 rounded-[16px] bg-[#EBF2FF] text-[#0D2453] flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 shadow-2xs">
             <item.icon className="w-5 h-5 stroke-[2.2]" />
           </div>
 
-          {/* Right Text Column: Big bold number on top, label underneath */}
+          {/* Unified Navy Value & Slate Label */}
           <div className="text-left min-w-0 flex-1">
-            <div
-              className={`text-2xl sm:text-[26px] font-extrabold ${item.valueColor} tracking-tight font-sans leading-tight`}
-            >
+            <div className="text-2xl sm:text-[26px] font-extrabold text-[#0D2453] tracking-tight font-sans leading-tight">
               <Counter
                 isInView={isInView}
                 target={item.targetNumber}

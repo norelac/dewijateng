@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Newspaper, ChevronRight } from 'lucide-react';
 import HomeHeroBanner from '@/components/HomeHeroBanner';
+import HomeLiveTicker from '@/components/HomeLiveTicker';
 import HomeKpiCounters from '@/components/HomeKpiCounters';
 import HomeReportForm from '@/components/HomeReportForm';
 import HomeReportFeed from '@/components/HomeReportFeed';
@@ -11,8 +12,12 @@ export default function HomePage() {
       {/* 1. Dynamic Hero Banner with Slideshow & Entrance Animations */}
       <HomeHeroBanner />
 
-      {/* 2. Stats KPI Strip (Original Style with Category Badges & Counter) */}
-      <section className="w-full">
+      {/* 2. Live Activity Ticker Strip & Unified Navy KPI Counters */}
+      <section className="w-full space-y-4">
+        {/* Real-time Civic Update Ticker */}
+        <HomeLiveTicker />
+
+        {/* 4 KPI Metrics Strip */}
         <HomeKpiCounters />
       </section>
 
@@ -49,17 +54,17 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* 2-Row Feed */}
+        {/* 2-Row Feed with Before/After Drag Slider and Lightbox */}
         <HomeReportFeed />
 
-        {/* Action Button */}
+        {/* Action Button: Solid Navy Button matching user request */}
         <div className="flex justify-end pt-2 w-full">
           <Link
             href="/lapor"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-[#EBEBEB] text-[#0D2453] text-[13px] font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs group"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0D2453] hover:bg-[#163574] text-white text-[13px] font-semibold transition-all shadow-sm active:scale-95 group"
           >
             <span>Lihat Lainnya</span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#0D2453] group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
       </section>
