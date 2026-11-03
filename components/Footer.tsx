@@ -22,7 +22,7 @@ import {
 export default function Footer() {
   return (
     <footer className="bg-[#0D2453] text-white mt-24 w-full">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-12 lg:px-20 py-[56px]">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-[56px]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 items-start justify-between">
           {/* Col 1: Brand & Contact (300px in Figma) */}
           <div className="lg:col-span-4 space-y-5">
@@ -201,7 +201,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-12 lg:px-20 py-5 flex flex-col sm:flex-row items-center justify-between text-[13px] text-white/40 gap-3">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between text-[13px] text-white/40 gap-3">
           <p>© 2024 – 2026 Pemerintah Provinsi Jawa Tengah. Hak Cipta Dilindungi.</p>
           <div className="flex items-center gap-5">
             <a href="#" className="hover:text-white/70 transition-colors">

@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MapPin, ArrowUpRight, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin } from 'lucide-react';
 
 interface ReportCardItem {
   id: string;
@@ -77,14 +78,18 @@ const REPORT_CARDS: ReportCardItem[] = [
 
 export default function HomeReportFeed() {
   return (
-    <div className="space-y-6">
-      {REPORT_CARDS.map((item) => (
-        <div
+    <div className="space-y-6 w-full">
+      {REPORT_CARDS.map((item, idx) => (
+        <motion.div
           key={item.id}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.45, delay: idx * 0.12 }}
           className="flex flex-col lg:flex-row items-stretch justify-between gap-4 w-full"
         >
           {/* Left Card: Evidence Photos */}
-          <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex-1 flex flex-col justify-between">
+          <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all flex-1 flex flex-col justify-between">
             <div>
               {/* Header: Title + Badge */}
               <div className="flex items-center justify-between gap-3 mb-1">
@@ -105,15 +110,15 @@ export default function HomeReportFeed() {
                 <span className="text-[10px]">↗</span>
               </Link>
 
-              {/* Side-by-side Photos */}
+              {/* Side-by-side Photos with gentle zoom on hover */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* Before */}
-                <div>
+                <div className="group cursor-pointer">
                   <div className="h-[197px] rounded-[16px] overflow-hidden bg-slate-100 border border-[#EBEBEB]">
                     <img
                       src={item.beforePhoto}
                       alt={item.beforeLabel}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
                   </div>
                   <p className="text-[11px] text-[#64748B] mt-2 font-normal">
@@ -122,12 +127,12 @@ export default function HomeReportFeed() {
                 </div>
 
                 {/* After */}
-                <div>
+                <div className="group cursor-pointer">
                   <div className="h-[197px] rounded-[16px] overflow-hidden bg-slate-100 border border-[#EBEBEB]">
                     <img
                       src={item.afterPhoto}
                       alt={item.afterLabel}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
                   </div>
                   <p className="text-[11px] text-[#64748B] mt-2 font-normal">
@@ -145,18 +150,18 @@ export default function HomeReportFeed() {
           </div>
 
           {/* Right Card: Catatan Dari Desa */}
-          <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.05)] lg:w-[480px] xl:w-[540px] shrink-0 flex flex-col justify-between">
+          <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all lg:w-[480px] xl:w-[520px] shrink-0 flex flex-col justify-between">
             <div>
               <div className="text-[12px] font-bold tracking-wider text-[#0D2453] uppercase mb-4">
                 CATATAN DARI DESA
               </div>
 
               <div className="space-y-4">
-                {item.notes.map((note, idx) => (
+                {item.notes.map((note, noteIdx) => (
                   <div
-                    key={idx}
+                    key={noteIdx}
                     className={`space-y-1.5 ${
-                      idx !== item.notes.length - 1 ? 'pb-4 border-b border-[#DDE6DF]' : ''
+                      noteIdx !== item.notes.length - 1 ? 'pb-4 border-b border-[#DDE6DF]' : ''
                     }`}
                   >
                     <div className="text-[10px] text-[#64748B] font-medium">
@@ -170,16 +175,16 @@ export default function HomeReportFeed() {
                     </p>
                     <Link
                       href="/transparansi"
-                      className="inline-block text-xs font-semibold text-[#0D2453] hover:underline pt-0.5"
+                      className="inline-block text-xs font-semibold text-[#0D2453] hover:underline pt-0.5 group"
                     >
-                      {note.villageLink}
+                      <span>{note.villageLink}</span>
                     </Link>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
