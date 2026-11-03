@@ -108,15 +108,14 @@ export default function HomeHeroBanner() {
           </div>
         </div>
 
-        {/* Subheadline */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.52 }}
-          className="text-white/85 text-sm sm:text-[18px] max-w-[720px] leading-relaxed drop-shadow-sm font-normal"
-        >
-          Pantau penggunaan dana desa secara terbuka dan laporkan kendala fasilitas wisata secara cepat
-        </motion.p>
+        {/* Subheadline with Typewriter Animation */}
+        <p className="text-white/85 text-sm sm:text-[18px] max-w-[720px] leading-relaxed drop-shadow-sm font-normal min-h-[50px] sm:min-h-[54px] flex items-center">
+          <HeroTypewriter
+            text="Pantau penggunaan dana desa secara terbuka dan laporkan kendala fasilitas wisata secara cepat"
+            speed={22}
+            delay={500}
+          />
+        </p>
 
         {/* Dual Action Buttons */}
         <motion.div
@@ -167,5 +166,49 @@ export default function HomeHeroBanner() {
         </div>
       </div>
     </section>
+  );
+}
+
+function HeroTypewriter({
+  text,
+  speed = 22,
+  delay = 500,
+}: {
+  text: string;
+  speed?: number;
+  delay?: number;
+}) {
+  const [length, setLength] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    // ponytail: interval typewriter. Upgrade to Web Animations API if complex pause/resume needed.
+    let intervalId: NodeJS.Timeout;
+    const timeoutId = setTimeout(() => {
+      setIsTyping(true);
+      let current = 0;
+      intervalId = setInterval(() => {
+        current++;
+        setLength(current);
+        if (current >= text.length) {
+          clearInterval(intervalId);
+          setIsTyping(false);
+        }
+      }, speed);
+    }, delay);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [text, speed, delay]);
+
+  return (
+    <span className="inline-block select-none">
+      <span>{text.slice(0, length)}</span>
+      {isTyping && (
+        <span className="inline-block w-[2px] h-[0.9em] ml-1 bg-white align-baseline animate-pulse" />
+      )}
+    </span>
   );
 }

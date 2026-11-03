@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import {
   Landmark,
@@ -12,12 +12,9 @@ import {
 
 interface MetricItem {
   value: string;
-  targetNumber: number;
-  prefix?: string;
-  suffix?: string;
-  decimals?: number;
   label: string;
   icon: LucideIcon;
+  delayOffset: number;
 }
 
 export default function HomeKpiCounters() {
@@ -27,31 +24,27 @@ export default function HomeKpiCounters() {
   const metrics: MetricItem[] = [
     {
       value: 'Rp 185 Miliar',
-      targetNumber: 185,
-      prefix: 'Rp ',
-      suffix: ' Miliar',
       label: 'Total Dana Desa',
       icon: Landmark,
+      delayOffset: 100,
     },
     {
-      value: '9607',
-      targetNumber: 9607,
+      value: '9.607',
       label: 'Total Laporan',
       icon: FileText,
+      delayOffset: 250,
     },
     {
       value: '889',
-      targetNumber: 889,
       label: 'Desa Wisata',
       icon: MapPin,
+      delayOffset: 400,
     },
     {
       value: '94,2%',
-      targetNumber: 94.2,
-      suffix: '%',
-      decimals: 1,
       label: 'Tingkat Penyelesaian Laporan',
       icon: CheckCheck,
+      delayOffset: 550,
     },
   ];
 
@@ -74,21 +67,24 @@ export default function HomeKpiCounters() {
             <item.icon className="w-5 h-5 stroke-[2.2]" />
           </div>
 
-          {/* Unified Navy Value & Slate Label */}
+          {/* Typewriter Value & Slate Label */}
           <div className="text-left min-w-0 flex-1">
-            <div className="text-2xl sm:text-[26px] font-extrabold text-[#0D2453] tracking-tight font-sans leading-tight">
-              <Counter
+            <div className="text-2xl sm:text-[26px] font-extrabold text-[#0D2453] tracking-tight font-sans leading-tight min-h-[32px] sm:min-h-[36px] flex items-center">
+              <TypewriterNumber
+                text={item.value}
                 isInView={isInView}
-                target={item.targetNumber}
-                prefix={item.prefix || ''}
-                suffix={item.suffix || ''}
-                decimals={item.decimals || 0}
-                fallback={item.value}
+                startDelay={item.delayOffset}
+                speed={50}
               />
             </div>
-            <div className="text-xs text-[#64748B] mt-0.5 font-medium leading-snug group-hover:text-slate-900 transition-colors truncate">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.4, delay: item.delayOffset / 1000 + 0.3 }}
+              className="text-xs text-[#64748B] mt-0.5 font-medium leading-snug group-hover:text-slate-900 transition-colors truncate"
+            >
               {item.label}
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       ))}
@@ -96,62 +92,52 @@ export default function HomeKpiCounters() {
   );
 }
 
-function Counter({
+function TypewriterNumber({
+  text,
   isInView,
-  target,
-  prefix,
-  suffix,
-  decimals = 0,
-  fallback,
+  startDelay = 100,
+  speed = 50,
 }: {
+  text: string;
   isInView: boolean;
-  target: number;
-  prefix: string;
-  suffix: string;
-  decimals?: number;
-  fallback: string;
+  startDelay?: number;
+  speed?: number;
 }) {
-  const [current, setCurrent] = useState(0);
+  const [length, setLength] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    if (!isInView || target === 0) return;
+    // ponytail: interval typewriter. Upgrade to requestAnimationFrame if variable glyph timing needed.
+    if (!isInView) return;
 
-    let start = 0;
-    const duration = 1200;
-    const frameRate = 1000 / 60;
-    const totalFrames = Math.round(duration / frameRate);
-    let frame = 0;
+    let intervalId: NodeJS.Timeout;
+    const timeoutId = setTimeout(() => {
+      setIsTyping(true);
+      let current = 0;
+      intervalId = setInterval(() => {
+        current++;
+        setLength(current);
+        if (current >= text.length) {
+          clearInterval(intervalId);
+          setIsTyping(false);
+        }
+      }, speed);
+    }, startDelay);
 
-    const timer = setInterval(() => {
-      frame++;
-      const progress = frame / totalFrames;
-      // Ease out cubic
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
-      const val = target * easeProgress;
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isInView, text, startDelay, speed]);
 
-      if (frame >= totalFrames) {
-        setCurrent(target);
-        clearInterval(timer);
-      } else {
-        setCurrent(val);
-      }
-    }, frameRate);
-
-    return () => clearInterval(timer);
-  }, [isInView, target]);
-
-  if (!isInView) return <span>{fallback}</span>;
-
-  const formatted =
-    decimals > 0
-      ? current.toFixed(decimals).replace('.', ',')
-      : Math.floor(current).toLocaleString('id-ID');
+  if (!isInView) return <span className="opacity-0">{text}</span>;
 
   return (
-    <span>
-      {prefix}
-      {formatted}
-      {suffix}
+    <span className="inline-flex items-baseline select-none">
+      <span>{text.slice(0, length)}</span>
+      {isTyping && (
+        <span className="inline-block w-[2px] h-[0.85em] ml-0.5 bg-[#0D2453] align-baseline animate-pulse" />
+      )}
     </span>
   );
 }
