@@ -136,9 +136,9 @@ export default function HomeReportFeed() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[32px]">
       {/* Category Filter Pills */}
-      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+      <div className="flex flex-wrap items-center gap-2.5">
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat;
           return (
@@ -158,7 +158,7 @@ export default function HomeReportFeed() {
         })}
       </div>
 
-      {/* Unified Report Cards */}
+      {/* Unified Report Cards - Split into Two Independent Cards */}
       <div className="space-y-[32px]">
         {filteredReports.map((item) => {
           const isSlider = !!sliderModes[item.id];
@@ -167,209 +167,205 @@ export default function HomeReportFeed() {
           return (
             <div
               key={item.id}
-              className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-8 shadow-xs hover:border-slate-300 transition-all"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-                {/* Left Column (Span 7): Incident Header, Before/After Visuals, Location Meta */}
-                <div className="lg:col-span-7 flex flex-col justify-between h-full space-y-5">
-                  <div>
-                    {/* Header: Title, Ticket Code, Mode Toggle & Status Badge */}
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg sm:text-xl font-bold text-[#0D2453] leading-snug">
-                          {item.title}
-                        </h3>
-                        <Link
-                          href="/#buat-laporan"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline group"
-                        >
-                          <span>{item.ticketCode}</span>
-                          <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                        </Link>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-start">
-                        {/* Toggle Slider Mode */}
-                        <button
-                          type="button"
-                          onClick={() => toggleSliderMode(item.id)}
-                          className="px-3 py-1.5 rounded-xl bg-[#F7F9FC] hover:bg-slate-200 border border-[#EBEBEB] text-[#0D2453] text-xs font-bold transition-colors flex items-center gap-1.5"
-                        >
-                          {isSlider ? <Columns className="w-3.5 h-3.5" /> : <SlidersHorizontal className="w-3.5 h-3.5" />}
-                          <span>{isSlider ? 'Berdampingan' : 'Slider'}</span>
-                        </button>
-
-                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E6FFFA] text-[#319795] border border-[#B2F5EA] shrink-0">
-                          {item.status}
-                        </span>
-                      </div>
+              {/* Left Card: Incident Header, Before/After Visuals, Location Meta */}
+              <div className="lg:col-span-7 bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-7 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-5">
+                <div>
+                  {/* Header: Title, Ticket Code, Mode Toggle & Status Badge */}
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-[#0D2453] leading-snug">
+                        {item.title}
+                      </h3>
+                      <Link
+                        href="/#buat-laporan"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline group"
+                      >
+                        <span>{item.ticketCode}</span>
+                        <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </Link>
                     </div>
 
-                    {/* Photos View: Side-by-side OR Draggable Comparison Slider */}
-                    {!isSlider ? (
-                      <div className="grid grid-cols-2 gap-4 mt-5">
-                        {/* Sebelum Perbaikan */}
-                        <div>
-                          <div className="text-xs font-bold text-[#0D2453] mb-1.5">
-                            {item.before.title}
-                          </div>
-                          <div
-                            onClick={() =>
-                              setLightboxImg({
-                                url: item.before.photo,
-                                title: `${item.title} - ${item.before.title}`,
-                                subtitle: item.before.label,
-                              })
-                            }
-                            className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
-                          >
-                            <img
-                              src={item.before.photo}
-                              alt={item.before.title}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
-                              <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                            </div>
-                          </div>
-                          <span className="text-[11px] text-[#767676] block mt-1.5 font-medium">
-                            {item.before.label}
-                          </span>
-                        </div>
+                    <div className="flex items-center gap-2 self-start">
+                      {/* Toggle Slider Mode */}
+                      <button
+                        type="button"
+                        onClick={() => toggleSliderMode(item.id)}
+                        className="px-3 py-1.5 rounded-xl bg-[#F7F9FC] hover:bg-slate-200 border border-[#EBEBEB] text-[#0D2453] text-xs font-bold transition-colors flex items-center gap-1.5"
+                      >
+                        {isSlider ? <Columns className="w-3.5 h-3.5" /> : <SlidersHorizontal className="w-3.5 h-3.5" />}
+                        <span>{isSlider ? 'Berdampingan' : 'Slider'}</span>
+                      </button>
 
-                        {/* Sesudah Perbaikan */}
-                        <div>
-                          <div className="text-xs font-bold text-[#0D2453] mb-1.5">
-                            {item.after.title}
-                          </div>
-                          <div
-                            onClick={() =>
-                              setLightboxImg({
-                                url: item.after.photo,
-                                title: `${item.title} - ${item.after.title}`,
-                                subtitle: item.after.label,
-                              })
-                            }
-                            className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
-                          >
-                            <img
-                              src={item.after.photo}
-                              alt={item.after.title}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
-                              <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                            </div>
-                          </div>
-                          <span className="text-[11px] text-[#767676] block mt-1.5 font-medium">
-                            {item.after.label}
-                          </span>
+                      <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E6FFFA] text-[#319795] border border-[#B2F5EA] shrink-0">
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Photos View: Side-by-side OR Draggable Comparison Slider */}
+                  {!isSlider ? (
+                    <div className="grid grid-cols-2 gap-4 mt-5">
+                      {/* Sebelum Perbaikan */}
+                      <div>
+                        <div className="text-xs font-bold text-[#0D2453] mb-1.5">
+                          {item.before.title}
                         </div>
+                        <div
+                          onClick={() =>
+                            setLightboxImg({
+                              url: item.before.photo,
+                              title: `${item.title} - ${item.before.title}`,
+                              subtitle: item.before.label,
+                            })
+                          }
+                          className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
+                        >
+                          <img
+                            src={item.before.photo}
+                            alt={item.before.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-[#767676] block mt-1.5 font-medium">
+                          {item.before.label}
+                        </span>
                       </div>
-                    ) : (
-                      /* Draggable Comparison Slider */
-                      <div className="mt-5">
-                        <div className="flex items-center justify-between text-xs font-bold text-[#0D2453] mb-1.5">
-                          <span>{item.before.title}</span>
-                          <span>{item.after.title}</span>
+
+                      {/* Sesudah Perbaikan */}
+                      <div>
+                        <div className="text-xs font-bold text-[#0D2453] mb-1.5">
+                          {item.after.title}
                         </div>
-                        <div className="relative aspect-[16/9] rounded-2xl overflow-hidden select-none border border-[#EBEBEB] shadow-2xs">
-                          {/* Sesudah (Full Background Image) */}
+                        <div
+                          onClick={() =>
+                            setLightboxImg({
+                              url: item.after.photo,
+                              title: `${item.title} - ${item.after.title}`,
+                              subtitle: item.after.label,
+                            })
+                          }
+                          className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
+                        >
                           <img
                             src={item.after.photo}
-                            alt="Sesudah Perbaikan"
-                            className="absolute inset-0 w-full h-full object-cover"
+                            alt={item.after.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
-
-                          {/* Sebelum (Clipped Overlay) */}
-                          <div
-                            className="absolute inset-0 overflow-hidden"
-                            style={{ width: `${pos}%` }}
-                          >
-                            <img
-                              src={item.before.photo}
-                              alt="Sebelum Perbaikan"
-                              className="absolute inset-0 w-full h-full object-cover max-w-none"
-                              style={{ width: '100%', height: '100%' }}
-                            />
+                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
                           </div>
-
-                          {/* Divider Line & Central Handle */}
-                          <div
-                            className="absolute top-0 bottom-0 w-0.5 bg-white shadow-xl pointer-events-none"
-                            style={{ left: `${pos}%` }}
-                          >
-                            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white shadow-lg flex items-center justify-center text-[#0D2453] border border-slate-200">
-                              <SlidersHorizontal className="w-3.5 h-3.5" />
-                            </div>
-                          </div>
-
-                          {/* Overlay Badges */}
-                          <span className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold">
-                            {item.before.label}
-                          </span>
-                          <span className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold">
-                            {item.after.label}
-                          </span>
-
-                          {/* Interactive Range Input Slider */}
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={pos}
-                            onChange={(e) => handleSliderMove(item.id, e)}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
-                            aria-label="Geser untuk membandingkan foto sebelum dan sesudah perbaikan"
-                          />
                         </div>
-                        <span className="text-[11px] text-[#767676] block mt-1.5 font-medium text-center">
-                          Geser handle ke kiri atau ke kanan untuk membandingkan kondisi fisik
+                        <span className="text-[11px] text-[#767676] block mt-1.5 font-medium">
+                          {item.after.label}
                         </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Location & Timestamp Footer */}
-                  <div className="flex items-center gap-2 text-xs text-[#767676] pt-4 border-t border-[#EBEBEB]">
-                    <MapPin className="w-4 h-4 shrink-0 text-slate-400" />
-                    <span>{item.location}</span>
-                  </div>
-                </div>
-
-                {/* Right Column (Span 5): CATATAN DARI DESA Timeline */}
-                <div className="lg:col-span-5 lg:border-l lg:border-[#EBEBEB] lg:pl-8 flex flex-col justify-between h-full pt-6 lg:pt-0 border-t lg:border-t-0 border-[#EBEBEB]">
-                  <div>
-                    <h4 className="text-[11px] font-bold text-[#767676] uppercase tracking-wider mb-[28px]">
-                      CATATAN DARI DESA
-                    </h4>
-
-                    <div className="space-y-[28px]">
-                      {item.timeline.map((entry, idx) => (
-                        <div key={idx} className="space-y-1.5">
-                          <span className="text-[11px] font-bold text-[#767676] block uppercase tracking-wide">
-                            {entry.date}
-                          </span>
-                          <h5 className="text-sm font-bold text-[#0D2453]">
-                            {entry.title}
-                          </h5>
-                          <p className="text-xs text-[#4A5568] leading-relaxed">
-                            {entry.desc}
-                          </p>
-                          <Link
-                            href="/transparansi"
-                            className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline"
-                          >
-                            <span>{entry.villageLink}</span>
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          </Link>
-                        </div>
-                      ))}
                     </div>
-                  </div>
+                  ) : (
+                    /* Draggable Comparison Slider */
+                    <div className="mt-5">
+                      <div className="flex items-center justify-between text-xs font-bold text-[#0D2453] mb-1.5">
+                        <span>{item.before.title}</span>
+                        <span>{item.after.title}</span>
+                      </div>
+                      <div className="relative aspect-[16/9] rounded-2xl overflow-hidden select-none border border-[#EBEBEB] shadow-2xs">
+                        {/* Sesudah (Full Background Image) */}
+                        <img
+                          src={item.after.photo}
+                          alt="Sesudah Perbaikan"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+
+                        {/* Sebelum (Clipped Overlay) */}
+                        <div
+                          className="absolute inset-0 overflow-hidden"
+                          style={{ width: `${pos}%` }}
+                        >
+                          <img
+                            src={item.before.photo}
+                            alt="Sebelum Perbaikan"
+                            className="absolute inset-0 w-full h-full object-cover max-w-none"
+                            style={{ width: '100%', height: '100%' }}
+                          />
+                        </div>
+
+                        {/* Divider Line & Central Handle */}
+                        <div
+                          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-xl pointer-events-none"
+                          style={{ left: `${pos}%` }}
+                        >
+                          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white shadow-lg flex items-center justify-center text-[#0D2453] border border-slate-200">
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+
+                        {/* Overlay Badges */}
+                        <span className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold">
+                          {item.before.label}
+                        </span>
+                        <span className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold">
+                          {item.after.label}
+                        </span>
+
+                        {/* Interactive Range Input Slider */}
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={pos}
+                          onChange={(e) => handleSliderMove(item.id, e)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
+                          aria-label="Geser untuk membandingkan foto sebelum dan sesudah perbaikan"
+                        />
+                      </div>
+                      <span className="text-[11px] text-[#767676] block mt-1.5 font-medium text-center">
+                        Geser handle ke kiri atau ke kanan untuk membandingkan kondisi fisik
+                      </span>
+                    </div>
+                  )}
                 </div>
 
+                {/* Location & Timestamp Footer */}
+                <div className="flex items-center gap-2 text-xs text-[#767676] pt-4 border-t border-[#EBEBEB]">
+                  <MapPin className="w-4 h-4 shrink-0 text-slate-400" />
+                  <span>{item.location}</span>
+                </div>
+              </div>
+
+              {/* Right Card: CATATAN DARI DESA */}
+              <div className="lg:col-span-5 bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-7 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+                <div>
+                  <h4 className="text-[11px] font-bold text-[#767676] uppercase tracking-wider mb-[28px]">
+                    CATATAN DARI DESA
+                  </h4>
+
+                  <div className="space-y-[28px]">
+                    {item.timeline.map((entry, idx) => (
+                      <div key={idx} className="space-y-1.5 pb-6 border-b border-[#F0F0F0] last:border-b-0 last:pb-0">
+                        <span className="text-[11px] font-semibold text-[#767676] block uppercase tracking-wide">
+                          {entry.date}
+                        </span>
+                        <h5 className="text-sm font-bold text-[#0D2453]">
+                          {entry.title}
+                        </h5>
+                        <p className="text-xs text-[#4A5568] leading-relaxed">
+                          {entry.desc}
+                        </p>
+                        <Link
+                          href="/transparansi"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-0.5 hover:underline"
+                        >
+                          <span>{entry.villageLink}</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           );
