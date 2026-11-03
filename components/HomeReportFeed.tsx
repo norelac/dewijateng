@@ -50,7 +50,7 @@ const REPORT_DATA: ReportItem[] = [
     before: {
       title: 'Sebelum Perbaikan',
       label: 'Sebelum • 1 Ags 2026',
-      photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=1000&auto=format&fit=crop&q=80',
+      photo: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&auto=format&fit=crop&q=80',
       caption: 'Akses jalan setapak curug berlumpur dan pagar pengaman lapuk',
     },
     after: {
