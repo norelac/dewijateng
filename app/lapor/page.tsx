@@ -359,7 +359,7 @@ export default function LaporPage() {
   }, [searchQuery, selectedKabupaten, selectedCategory, selectedStatus]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-5 mt-4 mb-24">
+    <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-20 space-y-5 mt-6 mb-24">
       {/* 1. Header Bar: Minimal, Direct, Linear-style */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>

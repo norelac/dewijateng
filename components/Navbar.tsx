@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 const navItems = [
   { href: '/', label: 'Beranda', disabled: false },
   { href: '/transparansi', label: 'Transparansi Dana', disabled: false },
-  { href: '/lapor', label: 'Telusur Aduan', disabled: false },
+  { href: '/lapor', label: 'Lapor', disabled: false },
   { href: '/edukasi', label: 'Edukasi & Panduan', disabled: true },
 ];
 
@@ -14,8 +14,8 @@ export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <header className="w-full bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] px-5 sm:px-6 py-3.5">
-      <div className="flex items-center justify-between">
+    <header className="w-full bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] px-5 sm:px-6 h-[76px] flex items-center">
+      <div className="flex items-center justify-between w-full">
         {/* Brand Logo with Pemprov Jateng Image */}
         <Link href="/" className="flex items-center gap-3 group shrink-0">
           <img

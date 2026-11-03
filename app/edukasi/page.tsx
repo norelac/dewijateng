@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function EdukasiPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 text-center">
+    <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-20 py-20 text-center">
       <div className="max-w-md mx-auto p-8 rounded-3xl bg-white border border-[#EBEBEB] shadow-xs">
         <h1 className="text-xl font-bold text-[#0D2453]">Fitur Sedang Disiapkan</h1>
         <p className="text-xs sm:text-sm text-[#767676] mt-2">

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { Landmark, MapPin, CheckCheck, Clock, LucideIcon } from 'lucide-react';
 
 interface MetricItem {
   value: string;
@@ -11,12 +10,11 @@ interface MetricItem {
   suffix?: string;
   decimals?: number;
   label: string;
-  icon: LucideIcon;
 }
 
 export default function HomeKpiCounters() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const isInView = useInView(ref, { once: true, margin: '-40px' });
 
   const metrics: MetricItem[] = [
     {
@@ -25,13 +23,11 @@ export default function HomeKpiCounters() {
       prefix: 'Rp ',
       suffix: ' Miliar',
       label: 'Total Dana Desa',
-      icon: Landmark,
     },
     {
       value: '889',
       targetNumber: 889,
       label: 'Desa Wisata',
-      icon: MapPin,
     },
     {
       value: '94,2%',
@@ -39,7 +35,6 @@ export default function HomeKpiCounters() {
       suffix: '%',
       decimals: 1,
       label: 'Tingkat Penyelesaian Laporan',
-      icon: CheckCheck,
     },
     {
       value: '< 24 Jam',
@@ -47,39 +42,34 @@ export default function HomeKpiCounters() {
       targetNumber: 24,
       suffix: ' Jam',
       label: 'Rata-rata Respon oleh Dinas',
-      icon: Clock,
     },
   ];
 
   return (
-    <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-[32px]">
+    <div
+      ref={ref}
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full"
+    >
       {metrics.map((item, idx) => (
         <motion.div
           key={item.label}
           initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.4, delay: idx * 0.1 }}
-          className="bg-white rounded-2xl border border-[#EBEBEB] p-4 sm:p-5 shadow-xs flex items-center gap-[32px] hover:shadow-sm hover:border-slate-300 transition-all group"
+          transition={{ duration: 0.35, delay: idx * 0.08 }}
+          className="bg-white rounded-[24px] border border-[#E6ECF5] h-[138px] p-6 flex flex-col items-center justify-center text-center shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:border-slate-300 transition-all group"
         >
-          {/* ponytail: squircle icon box, swap to category-specific tints if requested */}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-            <item.icon className="w-5 h-5 text-[#0D2453]" />
+          <div className="text-2xl sm:text-[28px] font-bold text-[#0D2453] tracking-tight leading-tight">
+            <Counter
+              isInView={isInView}
+              target={item.targetNumber || 0}
+              prefix={item.prefix || ''}
+              suffix={item.suffix || ''}
+              decimals={item.decimals || 0}
+              fallback={item.value}
+            />
           </div>
-
-          <div className="text-left min-w-0 flex-1">
-            <div className="text-xl sm:text-2xl font-extrabold text-[#0D2453] tracking-tight font-sans leading-tight">
-              <Counter
-                isInView={isInView}
-                target={item.targetNumber || 0}
-                prefix={item.prefix || ''}
-                suffix={item.suffix || ''}
-                decimals={item.decimals || 0}
-                fallback={item.value}
-              />
-            </div>
-            <div className="text-xs text-[#767676] mt-0.5 font-medium group-hover:text-slate-900 transition-colors leading-snug">
-              {item.label}
-            </div>
+          <div className="text-sm text-[#0D2453] mt-2 font-normal leading-snug">
+            {item.label}
           </div>
         </motion.div>
       ))}
@@ -102,43 +92,46 @@ function Counter({
   decimals?: number;
   fallback: string;
 }) {
-  const [count, setCount] = useState(0);
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     if (!isInView || target === 0) return;
 
     let start = 0;
-    const duration = 1200; // ms
-    const stepTime = 20; // 50 fps
-    const totalSteps = duration / stepTime;
-    const increment = target / totalSteps;
+    const duration = 1200;
+    const frameRate = 1000 / 60;
+    const totalFrames = Math.round(duration / frameRate);
+    let frame = 0;
 
     const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) {
-        setCount(target);
+      frame++;
+      const progress = frame / totalFrames;
+      // Ease out cubic
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const val = target * easeProgress;
+
+      if (frame >= totalFrames) {
+        setCurrent(target);
         clearInterval(timer);
       } else {
-        setCount(start);
+        setCurrent(val);
       }
-    }, stepTime);
+    }, frameRate);
 
     return () => clearInterval(timer);
   }, [isInView, target]);
 
-  if (!isInView) {
-    return <span>{prefix}0{suffix}</span>;
-  }
+  if (!isInView) return <span>{fallback}</span>;
 
-  const formattedNumber =
+  const formatted =
     decimals > 0
-      ? count.toFixed(decimals).replace('.', ',')
-      : Math.floor(count).toLocaleString('id-ID');
+      ? current.toFixed(decimals).replace('.', ',')
+      : Math.floor(current).toLocaleString('id-ID');
 
   return (
     <span>
       {prefix}
-      {formattedNumber}
+      {formatted}
       {suffix}
     </span>
   );

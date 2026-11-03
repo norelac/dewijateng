@@ -56,7 +56,7 @@ export default function TransparansiPage() {
   } | null>(null);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6 mt-4">
+    <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-20 space-y-6 mt-6 mb-24">
       {/* 1. Header Title & Subtitle */}
       <div>
         <div className="flex items-center gap-2.5 text-[#0D2453]">
