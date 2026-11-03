@@ -12,13 +12,12 @@ import {
   Maximize2,
   X,
   MapPin,
-  ShieldCheck,
   FileText,
-  AlertTriangle,
   Receipt,
-  Eye,
-  SlidersHorizontal,
-  ExternalLink
+  Camera,
+  ChevronRight,
+  Filter,
+  Check
 } from 'lucide-react';
 
 interface ReportItem {
@@ -58,20 +57,20 @@ const REPORT_ITEMS: ReportItem[] = [
     id: 'rep-0891',
     ticketCode: 'DS-JTG-2026-0891',
     category: 'Akses & Jalan',
-    title: 'Akses ke curug buruk dan pagar pengaman lapuk',
-    desc: 'Jalur setapak tebing curug licin berlumpur saat hujan dan pagar pembatas bambu telah patah di beberapa titik rawan.',
+    title: 'Akses jalan setapak curug berlumpur dan pagar lapuk',
+    desc: 'Jalur setapak tebing curug licin saat hujan dan pagar pembatas bambu telah patah di titik rawan.',
     kabupaten: 'Kabupaten Magelang',
     desa: 'Desa Candirejo',
-    date: '1 Ags 2026 • 09.30 WIB',
+    date: '1 Ags 2026',
     reporter: 'Pelapor Anonim',
     status: 'Selesai',
-    slaLabel: 'Tuntas dalam 5 hari',
+    slaLabel: 'Tuntas 5 hari',
     beforePhoto: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
     afterPhoto: 'https://images.unsplash.com/photo-1470246973918-29a93221c455?w=800&auto=format&fit=crop&q=80',
     response: {
       official: 'Pemerintah Desa Candirejo & Pokdarwis',
-      date: '12 Okt 2026 • 14.15 WIB',
-      content: 'Pekerjaan rabat beton jalan setapak 240 meter tuntas dikerjakan bersama warga. Pagar pengaman besi galvanis telah dipasang permanen.',
+      date: '12 Okt 2026',
+      content: 'Rabat beton jalan setapak 240 meter telah rampung dikerjakan. Pagar besi galvanis dipasang permanen.',
     },
     budgetInfo: {
       amount: 'Rp 100.000.000',
@@ -80,22 +79,22 @@ const REPORT_ITEMS: ReportItem[] = [
     },
     timeline: [
       {
-        title: 'Aduan Diterima & Verifikasi GPS',
+        title: 'Aduan Masuk & Verifikasi Lapangan',
         date: '1 Ags 2026 • 09.30 WIB',
         done: true,
-        note: 'Titik koordinat dan keabsahan foto disetujui tim verifikator.',
+        note: 'Titik koordinat dan keabsahan foto disetujui tim pengawas.',
       },
       {
-        title: 'Disposisi & Penerbitan SPK',
+        title: 'Penerbitan Surat Perintah Kerja',
         date: '2 Ags 2026 • 11.00 WIB',
         done: true,
-        note: 'Surat perintah kerja diterbitkan untuk Pokdarwis Candirejo.',
+        note: 'Pekerjaan fisik dirapatkan bersama warga dan Pokdarwis.',
       },
       {
-        title: 'Realisasi Fisik & Upload Bukti Kuitansi',
+        title: 'Realisasi Fisik & Verifikasi SPJ',
         date: '12 Okt 2026 • 14.15 WIB',
         done: true,
-        note: 'Pekerjaan selesai 100%. Bukti nota kasir dan foto hasil kerja tervalidasi.',
+        note: 'Rabat beton selesai 100%. Bukti nota dan dokumentasi terarsip di buku kas.',
       },
     ],
   },
@@ -104,19 +103,19 @@ const REPORT_ITEMS: ReportItem[] = [
     ticketCode: 'DS-JTG-2026-0744',
     category: 'Fasilitas & Sanitasi',
     title: 'Wastafel mampet dan kran air toilet tidak mengalir',
-    desc: 'Dua bilik toilet umum di area parkir utama wisata mampet, kran cuci tangan patah, dan penampungan air kosong.',
+    desc: 'Dua bilik toilet umum di area parkir utama mampet dan kran cuci tangan patah.',
     kabupaten: 'Kabupaten Magelang',
     desa: 'Desa Candirejo',
-    date: '6 Okt 2026 • 11.20 WIB',
+    date: '6 Okt 2026',
     reporter: 'Pelapor Anonim',
     status: 'Selesai',
-    slaLabel: 'Tuntas dalam 3 hari',
+    slaLabel: 'Tuntas 3 hari',
     beforePhoto: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80',
     afterPhoto: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=800&auto=format&fit=crop&q=80',
     response: {
       official: 'Unit Pengelola Kebersihan Desa Candirejo',
-      date: '9 Okt 2026 • 16.00 WIB',
-      content: 'Instalasi pipa suplai diganti baru, kran air otomatis dipasang, dan jadwal kuras tandon dijadwalkan berkala tiap dua hari.',
+      date: '9 Okt 2026',
+      content: 'Instalasi pipa suplai diganti baru, kran dipasang ulang, dan tandon air dikuras rutin.',
     },
     budgetInfo: {
       amount: 'Rp 15.000.000',
@@ -125,22 +124,22 @@ const REPORT_ITEMS: ReportItem[] = [
     },
     timeline: [
       {
-        title: 'Laporan Masuk',
+        title: 'Laporan Divalidasi Petugas',
         date: '6 Okt 2026 • 11.20 WIB',
         done: true,
-        note: 'Aduan masuk kategori fasilitas sanitasi.',
+        note: 'Pemeriksaan pipa tersumbat dan kran patah.',
       },
       {
-        title: 'Pemeriksaan Pipa & Pengadaan Material',
+        title: 'Penggantian Pipa & Keran',
         date: '7 Okt 2026 • 14.00 WIB',
         done: true,
-        note: 'Pipa tersumbat lumut tebal, diputuskan penggantian pipa paralon.',
+        note: 'Pembelian pipa paralon baru menggunakan dana pemeliharaan.',
       },
       {
-        title: 'Perbaikan Selesai & Sanitasi Bersih',
+        title: 'Pekerjaan Selesai',
         date: '9 Okt 2026 • 16.00 WIB',
         done: true,
-        note: 'Air mengalir normal, sanitasi berfungsi optimal kembali.',
+        note: 'Air mengalir normal dan fasilitas dibuka kembali.',
       },
     ],
   },
@@ -148,39 +147,39 @@ const REPORT_ITEMS: ReportItem[] = [
     id: 'rep-0922',
     ticketCode: 'DS-JTG-2026-0922',
     category: 'Pungutan Liar',
-    title: 'Tarif parkir liar tidak sesuai plang karcis resmi',
-    desc: 'Oknum petugas di pintu masuk timur menarik retribusi parkir mobil Rp 20.000 tanpa karcis bernomor seri Pemkab.',
+    title: 'Tarif parkir liar tanpa karcis resmi di pintu timur',
+    desc: 'Tarif parkir mobil ditarik Rp 20.000 tanpa karcis bernomor seri pemerintah daerah.',
     kabupaten: 'Kabupaten Banjarnegara',
     desa: 'Desa Dieng Kulon',
-    date: '18 Okt 2026 • 13.45 WIB',
+    date: '18 Okt 2026',
     reporter: 'Wisatawan Domestik',
     status: 'Selesai',
-    slaLabel: 'Tuntas dalam 24 jam',
+    slaLabel: 'Tuntas 24 jam',
     beforePhoto: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80',
     afterPhoto: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80',
     response: {
       official: 'Satgas Pengawasan Pariwisata Dieng & Bhabinkamtibmas',
-      date: '19 Okt 2026 • 10.00 WIB',
-      content: 'Penertiban langsung di lokasi. Petugas liar dipindahtugaskan dan papan pengumuman tarif resmi Perda telah ditegakkan di 4 titik pintu masuk.',
+      date: '19 Okt 2026',
+      content: 'Penertiban langsung di lokasi. Plang tarif resmi Perda dipasang di 4 pintu masuk kawasan wisata.',
     },
     timeline: [
       {
-        title: 'Laporan Prioritas Pungli Diterima',
+        title: 'Eskalasi Prioritas 24 Jam',
         date: '18 Okt 2026 • 13.45 WIB',
         done: true,
-        note: 'Eskalasi darurat SLA 24 jam ke BUMDes Dieng Kulon.',
+        note: 'Laporan masuk satgas pungli kabupaten.',
       },
       {
-        title: 'Sidang Lapangan Bersama Pokdarwis',
+        title: 'Penertiban Lapangan',
         date: '18 Okt 2026 • 17.00 WIB',
         done: true,
-        note: 'Klarifikasi dan penertiban oknum penarik parkir liar.',
+        note: 'Klarifikasi oknum pengelola dan penegakan tarif Perda.',
       },
       {
-        title: 'Pemasangan Plang Tarif Resmi & Pos Pantau',
+        title: 'Pemasangan Pos Resmi & Karcis Barcode',
         date: '19 Okt 2026 • 10.00 WIB',
         done: true,
-        note: 'Sistem karcis barcode terpusat diaktifkan.',
+        note: 'Karcis resmi terpadu BUMDes mulai beroperasi penuh.',
       },
     ],
   },
@@ -188,38 +187,38 @@ const REPORT_ITEMS: ReportItem[] = [
     id: 'rep-0955',
     ticketCode: 'DS-JTG-2026-0955',
     category: 'Bahaya Keselamatan (K3)',
-    title: 'Bantalan kayu titian jembatan retak dan berderit',
-    desc: 'Bantalan penyangga papan titian wisata hutan pinus tampak retak melintang dan goyang saat dilewati kelompok wisatawan.',
+    title: 'Bantalan kayu titian jembatan retak dan goyang',
+    desc: 'Bantalan penyangga papan titian hutan pinus retak melintang dan bergoyang saat dilewati pengunjung.',
     kabupaten: 'Kabupaten Banyumas',
     desa: 'Desa Limpakuwus',
-    date: '21 Okt 2026 • 15.10 WIB',
+    date: '21 Okt 2026',
     reporter: 'Pelapor Anonim',
     status: 'Dalam Penanganan',
-    slaLabel: 'Sisa SLA: 2 hari kerja',
+    slaLabel: 'Sisa SLA: 2 hari',
     beforePhoto: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80',
     response: {
       official: 'Dinas Pemuda Olahraga & Pariwisata Kab. Banyumas',
-      date: '22 Okt 2026 • 09.00 WIB',
-      content: 'Wahana titian kayu telah ditutup sementara dengan garis pembatas bahaya. Tim teknis konstruksi sedang menguji beban dan menghitung RAB penggantian balok baja.',
+      date: '22 Okt 2026',
+      content: 'Wahana titian kayu ditutup sementara demi keselamatan. Tim teknis sedang menguji beban dan merakit rangka pengganti.',
     },
     timeline: [
       {
-        title: 'Laporan Diterima & Validasi Titik K3',
+        title: 'Aduan Diterima',
         date: '21 Okt 2026 • 15.10 WIB',
         done: true,
-        note: 'Kategori bahaya keselamatan berisiko tinggi.',
+        note: 'Kategori bahaya keselamatan diprioritaskan.',
       },
       {
-        title: 'Penutupan Sementara Akses Wahana',
+        title: 'Penutupan Akses Wahana Sementara',
         date: '22 Okt 2026 • 09.00 WIB',
         done: true,
-        note: 'Pemasangan police line dan pengumuman penutupan demi keselamatan pengunjung.',
+        note: 'Pemasangan garis pengaman di tangga titian jembatan.',
       },
       {
-        title: 'Penggantian Struktur Penopang',
-        date: '23 Okt 2026 (Sedang Berjalan)',
+        title: 'Pergantian Balok Rangka',
+        date: '23 Okt 2026 (Berlangsung)',
         done: false,
-        note: 'Proses pemotongan dan perakitan rangka penopang baru.',
+        note: 'Proses pengelasan dan penggantian bantalan kayu.',
       },
     ],
   },
@@ -227,32 +226,32 @@ const REPORT_ITEMS: ReportItem[] = [
     id: 'rep-0971',
     ticketCode: 'DS-JTG-2026-0971',
     category: 'Akses & Jalan',
-    title: 'Material longsor menutup separuh lajur masuk air terjun',
-    desc: 'Tebing setinggi 3 meter longsor akibat hujan deras semalam, menutup sebagian jalan paving akses kendaraan shuttle wisata.',
+    title: 'Material longsor menutup separuh lajur jalan shuttle',
+    desc: 'Tebing setinggi 3 meter longsor menutup sebagian jalan paving menuju pos air terjun.',
     kabupaten: 'Kabupaten Karanganyar',
     desa: 'Desa Berjo',
-    date: '23 Okt 2026 • 08.00 WIB',
+    date: '23 Okt 2026',
     reporter: 'Pengelola Homestay Warga',
     status: 'Dalam Penanganan',
-    slaLabel: 'Sisa SLA: 1 hari kerja',
+    slaLabel: 'Sisa SLA: 1 hari',
     beforePhoto: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
     response: {
       official: 'Relawan BPBD & Pengelola Wisata Air Terjun Jumog',
-      date: '23 Okt 2026 • 10.30 WIB',
-      content: 'Pembersihan tanah longsor sedang berlangsung menggunakan alat berat mini. Direncanakan pembuatan bronjong kawat untuk menahan tebing.',
+      date: '23 Okt 2026',
+      content: 'Pembersihan tanah longsor sedang berlangsung dengan alat berat mini dan pemasangan bronjong kawat.',
     },
     timeline: [
       {
-        title: 'Laporan Darurat Masuk',
+        title: 'Laporan Masuk',
         date: '23 Okt 2026 • 08.00 WIB',
         done: true,
-        note: 'Akses terhambat 50%, kendaraan roda empat dialihkan.',
+        note: 'Akses kendaraan roda empat dialihkan ke jalur lingkar.',
       },
       {
         title: 'Pengerukan Lumpur & Batu',
-        date: '23 Okt 2026 • 10.30 WIB (Sedang Berjalan)',
+        date: '23 Okt 2026 • 10.30 WIB (Berlangsung)',
         done: false,
-        note: 'Proses evakuasi material dan pemasangan terpal pelindung tebing.',
+        note: 'Evakuasi batu dan pembersihan jalan paving.',
       },
     ],
   },
@@ -260,20 +259,20 @@ const REPORT_ITEMS: ReportItem[] = [
     id: 'rep-0680',
     ticketCode: 'DS-JTG-2026-0680',
     category: 'Fasilitas & Sanitasi',
-    title: 'Kekurangan tempat sampah di rute tubing genting',
-    desc: 'Pengunjung meninggalkan botol dan bungkus makanan di bebatuan pinggir sungai karena ketiadaan tempat sampah terpilah di titik finish.',
+    title: 'Kekurangan tempat sampah di titik finish tubing',
+    desc: 'Bungkus makanan menumpuk di bebatuan sungai karena belum ada tempat sampah pilah di dermaga finish.',
     kabupaten: 'Kabupaten Kendal',
     desa: 'Desa Getas (Tubing Genting)',
-    date: '11 Okt 2026 • 14.00 WIB',
+    date: '11 Okt 2026',
     reporter: 'Komunitas Pecinta Alam',
     status: 'Selesai',
-    slaLabel: 'Tuntas dalam 4 hari',
+    slaLabel: 'Tuntas 4 hari',
     beforePhoto: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80',
     afterPhoto: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80',
     response: {
       official: 'Pengurus Pokdarwis Tubing Genting Getas',
-      date: '15 Okt 2026 • 11.00 WIB',
-      content: 'Telah dipasang 8 set tempat sampah pilah (organik, anorganik, residu) di sepanjang dermaga start dan rest area finish.',
+      date: '15 Okt 2026',
+      content: '8 set tempat sampah terpilah (organik, anorganik, residu) dipasang di dermaga start dan rest area finish.',
     },
     budgetInfo: {
       amount: 'Rp 8.500.000',
@@ -282,22 +281,22 @@ const REPORT_ITEMS: ReportItem[] = [
     },
     timeline: [
       {
-        title: 'Laporan Diterima',
+        title: 'Verifikasi Laporan',
         date: '11 Okt 2026 • 14.00 WIB',
         done: true,
-        note: 'Verifikasi volume sampah dan titik kumpul.',
+        note: 'Pemeriksaan titik penumpukan sampah di tepian sungai.',
       },
       {
-        title: 'Pengadaan Tong Sampah Pilah',
+        title: 'Pengadaan Tempat Sampah Pilah',
         date: '13 Okt 2026 • 10.00 WIB',
         done: true,
-        note: 'Pemesanan 8 set tong sampah drum baja ramah lingkungan.',
+        note: 'Pembelian 8 set drum sampah tertutup.',
       },
       {
-        title: 'Pemasangan & Pembersihan Total',
+        title: 'Pemasangan & Edukasi Wisatawan',
         date: '15 Okt 2026 • 11.00 WIB',
         done: true,
-        note: 'Area sungai bersih kembali dan edukasi buang sampah dipasang.',
+        note: 'Pemasangan plang ajakan menjaga kebersihan sungai.',
       },
     ],
   },
@@ -310,16 +309,9 @@ const KABUPATEN_OPTIONS = [
   'Kabupaten Kendal',
   'Kabupaten Karanganyar',
   'Kabupaten Banjarnegara',
-  'Kabupaten Wonosobo',
 ];
 
-const STATUS_FILTERS = [
-  'Semua Status',
-  'Dalam Penanganan',
-  'Selesai',
-];
-
-const CATEGORY_FILTERS = [
+const CATEGORY_OPTIONS = [
   'Semua Kategori',
   'Akses & Jalan',
   'Fasilitas & Sanitasi',
@@ -330,578 +322,487 @@ const CATEGORY_FILTERS = [
 export default function LaporPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedKabupaten, setSelectedKabupaten] = useState('Semua Kabupaten');
-  const [selectedStatus, setSelectedStatus] = useState('Semua Status');
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
+  const [selectedStatus, setSelectedStatus] = useState<'Semua' | 'Dalam Penanganan' | 'Selesai'>('Semua');
 
-  // Modal Detail State
-  const [activeDetailItem, setActiveDetailItem] = useState<ReportItem | null>(null);
+  // Slide-over Drawer State
+  const [selectedItem, setSelectedItem] = useState<ReportItem | null>(null);
 
   // Lightbox State
-  const [activeLightbox, setActiveLightbox] = useState<{
-    url: string;
-    title: string;
-    tag: string;
-  } | null>(null);
+  const [lightboxImg, setLightboxImg] = useState<{ url: string; label: string } | null>(null);
 
-  // Filtered Reports
   const filteredReports = useMemo(() => {
     return REPORT_ITEMS.filter((item) => {
-      // 1. Text Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchTitle = item.title.toLowerCase().includes(q);
         const matchCode = item.ticketCode.toLowerCase().includes(q);
         const matchDesa = item.desa.toLowerCase().includes(q);
         const matchKab = item.kabupaten.toLowerCase().includes(q);
-        const matchDesc = item.desc.toLowerCase().includes(q);
-        if (!matchTitle && !matchCode && !matchDesa && !matchKab && !matchDesc) {
-          return false;
-        }
+        if (!matchTitle && !matchCode && !matchDesa && !matchKab) return false;
       }
 
-      // 2. Kabupaten Filter
       if (selectedKabupaten !== 'Semua Kabupaten' && item.kabupaten !== selectedKabupaten) {
         return false;
       }
 
-      // 3. Status Filter
-      if (selectedStatus !== 'Semua Status' && item.status !== selectedStatus) {
+      if (selectedCategory !== 'Semua Kategori' && item.category !== selectedCategory) {
         return false;
       }
 
-      // 4. Category Filter
-      if (selectedCategory !== 'Semua Kategori' && item.category !== selectedCategory) {
+      if (selectedStatus !== 'Semua' && item.status !== selectedStatus) {
         return false;
       }
 
       return true;
     });
-  }, [searchQuery, selectedKabupaten, selectedStatus, selectedCategory]);
+  }, [searchQuery, selectedKabupaten, selectedCategory, selectedStatus]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-[32px] mt-4 mb-20">
-      {/* 1. Header & Call to Action Bar */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-5 mt-4 mb-24">
+      {/* 1. Header Bar: Minimal, Direct, Linear-style */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div>
-          <div className="flex items-center gap-2.5 text-[#0D2453]">
-            <div className="w-8 h-8 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-[#0D2453]" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D2453]">
-              Telusur & Jelajah Aduan
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0D2453]">
+              Telusur Aduan
             </h1>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#EAEFF7] text-[#0D2453]">
+              889 aduan
+            </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#767676] mt-1.5 max-w-2xl">
-            Pantau transparansi penanganan pengaduan fisik fasilitas, penertiban pungutan, dan bukti realisasi SPJ desa wisata se-Jawa Tengah.
+          <p className="text-xs text-[#767676] mt-0.5">
+            Daftar laporan masyarakat dan realisasi perbaikan fasilitas desa wisata Jawa Tengah.
           </p>
         </div>
 
         <Link
           href="/#buat-laporan"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs sm:text-sm font-bold shadow-sm transition-all shrink-0 active:scale-95 group"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold transition-all shadow-xs shrink-0 self-start sm:self-auto active:scale-95"
         >
-          <span>+ Buat Laporan Baru</span>
-          <ArrowUpRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <span>+ Buat Laporan</span>
+          <ArrowUpRight className="w-3.5 h-3.5 text-white/80" />
         </Link>
       </div>
 
-      {/* 2. Top Summary Stat Counters */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-[#EBEBEB] p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0 font-extrabold text-lg">
-            889
-          </div>
-          <div>
-            <div className="text-xs font-bold text-[#767676] uppercase tracking-wide">
-              Total Aduan Masuk
-            </div>
-            <div className="text-sm font-bold text-[#0D2453] mt-0.5">
-              Warga & Wisatawan Jateng
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#EBEBEB] p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-extrabold text-lg">
-            51
-          </div>
-          <div>
-            <div className="text-xs font-bold text-[#767676] uppercase tracking-wide">
-              Dalam Penanganan
-            </div>
-            <div className="text-sm font-bold text-[#0D2453] mt-0.5">
-              Timer SLA Aktif & Verifikasi
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#EBEBEB] p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#E6FFFA] text-[#319795] flex items-center justify-center shrink-0 font-extrabold text-lg">
-            838
-          </div>
-          <div>
-            <div className="text-xs font-bold text-[#767676] uppercase tracking-wide">
-              Selesai & Ada Bukti SPJ
-            </div>
-            <div className="text-sm font-bold text-[#0D2453] mt-0.5">
-              94,2% Tingkat Keterbukaan
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Search Bar & Filter Controls Card */}
-      <div className="bg-white rounded-3xl border border-[#EBEBEB] p-5 sm:p-6 shadow-xs space-y-4">
-        {/* Row 1: Search Input */}
-        <div className="relative">
+      {/* 2. Unified Filter Row (Single Flat Toolbar) */}
+      <div className="bg-white rounded-2xl border border-[#EBEBEB] p-2.5 shadow-2xs flex flex-col md:flex-row items-center gap-2">
+        {/* Search Input */}
+        <div className="relative flex-1 w-full">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari kode tiket (contoh: DS-JTG-2026-0891), nama desa wisata, atau topik masalah..."
-            className="w-full bg-[#F5F5F5] border-0 rounded-2xl pl-12 pr-4 py-3.5 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none"
+            placeholder="Cari kode tiket, nama desa, atau topik masalah..."
+            className="w-full bg-[#F5F5F5] border-0 rounded-xl pl-9 pr-3 py-2 text-xs text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none"
           />
-          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Row 2: Select Dropdowns & Category Pills */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-          {/* Kabupaten Dropdown */}
-          <div className="md:col-span-4 relative">
+        {/* Filter Dropdowns */}
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          {/* Kabupaten */}
+          <div className="relative flex-1 md:flex-initial">
             <select
               value={selectedKabupaten}
               onChange={(e) => setSelectedKabupaten(e.target.value)}
-              className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-2.5 text-xs text-[#0D2453] font-bold focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer"
+              className="w-full bg-[#F5F5F5] border-0 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-[#0D2453] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
             >
-              {KABUPATEN_OPTIONS.map((kab) => (
-                <option key={kab} value={kab}>{kab}</option>
+              {KABUPATEN_OPTIONS.map((k) => (
+                <option key={k} value={k}>{k}</option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Kategori Dropdown */}
-          <div className="md:col-span-4 relative">
+          {/* Kategori */}
+          <div className="relative flex-1 md:flex-initial">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-2.5 text-xs text-[#0D2453] font-bold focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer"
+              className="w-full bg-[#F5F5F5] border-0 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-[#0D2453] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
             >
-              {CATEGORY_FILTERS.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-
-          {/* Status Tabs */}
-          <div className="md:col-span-4 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {STATUS_FILTERS.map((st) => {
-              const isActive = selectedStatus === st;
-              return (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setSelectedStatus(st)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                    isActive
-                      ? 'bg-[#0D2453] text-white shadow-2xs'
-                      : 'bg-[#F5F5F5] text-[#767676] hover:text-[#0D2453]'
-                  }`}
-                >
-                  {st}
-                </button>
-              );
-            })}
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
-      </div>
 
-      {/* 4. Results Header & Count */}
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-bold text-[#767676]">
-          Menampilkan <span className="text-[#0D2453]">{filteredReports.length}</span> laporan publik
-        </div>
-        {(searchQuery || selectedKabupaten !== 'Semua Kabupaten' || selectedStatus !== 'Semua Status' || selectedCategory !== 'Semua Kategori') && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedKabupaten('Semua Kabupaten');
-              setSelectedStatus('Semua Status');
-              setSelectedCategory('Semua Kategori');
-            }}
-            className="text-xs font-bold text-[#0D2453] hover:underline"
-          >
-            Reset Filter
-          </button>
-        )}
-      </div>
-
-      {/* 5. Report Cards Grid (2 Columns, Lapor Semar Style) */}
-      {filteredReports.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-[#EBEBEB] p-12 text-center shadow-xs">
-          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-[#0D2453]">Tidak ada aduan yang sesuai</h3>
-          <p className="text-xs text-[#767676] mt-1 max-w-sm mx-auto">
-            Coba ubah kata kunci pencarian atau sesuaikan pilihan filter kabupaten dan kategori.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {filteredReports.map((item) => {
-            const isCompleted = item.status === 'Selesai';
-
+        {/* Status Segmented Tabs */}
+        <div className="flex items-center gap-1 bg-[#F5F5F5] p-1 rounded-xl w-full md:w-auto shrink-0">
+          {(['Semua', 'Dalam Penanganan', 'Selesai'] as const).map((st) => {
+            const isActive = selectedStatus === st;
             return (
-              <div
-                key={item.id}
-                className="bg-white rounded-3xl border border-[#EBEBEB] p-6 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-5"
+              <button
+                key={st}
+                type="button"
+                onClick={() => setSelectedStatus(st)}
+                className={`flex-1 md:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  isActive
+                    ? 'bg-white text-[#0D2453] font-bold shadow-2xs'
+                    : 'text-[#767676] hover:text-[#0D2453]'
+                }`}
               >
-                <div>
-                  {/* Card Header: Ticket Code, Category, Status Badge */}
-                  <div className="flex items-start justify-between gap-3 border-b border-[#F0F0F0] pb-3.5">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-[#0D2453] tracking-wide">
-                          {item.ticketCode}
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#0D2453] border border-[#EBEBEB]">
-                          {item.category}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[11px] text-[#767676] mt-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>{item.desa}, {item.kabupaten}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                          isCompleted
-                            ? 'bg-[#E6FFFA] text-[#319795] border-[#B2F5EA]'
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                      <span className="text-[10px] text-[#767676] font-medium">
-                        {item.slaLabel}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Complaint Content */}
-                  <div className="mt-4">
-                    <h3 className="text-base font-bold text-[#0D2453] leading-snug">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-[#4A5568] mt-1.5 leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-
-                  {/* Photos: Before & After (If Available) */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    {/* Before Photo */}
-                    {item.beforePhoto && (
-                      <div>
-                        <div className="text-[11px] font-bold text-[#767676] mb-1">
-                          Kondisi Awal
-                        </div>
-                        <div
-                          onClick={() =>
-                            setActiveLightbox({
-                              url: item.beforePhoto!,
-                              title: `${item.ticketCode} - Kondisi Awal`,
-                              tag: 'Sebelum Perbaikan',
-                            })
-                          }
-                          className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
-                        >
-                          <img
-                            src={item.beforePhoto}
-                            alt="Kondisi Awal"
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
-                            <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* After Photo or Processing Placeholder */}
-                    {item.afterPhoto ? (
-                      <div>
-                        <div className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Hasil Perbaikan (Proof-of-Fix)</span>
-                        </div>
-                        <div
-                          onClick={() =>
-                            setActiveLightbox({
-                              url: item.afterPhoto!,
-                              title: `${item.ticketCode} - Hasil Perbaikan`,
-                              tag: 'Sesudah Selesai',
-                            })
-                          }
-                          className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
-                        >
-                          <img
-                            src={item.afterPhoto}
-                            alt="Hasil Perbaikan"
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
-                            <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="text-[11px] font-bold text-amber-700 mb-1 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-amber-600" />
-                          <span>Tahap Eksekusi</span>
-                        </div>
-                        <div className="aspect-[4/3] rounded-2xl bg-[#F7F9FC] border border-dashed border-amber-300 flex flex-col items-center justify-center p-4 text-center">
-                          <Clock className="w-6 h-6 text-amber-600 mb-1.5 animate-pulse" />
-                          <span className="text-[11px] font-bold text-[#0D2453]">
-                            Petugas di Lapangan
-                          </span>
-                          <span className="text-[10px] text-[#767676] mt-0.5">
-                            Wajib upload foto fisik untuk tutup tiket
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Official Response Box (Tindak Lanjut Desa) */}
-                  <div className="mt-4 p-4 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] border-l-4 border-l-[#0D2453] space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-[#0D2453]">
-                        {item.response.official}
-                      </span>
-                      <span className="text-[#767676]">{item.response.date}</span>
-                    </div>
-                    <p className="text-xs text-[#4A5568] leading-relaxed">
-                      {item.response.content}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Card Footer: Budget / SPJ Link & Detail Trigger */}
-                <div className="pt-3 border-t border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  {item.budgetInfo ? (
-                    <div className="flex items-center gap-2">
-                      <Receipt className="w-4 h-4 text-[#0D2453] shrink-0" />
-                      <div className="text-[11px]">
-                        <span className="text-[#767676]">Realisasi: </span>
-                        <span className="font-bold text-[#0D2453]">{item.budgetInfo.amount}</span>
-                        <Link
-                          href={item.budgetInfo.transparencyUrl}
-                          className="inline-flex items-center gap-0.5 text-[#0D2453] font-bold ml-2 hover:underline"
-                        >
-                          <span>Cek SPJ ↗</span>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-[#767676]">
-                      {item.reporter} • {item.date}
-                    </span>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveDetailItem(item)}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#F5F5F5] hover:bg-slate-200 text-xs font-bold text-[#0D2453] transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Linimasa Tiket</span>
-                  </button>
-                </div>
-              </div>
+                {st}
+              </button>
             );
           })}
         </div>
-      )}
+      </div>
 
-      {/* 6. Bottom Banner: Report Issue CTA */}
-      <section className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-[#0D2453]">
-            Menemukan kejanggalan atau fasilitas rusak di desa wisata?
-          </h2>
-          <p className="text-xs text-[#767676] mt-1 max-w-2xl">
-            Sampaikan pengaduan melalui formulir instan di Beranda. Laporan Anda tercatat langsung di dashboard pengawasan Pemprov Jateng dengan garansi SLA tuntas.
-          </p>
+      {/* 3. Compact List Table (Linear / GitHub Issues Style) */}
+      <div className="bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden shadow-xs">
+        {/* Table Head */}
+        <div className="hidden md:grid grid-cols-12 gap-3 px-5 py-2.5 bg-[#F9FAFC] border-b border-[#EBEBEB] text-[11px] font-semibold text-[#767676]">
+          <div className="col-span-2">Tiket & Status</div>
+          <div className="col-span-5">Keluhan & Lokasi</div>
+          <div className="col-span-2">Kategori</div>
+          <div className="col-span-2">Realisasi Kas</div>
+          <div className="col-span-1 text-right">Tanggal</div>
         </div>
-        <Link
-          href="/#buat-laporan"
-          className="inline-flex items-center justify-center gap-1.5 px-6 py-3 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
-        >
-          <span>Buka Formulir Beranda</span>
-          <ArrowUpRight className="w-4 h-4" />
-        </Link>
-      </section>
 
-      {/* 7. Modal: Timeline Detail */}
+        {/* Table Rows */}
+        {filteredReports.length === 0 ? (
+          <div className="py-16 text-center text-xs text-[#767676]">
+            Tidak ada laporan yang cocok dengan filter saat ini.
+          </div>
+        ) : (
+          <div className="divide-y divide-[#F0F0F0]">
+            {filteredReports.map((item) => {
+              const isDone = item.status === 'Selesai';
+
+              return (
+                <motion.div
+                  key={item.id}
+                  layout
+                  onClick={() => setSelectedItem(item)}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 px-4 sm:px-5 py-3.5 items-center hover:bg-[#F7F9FC] transition-colors cursor-pointer group select-none"
+                >
+                  {/* Col 1: Status Dot & Ticket */}
+                  <div className="md:col-span-2 flex items-center justify-between md:justify-start gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          isDone ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                        }`}
+                      />
+                      <span className="text-xs font-bold text-[#0D2453] tracking-wide">
+                        {item.ticketCode}
+                      </span>
+                    </div>
+
+                    {/* Mobile-only status tag */}
+                    <span
+                      className={`md:hidden text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                        isDone
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  {/* Col 2: Title & Village */}
+                  <div className="md:col-span-5 min-w-0 pr-2">
+                    <div className="text-xs font-semibold text-[#0D2453] truncate group-hover:text-blue-900 transition-colors">
+                      {item.title}
+                    </div>
+                    <div className="text-[11px] text-[#767676] truncate mt-0.5">
+                      {item.desa}, {item.kabupaten}
+                    </div>
+                  </div>
+
+                  {/* Col 3: Category */}
+                  <div className="md:col-span-2 hidden md:block">
+                    <span className="inline-block text-[11px] font-medium text-[#4A5568] bg-[#F5F5F5] px-2 py-0.5 rounded-md truncate max-w-full">
+                      {item.category}
+                    </span>
+                  </div>
+
+                  {/* Col 4: Budget / SPJ */}
+                  <div className="md:col-span-2 hidden md:flex items-center gap-1.5 text-xs text-[#0D2453]">
+                    {item.budgetInfo ? (
+                      <span className="font-semibold">{item.budgetInfo.amount}</span>
+                    ) : (
+                      <span className="text-[#A0AEC0]">-</span>
+                    )}
+                  </div>
+
+                  {/* Col 5: Date & Arrow */}
+                  <div className="md:col-span-1 flex items-center justify-between md:justify-end text-[11px] text-[#767676]">
+                    <span className="truncate">{item.date}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#0D2453] transition-colors ml-1 hidden md:block" />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Slide-over Detail Drawer (Panel Kanan) */}
       <AnimatePresence>
-        {activeDetailItem && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs"
-            onClick={() => setActiveDetailItem(null)}
-          >
+        {selectedItem && (
+          <div className="fixed inset-0 z-50 overflow-hidden">
+            {/* Backdrop Overlay */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl border border-[#EBEBEB] max-w-lg w-full p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex items-start justify-between gap-3 border-b border-[#EBEBEB] pb-4 mb-4">
-                <div>
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedItem(null)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs transition-opacity"
+            />
+
+            {/* Slide Drawer */}
+            <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                className="w-screen max-w-md bg-white border-l border-[#EBEBEB] shadow-2xl flex flex-col justify-between"
+              >
+                {/* Drawer Header */}
+                <div className="p-5 border-b border-[#EBEBEB] flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-extrabold text-[#0D2453]">
-                      {activeDetailItem.ticketCode}
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        selectedItem.status === 'Selesai' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                      }`}
+                    />
+                    <span className="text-sm font-bold text-[#0D2453]">
+                      {selectedItem.ticketCode}
                     </span>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        activeDetailItem.status === 'Selesai'
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                        selectedItem.status === 'Selesai'
                           ? 'bg-[#E6FFFA] text-[#319795]'
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {activeDetailItem.status}
+                      {selectedItem.status}
                     </span>
                   </div>
-                  <h3 className="text-base font-bold text-[#0D2453] mt-1">
-                    {activeDetailItem.title}
-                  </h3>
-                  <span className="text-xs text-[#767676] block mt-0.5">
-                    {activeDetailItem.desa}, {activeDetailItem.kabupaten}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailItem(null)}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              {/* Timeline Steps */}
-              <div className="space-y-4 py-2">
-                <h4 className="text-xs font-bold text-[#767676] uppercase tracking-wider">
-                  Riwayat & Linimasa Penanganan
-                </h4>
-                <div className="space-y-3.5">
-                  {activeDetailItem.timeline.map((st, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <div className="mt-0.5">
-                        {st.done ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
-                        )}
-                      </div>
-                      <div className="text-xs">
-                        <div className="font-bold text-[#0D2453]">{st.title}</div>
-                        <div className="text-[10px] text-[#767676] mt-0.5">{st.date}</div>
-                        <div className="text-[11px] text-[#4A5568] mt-1 leading-snug">
-                          {st.note}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedItem(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Drawer Scrollable Body */}
+                <div className="p-5 space-y-5 overflow-y-auto flex-1">
+                  {/* Title & Meta */}
+                  <div>
+                    <h3 className="text-base font-bold text-[#0D2453] leading-snug">
+                      {selectedItem.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-xs text-[#767676] mt-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{selectedItem.desa}, {selectedItem.kabupaten}</span>
+                    </div>
+                    <p className="text-xs text-[#4A5568] mt-2.5 leading-relaxed bg-[#F7F9FC] p-3 rounded-xl border border-[#EBEBEB]">
+                      {selectedItem.desc}
+                    </p>
+                  </div>
+
+                  {/* Photo Evidence (Kondisi Awal vs Hasil Perbaikan) */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-[#0D2453] flex items-center justify-between">
+                      <span>Dokumentasi Fisik</span>
+                      <span className="text-[11px] font-normal text-[#767676]">{selectedItem.slaLabel}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {/* Before Photo */}
+                      {selectedItem.beforePhoto && (
+                        <div>
+                          <div className="text-[10px] font-medium text-[#767676] mb-1">
+                            Sebelum
+                          </div>
+                          <div
+                            onClick={() =>
+                              setLightboxImg({
+                                url: selectedItem.beforePhoto!,
+                                label: `${selectedItem.ticketCode} - Kondisi Awal`,
+                              })
+                            }
+                            className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer"
+                          >
+                            <img
+                              src={selectedItem.beforePhoto}
+                              alt="Sebelum"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
+                              <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* After Photo or In-Progress Box */}
+                      {selectedItem.afterPhoto ? (
+                        <div>
+                          <div className="text-[10px] font-semibold text-emerald-700 mb-1 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>Hasil Perbaikan</span>
+                          </div>
+                          <div
+                            onClick={() =>
+                              setLightboxImg({
+                                url: selectedItem.afterPhoto!,
+                                label: `${selectedItem.ticketCode} - Hasil Perbaikan`,
+                              })
+                            }
+                            className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer"
+                          >
+                            <img
+                              src={selectedItem.afterPhoto}
+                              alt="Hasil Perbaikan"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
+                              <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-[10px] font-semibold text-amber-700 mb-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-600" />
+                            <span>Tahap Fisik</span>
+                          </div>
+                          <div className="aspect-[4/3] rounded-xl bg-[#F7F9FC] border border-dashed border-amber-300 flex flex-col items-center justify-center p-2 text-center">
+                            <span className="text-[11px] font-bold text-[#0D2453]">Petugas Lapangan</span>
+                            <span className="text-[10px] text-[#767676] mt-0.5">Menunggu upload bukti</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Official Village Response */}
+                  <div className="p-3.5 rounded-xl bg-[#F7F9FC] border border-[#EBEBEB]">
+                    <div className="text-[11px] font-bold text-[#0D2453]">
+                      {selectedItem.response.official}
+                    </div>
+                    <div className="text-[10px] text-[#767676] mb-1">
+                      {selectedItem.response.date}
+                    </div>
+                    <p className="text-xs text-[#4A5568] leading-relaxed">
+                      {selectedItem.response.content}
+                    </p>
+                  </div>
+
+                  {/* Budget Link */}
+                  {selectedItem.budgetInfo && (
+                    <div className="p-3 rounded-xl bg-[#F9FAFC] border border-[#EBEBEB] flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] text-[#767676]">Realisasi Dana Kas:</div>
+                        <div className="text-xs font-bold text-[#0D2453]">
+                          {selectedItem.budgetInfo.amount} ({selectedItem.budgetInfo.source})
                         </div>
                       </div>
+                      <Link
+                        href={selectedItem.budgetInfo.transparencyUrl}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] hover:underline"
+                      >
+                        <span>Cek Nota</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </Link>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  )}
 
-              {/* Budget transparency link */}
-              {activeDetailItem.budgetInfo && (
-                <div className="mt-5 p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-[#767676] block uppercase font-bold">
-                      Realisasi Buku Kas
-                    </span>
-                    <span className="text-xs font-bold text-[#0D2453]">
-                      {activeDetailItem.budgetInfo.amount} ({activeDetailItem.budgetInfo.source})
-                    </span>
+                  {/* Progress Milestones */}
+                  <div className="space-y-3 pt-1">
+                    <div className="text-xs font-bold text-[#0D2453]">
+                      Linimasa Penanganan
+                    </div>
+                    <div className="space-y-3">
+                      {selectedItem.timeline.map((step, idx) => (
+                        <div key={idx} className="flex items-start gap-2.5">
+                          <div className="mt-0.5">
+                            {step.done ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                            )}
+                          </div>
+                          <div className="text-xs">
+                            <div className="font-semibold text-[#0D2453]">{step.title}</div>
+                            <div className="text-[10px] text-[#767676]">{step.date}</div>
+                            <div className="text-[11px] text-[#4A5568] mt-0.5 leading-snug">
+                              {step.note}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <Link
-                    href={activeDetailItem.budgetInfo.transparencyUrl}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] hover:underline"
-                  >
-                    <span>Buka SPJ</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
-              )}
 
-              <div className="mt-6 pt-3 border-t border-[#EBEBEB]">
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailItem(null)}
-                  className="w-full py-2.5 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold transition-all"
-                >
-                  Tutup Rincian
-                </button>
-              </div>
-            </motion.div>
+                {/* Drawer Footer */}
+                <div className="p-4 border-t border-[#EBEBEB] bg-[#F9FAFC]">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedItem(null)}
+                    className="w-full py-2.5 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold transition-all"
+                  >
+                    Tutup Detail
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* 8. Lightbox Modal */}
+      {/* 5. Minimal Lightbox for Photo Inspection */}
       <AnimatePresence>
-        {activeLightbox && (
+        {lightboxImg && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
-            onClick={() => setActiveLightbox(null)}
+            onClick={() => setLightboxImg(null)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full shadow-2xl relative border border-slate-700/50"
+              className="bg-white rounded-2xl overflow-hidden max-w-xl w-full shadow-2xl relative"
             >
               <div className="relative aspect-[16/10] bg-slate-900">
                 <img
-                  src={activeLightbox.url}
-                  alt={activeLightbox.title}
+                  src={lightboxImg.url}
+                  alt={lightboxImg.label}
                   className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
-                  onClick={() => setActiveLightbox(null)}
-                  className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/60 text-white hover:bg-slate-900 transition-colors"
+                  onClick={() => setLightboxImg(null)}
+                  className="absolute top-3 right-3 p-1.5 rounded-full bg-slate-900/60 text-white hover:bg-slate-900 transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
-                <span className="absolute bottom-4 left-4 px-3 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white text-xs font-bold">
-                  {activeLightbox.tag}
-                </span>
               </div>
-              <div className="p-4 sm:p-5 bg-white">
-                <h4 className="text-sm font-bold text-[#0D2453]">
-                  {activeLightbox.title}
-                </h4>
-                <p className="text-xs text-[#767676] mt-0.5">
-                  Foto bukti verifikasi fisik pengawasan tata kelola desa wisata Jawa Tengah.
-                </p>
+              <div className="p-3.5 text-xs font-semibold text-[#0D2453]">
+                {lightboxImg.label}
               </div>
             </motion.div>
           </div>
