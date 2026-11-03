@@ -1,983 +1,907 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShieldAlert,
-  Clock,
-  CheckCircle2,
-  MapPin,
-  UploadCloud,
   Search,
   ChevronDown,
+  CheckCircle2,
+  Clock,
   ArrowUpRight,
-  Lock,
-  FileCheck2,
+  Maximize2,
   X,
-  Copy,
-  Check,
-  AlertTriangle,
-  Landmark,
+  MapPin,
+  ShieldCheck,
   FileText,
-  BadgeAlert
+  AlertTriangle,
+  Receipt,
+  Eye,
+  SlidersHorizontal,
+  ExternalLink
 } from 'lucide-react';
 
-interface LocationCoord {
-  lat: number;
-  lng: number;
-  displayName: string;
+interface ReportItem {
+  id: string;
+  ticketCode: string;
+  category: 'Akses & Jalan' | 'Fasilitas & Sanitasi' | 'Pungutan Liar' | 'Bahaya Keselamatan (K3)';
+  title: string;
+  desc: string;
+  kabupaten: string;
+  desa: string;
+  date: string;
+  reporter: string;
+  status: 'Selesai' | 'Dalam Penanganan';
+  slaLabel: string;
+  beforePhoto?: string;
+  afterPhoto?: string;
+  response: {
+    official: string;
+    date: string;
+    content: string;
+  };
+  budgetInfo?: {
+    amount: string;
+    source: string;
+    transparencyUrl: string;
+  };
+  timeline: {
+    title: string;
+    date: string;
+    done: boolean;
+    note: string;
+  }[];
 }
 
-const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
-  candirejo: {
-    lat: -7.6186,
-    lng: 110.2317,
-    displayName: 'Desa Wisata Candirejo, Borobudur, Kabupaten Magelang',
-  },
-  magelang: {
-    lat: -7.6186,
-    lng: 110.2317,
-    displayName: 'Desa Wisata Candirejo, Borobudur, Kabupaten Magelang',
-  },
-  limpakuwus: {
-    lat: -7.3197,
-    lng: 109.2394,
-    displayName: 'Desa Limpakuwus (The Geong), Sumbang, Kabupaten Banyumas',
-  },
-  banyumas: {
-    lat: -7.3197,
-    lng: 109.2394,
-    displayName: 'Desa Limpakuwus (The Geong), Sumbang, Kabupaten Banyumas',
-  },
-  getas: {
-    lat: -7.1124,
-    lng: 110.2831,
-    displayName: 'Desa Wisata Getas (Tubing Genting), Singorojo, Kabupaten Kendal',
-  },
-  kendal: {
-    lat: -7.1124,
-    lng: 110.2831,
-    displayName: 'Desa Wisata Getas (Tubing Genting), Singorojo, Kabupaten Kendal',
-  },
-  berjo: {
-    lat: -7.6253,
-    lng: 111.1278,
-    displayName: 'Desa Berjo (Air Terjun Jumog), Ngargoyoso, Kabupaten Karanganyar',
-  },
-  karanganyar: {
-    lat: -7.6253,
-    lng: 111.1278,
-    displayName: 'Desa Berjo (Air Terjun Jumog), Ngargoyoso, Kabupaten Karanganyar',
-  },
-  dieng: {
-    lat: -7.2062,
-    lng: 109.9042,
-    displayName: 'Desa Dieng Kulon, Batur, Kabupaten Banjarnegara',
-  },
-  banjarnegara: {
-    lat: -7.2062,
-    lng: 109.9042,
-    displayName: 'Desa Dieng Kulon, Batur, Kabupaten Banjarnegara',
-  },
-  wonosobo: {
-    lat: -7.3601,
-    lng: 109.9015,
-    displayName: 'Kawasan Wisata Telaga Menjer, Garung, Kabupaten Wonosobo',
-  },
-  pamularsih: {
-    lat: -6.9928,
-    lng: 110.3957,
-    displayName: 'Jl. Pamularsih Raya, Bongsari, Semarang Barat, Kota Semarang',
-  },
-};
-
-const CATEGORIES = [
+const REPORT_ITEMS: ReportItem[] = [
   {
-    id: 'pungli',
-    label: 'Pungutan Liar & Tarif Wisata',
-    sla: '24 Jam Kerja',
-    slaType: 'urgent',
-    desc: 'Getok harga tiket masuk, karcis parkir tak resmi, atau pungutan tanpa dasar hukum.',
+    id: 'rep-0891',
+    ticketCode: 'DS-JTG-2026-0891',
+    category: 'Akses & Jalan',
+    title: 'Akses ke curug buruk dan pagar pengaman lapuk',
+    desc: 'Jalur setapak tebing curug licin berlumpur saat hujan dan pagar pembatas bambu telah patah di beberapa titik rawan.',
+    kabupaten: 'Kabupaten Magelang',
+    desa: 'Desa Candirejo',
+    date: '1 Ags 2026 • 09.30 WIB',
+    reporter: 'Pelapor Anonim',
+    status: 'Selesai',
+    slaLabel: 'Tuntas dalam 5 hari',
+    beforePhoto: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
+    afterPhoto: 'https://images.unsplash.com/photo-1470246973918-29a93221c455?w=800&auto=format&fit=crop&q=80',
+    response: {
+      official: 'Pemerintah Desa Candirejo & Pokdarwis',
+      date: '12 Okt 2026 • 14.15 WIB',
+      content: 'Pekerjaan rabat beton jalan setapak 240 meter tuntas dikerjakan bersama warga. Pagar pengaman besi galvanis telah dipasang permanen.',
+    },
+    budgetInfo: {
+      amount: 'Rp 100.000.000',
+      source: 'Bantuan Provinsi 2026',
+      transparencyUrl: '/transparansi',
+    },
+    timeline: [
+      {
+        title: 'Aduan Diterima & Verifikasi GPS',
+        date: '1 Ags 2026 • 09.30 WIB',
+        done: true,
+        note: 'Titik koordinat dan keabsahan foto disetujui tim verifikator.',
+      },
+      {
+        title: 'Disposisi & Penerbitan SPK',
+        date: '2 Ags 2026 • 11.00 WIB',
+        done: true,
+        note: 'Surat perintah kerja diterbitkan untuk Pokdarwis Candirejo.',
+      },
+      {
+        title: 'Realisasi Fisik & Upload Bukti Kuitansi',
+        date: '12 Okt 2026 • 14.15 WIB',
+        done: true,
+        note: 'Pekerjaan selesai 100%. Bukti nota kasir dan foto hasil kerja tervalidasi.',
+      },
+    ],
   },
   {
-    id: 'fasilitas',
-    label: 'Kerusakan Fasilitas Fisik',
-    sla: '7 Hari Kerja',
-    slaType: 'standard',
-    desc: 'Akses jalan berlubang, pagar pengaman ambrol, jembatan retak, atau sarana umum rusak.',
+    id: 'rep-0744',
+    ticketCode: 'DS-JTG-2026-0744',
+    category: 'Fasilitas & Sanitasi',
+    title: 'Wastafel mampet dan kran air toilet tidak mengalir',
+    desc: 'Dua bilik toilet umum di area parkir utama wisata mampet, kran cuci tangan patah, dan penampungan air kosong.',
+    kabupaten: 'Kabupaten Magelang',
+    desa: 'Desa Candirejo',
+    date: '6 Okt 2026 • 11.20 WIB',
+    reporter: 'Pelapor Anonim',
+    status: 'Selesai',
+    slaLabel: 'Tuntas dalam 3 hari',
+    beforePhoto: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80',
+    afterPhoto: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=800&auto=format&fit=crop&q=80',
+    response: {
+      official: 'Unit Pengelola Kebersihan Desa Candirejo',
+      date: '9 Okt 2026 • 16.00 WIB',
+      content: 'Instalasi pipa suplai diganti baru, kran air otomatis dipasang, dan jadwal kuras tandon dijadwalkan berkala tiap dua hari.',
+    },
+    budgetInfo: {
+      amount: 'Rp 15.000.000',
+      source: 'PADes Wisata Candirejo',
+      transparencyUrl: '/transparansi',
+    },
+    timeline: [
+      {
+        title: 'Laporan Masuk',
+        date: '6 Okt 2026 • 11.20 WIB',
+        done: true,
+        note: 'Aduan masuk kategori fasilitas sanitasi.',
+      },
+      {
+        title: 'Pemeriksaan Pipa & Pengadaan Material',
+        date: '7 Okt 2026 • 14.00 WIB',
+        done: true,
+        note: 'Pipa tersumbat lumut tebal, diputuskan penggantian pipa paralon.',
+      },
+      {
+        title: 'Perbaikan Selesai & Sanitasi Bersih',
+        date: '9 Okt 2026 • 16.00 WIB',
+        done: true,
+        note: 'Air mengalir normal, sanitasi berfungsi optimal kembali.',
+      },
+    ],
   },
   {
-    id: 'k3',
-    label: 'Bahaya Keselamatan (K3)',
-    sla: '48 Jam Kerja',
-    slaType: 'urgent',
-    desc: 'Wahana tanpa sertifikasi uji kelayakan, titik rawan longsor tanpa rambu, atau nihil P3K.',
+    id: 'rep-0922',
+    ticketCode: 'DS-JTG-2026-0922',
+    category: 'Pungutan Liar',
+    title: 'Tarif parkir liar tidak sesuai plang karcis resmi',
+    desc: 'Oknum petugas di pintu masuk timur menarik retribusi parkir mobil Rp 20.000 tanpa karcis bernomor seri Pemkab.',
+    kabupaten: 'Kabupaten Banjarnegara',
+    desa: 'Desa Dieng Kulon',
+    date: '18 Okt 2026 • 13.45 WIB',
+    reporter: 'Wisatawan Domestik',
+    status: 'Selesai',
+    slaLabel: 'Tuntas dalam 24 jam',
+    beforePhoto: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80',
+    afterPhoto: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80',
+    response: {
+      official: 'Satgas Pengawasan Pariwisata Dieng & Bhabinkamtibmas',
+      date: '19 Okt 2026 • 10.00 WIB',
+      content: 'Penertiban langsung di lokasi. Petugas liar dipindahtugaskan dan papan pengumuman tarif resmi Perda telah ditegakkan di 4 titik pintu masuk.',
+    },
+    timeline: [
+      {
+        title: 'Laporan Prioritas Pungli Diterima',
+        date: '18 Okt 2026 • 13.45 WIB',
+        done: true,
+        note: 'Eskalasi darurat SLA 24 jam ke BUMDes Dieng Kulon.',
+      },
+      {
+        title: 'Sidang Lapangan Bersama Pokdarwis',
+        date: '18 Okt 2026 • 17.00 WIB',
+        done: true,
+        note: 'Klarifikasi dan penertiban oknum penarik parkir liar.',
+      },
+      {
+        title: 'Pemasangan Plang Tarif Resmi & Pos Pantau',
+        date: '19 Okt 2026 • 10.00 WIB',
+        done: true,
+        note: 'Sistem karcis barcode terpusat diaktifkan.',
+      },
+    ],
   },
   {
-    id: 'sanitasi',
-    label: 'Sanitasi & Kebersihan',
-    sla: '7 Hari Kerja',
-    slaType: 'standard',
-    desc: 'Toilet mampet tidak terawat, air tidak mengalir, atau tumpukan sampah di area wisata.',
+    id: 'rep-0955',
+    ticketCode: 'DS-JTG-2026-0955',
+    category: 'Bahaya Keselamatan (K3)',
+    title: 'Bantalan kayu titian jembatan retak dan berderit',
+    desc: 'Bantalan penyangga papan titian wisata hutan pinus tampak retak melintang dan goyang saat dilewati kelompok wisatawan.',
+    kabupaten: 'Kabupaten Banyumas',
+    desa: 'Desa Limpakuwus',
+    date: '21 Okt 2026 • 15.10 WIB',
+    reporter: 'Pelapor Anonim',
+    status: 'Dalam Penanganan',
+    slaLabel: 'Sisa SLA: 2 hari kerja',
+    beforePhoto: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80',
+    response: {
+      official: 'Dinas Pemuda Olahraga & Pariwisata Kab. Banyumas',
+      date: '22 Okt 2026 • 09.00 WIB',
+      content: 'Wahana titian kayu telah ditutup sementara dengan garis pembatas bahaya. Tim teknis konstruksi sedang menguji beban dan menghitung RAB penggantian balok baja.',
+    },
+    timeline: [
+      {
+        title: 'Laporan Diterima & Validasi Titik K3',
+        date: '21 Okt 2026 • 15.10 WIB',
+        done: true,
+        note: 'Kategori bahaya keselamatan berisiko tinggi.',
+      },
+      {
+        title: 'Penutupan Sementara Akses Wahana',
+        date: '22 Okt 2026 • 09.00 WIB',
+        done: true,
+        note: 'Pemasangan police line dan pengumuman penutupan demi keselamatan pengunjung.',
+      },
+      {
+        title: 'Penggantian Struktur Penopang',
+        date: '23 Okt 2026 (Sedang Berjalan)',
+        done: false,
+        note: 'Proses pemotongan dan perakitan rangka penopang baru.',
+      },
+    ],
   },
   {
-    id: 'keuangan',
-    label: 'Penyalahgunaan Dana Desa',
-    sla: '14 Hari Kerja',
-    slaType: 'audit',
-    desc: 'Proyek fisik fiktif, belanja material tak sesuai nota kasir, atau dana mangkrak.',
+    id: 'rep-0971',
+    ticketCode: 'DS-JTG-2026-0971',
+    category: 'Akses & Jalan',
+    title: 'Material longsor menutup separuh lajur masuk air terjun',
+    desc: 'Tebing setinggi 3 meter longsor akibat hujan deras semalam, menutup sebagian jalan paving akses kendaraan shuttle wisata.',
+    kabupaten: 'Kabupaten Karanganyar',
+    desa: 'Desa Berjo',
+    date: '23 Okt 2026 • 08.00 WIB',
+    reporter: 'Pengelola Homestay Warga',
+    status: 'Dalam Penanganan',
+    slaLabel: 'Sisa SLA: 1 hari kerja',
+    beforePhoto: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
+    response: {
+      official: 'Relawan BPBD & Pengelola Wisata Air Terjun Jumog',
+      date: '23 Okt 2026 • 10.30 WIB',
+      content: 'Pembersihan tanah longsor sedang berlangsung menggunakan alat berat mini. Direncanakan pembuatan bronjong kawat untuk menahan tebing.',
+    },
+    timeline: [
+      {
+        title: 'Laporan Darurat Masuk',
+        date: '23 Okt 2026 • 08.00 WIB',
+        done: true,
+        note: 'Akses terhambat 50%, kendaraan roda empat dialihkan.',
+      },
+      {
+        title: 'Pengerukan Lumpur & Batu',
+        date: '23 Okt 2026 • 10.30 WIB (Sedang Berjalan)',
+        done: false,
+        note: 'Proses evakuasi material dan pemasangan terpal pelindung tebing.',
+      },
+    ],
+  },
+  {
+    id: 'rep-0680',
+    ticketCode: 'DS-JTG-2026-0680',
+    category: 'Fasilitas & Sanitasi',
+    title: 'Kekurangan tempat sampah di rute tubing genting',
+    desc: 'Pengunjung meninggalkan botol dan bungkus makanan di bebatuan pinggir sungai karena ketiadaan tempat sampah terpilah di titik finish.',
+    kabupaten: 'Kabupaten Kendal',
+    desa: 'Desa Getas (Tubing Genting)',
+    date: '11 Okt 2026 • 14.00 WIB',
+    reporter: 'Komunitas Pecinta Alam',
+    status: 'Selesai',
+    slaLabel: 'Tuntas dalam 4 hari',
+    beforePhoto: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80',
+    afterPhoto: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80',
+    response: {
+      official: 'Pengurus Pokdarwis Tubing Genting Getas',
+      date: '15 Okt 2026 • 11.00 WIB',
+      content: 'Telah dipasang 8 set tempat sampah pilah (organik, anorganik, residu) di sepanjang dermaga start dan rest area finish.',
+    },
+    budgetInfo: {
+      amount: 'Rp 8.500.000',
+      source: 'Operasional Pokdarwis 2026',
+      transparencyUrl: '/transparansi',
+    },
+    timeline: [
+      {
+        title: 'Laporan Diterima',
+        date: '11 Okt 2026 • 14.00 WIB',
+        done: true,
+        note: 'Verifikasi volume sampah dan titik kumpul.',
+      },
+      {
+        title: 'Pengadaan Tong Sampah Pilah',
+        date: '13 Okt 2026 • 10.00 WIB',
+        done: true,
+        note: 'Pemesanan 8 set tong sampah drum baja ramah lingkungan.',
+      },
+      {
+        title: 'Pemasangan & Pembersihan Total',
+        date: '15 Okt 2026 • 11.00 WIB',
+        done: true,
+        note: 'Area sungai bersih kembali dan edukasi buang sampah dipasang.',
+      },
+    ],
   },
 ];
 
-const SAMPLE_TICKETS: Record<string, {
-  code: string;
-  category: string;
-  title: string;
-  location: string;
-  submittedAt: string;
-  status: 'Selesai' | 'Sedang Ditindaklanjuti';
-  slaDeadline: string;
-  steps: { title: string; date: string; done: boolean; desc: string }[];
-  villageLink?: string;
-}> = {
-  'DS-JTG-2026-0891': {
-    code: 'DS-JTG-2026-0891',
-    category: 'Akses & Jalan',
-    title: 'Akses ke curug buruk dan pagar lapuk',
-    location: 'Desa Candirejo, Kabupaten Magelang',
-    submittedAt: '1 Ags 2026',
-    status: 'Selesai',
-    slaDeadline: '8 Ags 2026 (Tuntas)',
-    steps: [
-      {
-        title: 'Laporan Diterima & Verifikasi GPS',
-        date: '1 Ags 2026 • 09.30 WIB',
-        done: true,
-        desc: 'Verifikasi lokasi fisik dan bukti foto disetujui Inspektorat Daerah.',
-      },
-      {
-        title: 'Disposisi Pekerjaan ke Pemdes',
-        date: '2 Ags 2026 • 11.00 WIB',
-        done: true,
-        desc: 'Penerbitan surat tugas perbaikan rabat jalan dan pagar besi.',
-      },
-      {
-        title: 'Pekerjaan Fisik & Upload Proof-of-Fix',
-        date: '12 Okt 2026 • 14.15 WIB',
-        done: true,
-        desc: 'Rabat beton rampung. Nota belanja Rp 100.000.000 terbit di buku kas.',
-      },
-    ],
-    villageLink: '/transparansi',
-  },
-  'DS-JTG-2026-0744': {
-    code: 'DS-JTG-2026-0744',
-    category: 'Fasilitas & Sanitasi',
-    title: 'Wastafel dan toilet kotor sekali',
-    location: 'Desa Candirejo, Kabupaten Magelang',
-    submittedAt: '6 Okt 2026',
-    status: 'Selesai',
-    slaDeadline: '13 Okt 2026 (Tuntas)',
-    steps: [
-      {
-        title: 'Laporan Divalidasi Tim Lapangan',
-        date: '6 Okt 2026 • 13.00 WIB',
-        done: true,
-        desc: 'Pemeriksaan kondisi pipa air mampet dan kran toilet patah.',
-      },
-      {
-        title: 'Penggantian Pipa & Perlengkapan Sanitasi',
-        date: '8 Okt 2026 • 10.00 WIB',
-        done: true,
-        desc: 'Pengadaan material sanitasi baru dengan anggaran pemeliharaan.',
-      },
-      {
-        title: 'Verifikasi Fisik Akhir Selesai',
-        date: '9 Okt 2026 • 11.30 WIB',
-        done: true,
-        desc: 'Fasilitas aktif kembali. Bukti foto dan kuitansi terarsip di sistem.',
-      },
-    ],
-    villageLink: '/transparansi',
-  },
-};
+const KABUPATEN_OPTIONS = [
+  'Semua Kabupaten',
+  'Kabupaten Magelang',
+  'Kabupaten Banyumas',
+  'Kabupaten Kendal',
+  'Kabupaten Karanganyar',
+  'Kabupaten Banjarnegara',
+  'Kabupaten Wonosobo',
+];
+
+const STATUS_FILTERS = [
+  'Semua Status',
+  'Dalam Penanganan',
+  'Selesai',
+];
+
+const CATEGORY_FILTERS = [
+  'Semua Kategori',
+  'Akses & Jalan',
+  'Fasilitas & Sanitasi',
+  'Pungutan Liar',
+  'Bahaya Keselamatan (K3)',
+];
 
 export default function LaporPage() {
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
-  const [selectedKabupaten, setSelectedKabupaten] = useState('Kabupaten Magelang');
-  const [selectedDesa, setSelectedDesa] = useState('Desa Candirejo');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [addressInput, setAddressInput] = useState('Desa Wisata Candirejo, Borobudur, Kabupaten Magelang');
-  const [locationLabel, setLocationLabel] = useState('Titik Pin GPS: -7.6186, 110.2317');
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
-    lat: -7.6186,
-    lng: 110.2317,
-  });
-  const [isAnonymous, setIsAnonymous] = useState(true);
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([
-    'foto-kondisi-lapangan-1.jpg',
-  ]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdTicketCode, setCreatedTicketCode] = useState<string | null>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedKabupaten, setSelectedKabupaten] = useState('Semua Kabupaten');
+  const [selectedStatus, setSelectedStatus] = useState('Semua Status');
+  const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
 
-  // Tracking Ticket State
-  const [ticketSearchInput, setTicketSearchInput] = useState('DS-JTG-2026-0891');
-  const [trackedTicket, setTrackedTicket] = useState(SAMPLE_TICKETS['DS-JTG-2026-0891']);
-  const [ticketError, setTicketError] = useState<string | null>(null);
+  // Modal Detail State
+  const [activeDetailItem, setActiveDetailItem] = useState<ReportItem | null>(null);
 
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  // Lightbox State
+  const [activeLightbox, setActiveLightbox] = useState<{
+    url: string;
+    title: string;
+    tag: string;
+  } | null>(null);
 
-  // Initialize Leaflet Map on Client
-  useEffect(() => {
-    if (typeof window === 'undefined' || !mapContainerRef.current) return;
-    let isMounted = true;
+  // Filtered Reports
+  const filteredReports = useMemo(() => {
+    return REPORT_ITEMS.filter((item) => {
+      // 1. Text Search
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = item.title.toLowerCase().includes(q);
+        const matchCode = item.ticketCode.toLowerCase().includes(q);
+        const matchDesa = item.desa.toLowerCase().includes(q);
+        const matchKab = item.kabupaten.toLowerCase().includes(q);
+        const matchDesc = item.desc.toLowerCase().includes(q);
+        if (!matchTitle && !matchCode && !matchDesa && !matchKab && !matchDesc) {
+          return false;
+        }
+      }
 
-    import('leaflet').then((L) => {
-      if (!isMounted || !mapContainerRef.current) return;
-      if (mapInstanceRef.current) return;
+      // 2. Kabupaten Filter
+      if (selectedKabupaten !== 'Semua Kabupaten' && item.kabupaten !== selectedKabupaten) {
+        return false;
+      }
 
-      const map = L.map(mapContainerRef.current, {
-        center: [coords.lat, coords.lng],
-        zoom: 14,
-        zoomControl: true,
-        scrollWheelZoom: false,
-      });
+      // 3. Status Filter
+      if (selectedStatus !== 'Semua Status' && item.status !== selectedStatus) {
+        return false;
+      }
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors',
-      }).addTo(map);
+      // 4. Category Filter
+      if (selectedCategory !== 'Semua Kategori' && item.category !== selectedCategory) {
+        return false;
+      }
 
-      const pinIcon = L.divIcon({
-        className: 'custom-pin-marker',
-        html: `
-          <div style="transform: translate(-50%, -100%);">
-            <div style="background-color: #EA4335; width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 3px solid #FFFFFF;">
-              <svg style="width: 18px; height: 18px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-            </div>
-          </div>
-        `,
-        iconSize: [34, 34],
-        iconAnchor: [17, 34],
-      });
-
-      const marker = L.marker([coords.lat, coords.lng], {
-        icon: pinIcon,
-        draggable: true,
-      }).addTo(map);
-
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        setCoords({ lat: pos.lat, lng: pos.lng });
-        setLocationLabel(`Titik Pin GPS: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
-      });
-
-      map.on('click', (e: any) => {
-        marker.setLatLng(e.latlng);
-        setCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
-        setLocationLabel(`Titik Pin GPS: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`);
-      });
-
-      mapInstanceRef.current = map;
-      markerRef.current = marker;
+      return true;
     });
-
-    return () => {
-      isMounted = false;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleSearchLocation = (query: string) => {
-    const clean = query.trim().toLowerCase();
-    let match: LocationCoord | null = null;
-
-    for (const key of Object.keys(KNOWN_LOCATIONS)) {
-      if (clean.includes(key)) {
-        match = KNOWN_LOCATIONS[key];
-        break;
-      }
-    }
-
-    if (match) {
-      setCoords({ lat: match.lat, lng: match.lng });
-      setLocationLabel(match.displayName);
-      if (mapInstanceRef.current && markerRef.current) {
-        mapInstanceRef.current.setView([match.lat, match.lng], 15, { animate: true });
-        markerRef.current.setLatLng([match.lat, match.lng]);
-      }
-    }
-  };
-
-  const activeCategoryObj = CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const names = Array.from(e.target.files).map((f) => f.name);
-    setUploadedFiles((prev) => [...prev, ...names].slice(0, 4));
-  };
-
-  const removeFile = (idx: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      const generatedCode = `DS-JTG-2026-${randomNum}`;
-      setIsSubmitting(false);
-      setCreatedTicketCode(generatedCode);
-    }, 700);
-  };
-
-  const handleTrackTicket = (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = ticketSearchInput.trim().toUpperCase();
-    if (SAMPLE_TICKETS[query]) {
-      setTrackedTicket(SAMPLE_TICKETS[query]);
-      setTicketError(null);
-    } else {
-      setTicketError(`Tiket "${query}" belum ditemukan di arsip publik.`);
-    }
-  };
-
-  const handleCopyCode = () => {
-    if (!createdTicketCode) return;
-    navigator.clipboard.writeText(createdTicketCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
+  }, [searchQuery, selectedKabupaten, selectedStatus, selectedCategory]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-[32px] mt-4 mb-20">
-      {/* 1. Header Title & Subtitle */}
-      <div>
-        <div className="flex items-center gap-2.5 text-[#0D2453]">
-          <ShieldAlert className="w-6 h-6 text-[#0D2453]" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D2453]">
-            Layanan Pengaduan & Aspirasi Desa
-          </h1>
+      {/* 1. Header & Call to Action Bar */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5 text-[#0D2453]">
+            <div className="w-8 h-8 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5 text-[#0D2453]" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D2453]">
+              Telusur & Jelajah Aduan
+            </h1>
+          </div>
+          <p className="text-xs sm:text-sm text-[#767676] mt-1.5 max-w-2xl">
+            Pantau transparansi penanganan pengaduan fisik fasilitas, penertiban pungutan, dan bukti realisasi SPJ desa wisata se-Jawa Tengah.
+          </p>
         </div>
-        <p className="text-xs sm:text-sm text-[#767676] mt-1.5 max-w-3xl">
-          Sampaikan keluhan fasilitas fisik, pungutan tiket tak wajar, atau kejanggalan realisasi dana desa. Setiap laporan resmi wajib diverifikasi dan dituntaskan dengan bukti dokumentasi.
-        </p>
+
+        <Link
+          href="/#buat-laporan"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs sm:text-sm font-bold shadow-sm transition-all shrink-0 active:scale-95 group"
+        >
+          <span>+ Buat Laporan Baru</span>
+          <ArrowUpRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+        </Link>
       </div>
 
-      {/* 2. Three SLA Commitment Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Pungli SLA */}
+      {/* 2. Top Summary Stat Counters */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-[#EBEBEB] p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6 text-[#0D2453]" />
+          <div className="w-12 h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0 font-extrabold text-lg">
+            889
           </div>
           <div>
-            <div className="text-sm font-bold text-[#0D2453]">SLA 24 Jam Pungli</div>
-            <p className="text-xs text-[#767676] mt-0.5 leading-snug">
-              Respon cepat untuk aduan tiket ganda, parkir liar, dan tarif tak terdaftar.
-            </p>
+            <div className="text-xs font-bold text-[#767676] uppercase tracking-wide">
+              Total Aduan Masuk
+            </div>
+            <div className="text-sm font-bold text-[#0D2453] mt-0.5">
+              Warga & Wisatawan Jateng
+            </div>
           </div>
         </div>
 
-        {/* Card 2: Fasilitas Fisik SLA */}
         <div className="bg-white rounded-2xl border border-[#EBEBEB] p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0">
-            <BadgeAlert className="w-6 h-6 text-[#0D2453]" />
+          <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 font-extrabold text-lg">
+            51
           </div>
           <div>
-            <div className="text-sm font-bold text-[#0D2453]">SLA 7 Hari Fisik</div>
-            <p className="text-xs text-[#767676] mt-0.5 leading-snug">
-              Perintah kerja langsung ke Pemdes untuk perbaikan sarana jalan dan wahana.
-            </p>
+            <div className="text-xs font-bold text-[#767676] uppercase tracking-wide">
+              Dalam Penanganan
+            </div>
+            <div className="text-sm font-bold text-[#0D2453] mt-0.5">
+              Timer SLA Aktif & Verifikasi
+            </div>
           </div>
         </div>
 
-        {/* Card 3: 100% Bukti Fisik */}
         <div className="bg-white rounded-2xl border border-[#EBEBEB] p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-6 h-6 text-[#0D2453]" />
+          <div className="w-12 h-12 rounded-xl bg-[#E6FFFA] text-[#319795] flex items-center justify-center shrink-0 font-extrabold text-lg">
+            838
           </div>
           <div>
-            <div className="text-sm font-bold text-[#0D2453]">Wajib Bukti Fisik</div>
-            <p className="text-xs text-[#767676] mt-0.5 leading-snug">
-              Tiket aduan tidak dapat ditutup tanpa foto hasil kerja dan nota belanja riil.
-            </p>
+            <div className="text-xs font-bold text-[#767676] uppercase tracking-wide">
+              Selesai & Ada Bukti SPJ
+            </div>
+            <div className="text-sm font-bold text-[#0D2453] mt-0.5">
+              94,2% Tingkat Keterbukaan
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3. Main Workspace: Form (Col 7) and Tracking/SOP (Col 5) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column (Span 7): Complete Report Form */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-8 shadow-xs">
-          <div className="border-b border-[#EBEBEB] pb-5 mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-[#0D2453] tracking-tight">
-              Formulir Aduan Publik
-            </h2>
-            <p className="text-xs text-[#767676] mt-1">
-              Isi formulir dengan detail faktual agar tim pengawas dapat langsung memverifikasi ke lapangan.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Category Selector Pills */}
-            <div>
-              <label className="block text-xs font-bold text-[#0D2453] mb-2.5">
-                Kategori Masalah
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {CATEGORIES.map((cat) => {
-                  const isSelected = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`text-left p-3 rounded-2xl border transition-all ${
-                        isSelected
-                          ? 'border-[#0D2453] bg-[#0D2453]/5 ring-1 ring-[#0D2453]'
-                          : 'border-[#EBEBEB] bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#0D2453]">
-                          {cat.label}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            cat.slaType === 'urgent'
-                              ? 'bg-rose-100 text-rose-800'
-                              : cat.slaType === 'audit'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                          }`}
-                        >
-                          {cat.sla}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#767676] mt-1 leading-snug line-clamp-2">
-                        {cat.desc}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Region Selectors: Kabupaten & Desa */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
-                  Kabupaten / Kota
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedKabupaten}
-                    onChange={(e) => {
-                      setSelectedKabupaten(e.target.value);
-                      handleSearchLocation(e.target.value);
-                    }}
-                    className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-medium focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer"
-                  >
-                    <option>Kabupaten Magelang</option>
-                    <option>Kabupaten Banyumas</option>
-                    <option>Kabupaten Kendal</option>
-                    <option>Kabupaten Karanganyar</option>
-                    <option>Kabupaten Banjarnegara</option>
-                    <option>Kabupaten Wonosobo</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
-                  Desa Wisata
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedDesa}
-                    onChange={(e) => {
-                      setSelectedDesa(e.target.value);
-                      handleSearchLocation(e.target.value);
-                    }}
-                    className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-medium focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer"
-                  >
-                    <option>Desa Candirejo</option>
-                    <option>Desa Limpakuwus</option>
-                    <option>Desa Getas (Tubing Genting)</option>
-                    <option>Desa Berjo</option>
-                    <option>Desa Dieng Kulon</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            {/* Title / Judul Aduan */}
-            <div>
-              <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
-                Judul Laporan Singkat
-              </label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Contoh: Pagar pembatas jurang rapuh di akses air terjun"
-                className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none"
-              />
-            </div>
-
-            {/* Description / Deskripsi Detail */}
-            <div>
-              <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
-                Deskripsi Lengkap Kejadian & Titik Masalah
-              </label>
-              <textarea
-                rows={3}
-                required
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tuliskan kronologi, perkiraan dampak risiko keselamatan, atau detail besaran pungli tanpa kuitansi..."
-                className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none resize-none"
-              />
-            </div>
-
-            {/* Address Search & Coordinates */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-[#0D2453]">
-                  Lokasi / Alamat Titik Temuan
-                </label>
-                <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" />
-                  Peta terhubung
-                </span>
-              </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={addressInput}
-                  onChange={(e) => {
-                    setAddressInput(e.target.value);
-                    handleSearchLocation(e.target.value);
-                  }}
-                  placeholder="Ketik nama jalan, dusun, atau kawasan wisata..."
-                  className="w-full bg-[#F5F5F5] border-0 rounded-xl pl-4 pr-10 py-3 text-xs sm:text-sm text-[#0D2453] font-medium focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none"
-                />
-                <Search className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Interactive Leaflet Map Pin */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-[#0D2453]">
-                  Tandai Posisi Presisi di Peta (Geser atau Klik)
-                </label>
-                <span className="text-[11px] text-[#767676]">
-                  {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-                </span>
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-[#EBEBEB] relative">
-                <div ref={mapContainerRef} className="w-full h-56 z-0 bg-slate-100" />
-                <div className="bg-white/90 backdrop-blur-xs px-3 py-1.5 border-t border-[#EBEBEB] text-[11px] text-[#767676] flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                    <span className="truncate">{locationLabel}</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-medium shrink-0 ml-2">
-                    OpenStreetMap GPS
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* File Upload Dropzone */}
-            <div>
-              <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
-                Unggah Bukti Lapangan (Foto, Nota, atau Video)
-              </label>
-              <div className="relative border-2 border-dashed border-[#EBEBEB] hover:border-[#0D2453]/40 rounded-2xl p-6 text-center transition-colors bg-[#F7F9FC]/50 group">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,video/*,.pdf"
-                  onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="flex flex-col items-center justify-center">
-                  <div className="w-10 h-10 rounded-full bg-white border border-[#EBEBEB] flex items-center justify-center text-[#0D2453] mb-2 group-hover:scale-105 transition-transform shadow-xs">
-                    <UploadCloud className="w-5 h-5 text-[#0D2453]" />
-                  </div>
-                  <span className="text-xs font-bold text-[#0D2453]">
-                    Pilih Berkas atau Tarik ke Sini
-                  </span>
-                  <span className="text-[11px] text-[#767676] mt-0.5">
-                    JPG, PNG, WEBP, MP4 (maksimal 5 MB per berkas)
-                  </span>
-                </div>
-              </div>
-
-              {/* Uploaded Files Chips */}
-              {uploadedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2.5">
-                  {uploadedFiles.map((fname, idx) => (
-                    <div
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 bg-[#F5F5F5] px-3 py-1.5 rounded-full text-[11px] font-medium text-[#0D2453] border border-[#EBEBEB]"
-                    >
-                      <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="max-w-[180px] truncate">{fname}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(idx)}
-                        className="text-slate-400 hover:text-slate-600 ml-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Whistleblower Protection Checkbox */}
-            <div className="bg-[#F7F9FC] border border-[#EBEBEB] rounded-2xl p-4 flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="anonim-check"
-                checked={isAnonymous}
-                onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded text-[#0D2453] border-slate-300 focus:ring-[#0D2453]"
-              />
-              <label htmlFor="anonim-check" className="text-xs text-[#0D2453] cursor-pointer">
-                <span className="font-bold flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#0D2453]" />
-                  Lapor sebagai Pelapor Anonim / Rahasia
-                </span>
-                <span className="text-[11px] text-[#767676] block mt-0.5">
-                  Identitas Anda, nomor kontak, serta alamat IP disamarkan dari dokumen publikasi demi perlindungan keselamatan pelapor.
-                </span>
-              </label>
-            </div>
-
-            {/* Submit Action & SLA notice */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between text-xs text-[#767676] mb-3">
-                <span>Garansi Penyelesaian:</span>
-                <span className="font-bold text-[#0D2453]">
-                  {activeCategoryObj.sla} ({activeCategoryObj.label})
-                </span>
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 rounded-full bg-[#0D2453] hover:bg-[#132d66] active:scale-[0.99] text-white text-xs sm:text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Menerbitkan Tiket Resmi...</span>
-                  </>
-                ) : (
-                  <span>Kirim Laporan Resmi</span>
-                )}
-              </button>
-            </div>
-          </form>
+      {/* 3. Search Bar & Filter Controls Card */}
+      <div className="bg-white rounded-3xl border border-[#EBEBEB] p-5 sm:p-6 shadow-xs space-y-4">
+        {/* Row 1: Search Input */}
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari kode tiket (contoh: DS-JTG-2026-0891), nama desa wisata, atau topik masalah..."
+            className="w-full bg-[#F5F5F5] border-0 rounded-2xl pl-12 pr-4 py-3.5 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none"
+          />
+          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Right Column (Span 5): Ticket Tracking & SLA SOP */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Card A: Track Existing Ticket */}
-          <div className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-7 shadow-xs">
-            <h3 className="text-sm font-bold text-[#0D2453] uppercase tracking-wider mb-3">
-              Lacak Status Tiket Aduan
-            </h3>
-            <p className="text-xs text-[#767676] mb-4">
-              Pantau tahapan verifikasi lapangan dan disposisi penyelesaian secara transparan.
-            </p>
+        {/* Row 2: Select Dropdowns & Category Pills */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          {/* Kabupaten Dropdown */}
+          <div className="md:col-span-4 relative">
+            <select
+              value={selectedKabupaten}
+              onChange={(e) => setSelectedKabupaten(e.target.value)}
+              className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-2.5 text-xs text-[#0D2453] font-bold focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer"
+            >
+              {KABUPATEN_OPTIONS.map((kab) => (
+                <option key={kab} value={kab}>{kab}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
 
-            <form onSubmit={handleTrackTicket} className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={ticketSearchInput}
-                onChange={(e) => setTicketSearchInput(e.target.value)}
-                placeholder="Contoh: DS-JTG-2026-0891"
-                className="flex-1 bg-[#F5F5F5] border-0 rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#0D2453] uppercase placeholder:normal-case placeholder:font-normal placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2.5 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold transition-all shrink-0"
+          {/* Kategori Dropdown */}
+          <div className="md:col-span-4 relative">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-2.5 text-xs text-[#0D2453] font-bold focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer"
+            >
+              {CATEGORY_FILTERS.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Status Tabs */}
+          <div className="md:col-span-4 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {STATUS_FILTERS.map((st) => {
+              const isActive = selectedStatus === st;
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setSelectedStatus(st)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    isActive
+                      ? 'bg-[#0D2453] text-white shadow-2xs'
+                      : 'bg-[#F5F5F5] text-[#767676] hover:text-[#0D2453]'
+                  }`}
+                >
+                  {st}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Results Header & Count */}
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-bold text-[#767676]">
+          Menampilkan <span className="text-[#0D2453]">{filteredReports.length}</span> laporan publik
+        </div>
+        {(searchQuery || selectedKabupaten !== 'Semua Kabupaten' || selectedStatus !== 'Semua Status' || selectedCategory !== 'Semua Kategori') && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setSelectedKabupaten('Semua Kabupaten');
+              setSelectedStatus('Semua Status');
+              setSelectedCategory('Semua Kategori');
+            }}
+            className="text-xs font-bold text-[#0D2453] hover:underline"
+          >
+            Reset Filter
+          </button>
+        )}
+      </div>
+
+      {/* 5. Report Cards Grid (2 Columns, Lapor Semar Style) */}
+      {filteredReports.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-[#EBEBEB] p-12 text-center shadow-xs">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-[#0D2453]">Tidak ada aduan yang sesuai</h3>
+          <p className="text-xs text-[#767676] mt-1 max-w-sm mx-auto">
+            Coba ubah kata kunci pencarian atau sesuaikan pilihan filter kabupaten dan kategori.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {filteredReports.map((item) => {
+            const isCompleted = item.status === 'Selesai';
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white rounded-3xl border border-[#EBEBEB] p-6 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-5"
               >
-                Periksa
-              </button>
-            </form>
+                <div>
+                  {/* Card Header: Ticket Code, Category, Status Badge */}
+                  <div className="flex items-start justify-between gap-3 border-b border-[#F0F0F0] pb-3.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-[#0D2453] tracking-wide">
+                          {item.ticketCode}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F5F5] text-[#0D2453] border border-[#EBEBEB]">
+                          {item.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#767676] mt-1">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{item.desa}, {item.kabupaten}</span>
+                      </div>
+                    </div>
 
-            {ticketError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 mb-3">
-                {ticketError}
-              </div>
-            )}
-
-            {trackedTicket && (
-              <div className="space-y-4 pt-2 border-t border-[#EBEBEB]">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[11px] font-bold text-[#0D2453] block">
-                      {trackedTicket.code}
-                    </span>
-                    <h4 className="text-xs font-bold text-[#0D2453] mt-0.5">
-                      {trackedTicket.title}
-                    </h4>
-                    <span className="text-[11px] text-[#767676] block mt-0.5">
-                      {trackedTicket.location}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                          isCompleted
+                            ? 'bg-[#E6FFFA] text-[#319795] border-[#B2F5EA]'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                      <span className="text-[10px] text-[#767676] font-medium">
+                        {item.slaLabel}
+                      </span>
+                    </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E6FFFA] text-[#319795] border border-[#B2F5EA] shrink-0">
-                    {trackedTicket.status}
-                  </span>
+
+                  {/* Complaint Content */}
+                  <div className="mt-4">
+                    <h3 className="text-base font-bold text-[#0D2453] leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-[#4A5568] mt-1.5 leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
+
+                  {/* Photos: Before & After (If Available) */}
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    {/* Before Photo */}
+                    {item.beforePhoto && (
+                      <div>
+                        <div className="text-[11px] font-bold text-[#767676] mb-1">
+                          Kondisi Awal
+                        </div>
+                        <div
+                          onClick={() =>
+                            setActiveLightbox({
+                              url: item.beforePhoto!,
+                              title: `${item.ticketCode} - Kondisi Awal`,
+                              tag: 'Sebelum Perbaikan',
+                            })
+                          }
+                          className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
+                        >
+                          <img
+                            src={item.beforePhoto}
+                            alt="Kondisi Awal"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* After Photo or Processing Placeholder */}
+                    {item.afterPhoto ? (
+                      <div>
+                        <div className="text-[11px] font-bold text-emerald-700 mb-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Hasil Perbaikan (Proof-of-Fix)</span>
+                        </div>
+                        <div
+                          onClick={() =>
+                            setActiveLightbox({
+                              url: item.afterPhoto!,
+                              title: `${item.ticketCode} - Hasil Perbaikan`,
+                              tag: 'Sesudah Selesai',
+                            })
+                          }
+                          className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#EBEBEB] relative group cursor-pointer shadow-2xs"
+                        >
+                          <img
+                            src={item.afterPhoto}
+                            alt="Hasil Perbaikan"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors flex items-center justify-center">
+                            <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="text-[11px] font-bold text-amber-700 mb-1 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Tahap Eksekusi</span>
+                        </div>
+                        <div className="aspect-[4/3] rounded-2xl bg-[#F7F9FC] border border-dashed border-amber-300 flex flex-col items-center justify-center p-4 text-center">
+                          <Clock className="w-6 h-6 text-amber-600 mb-1.5 animate-pulse" />
+                          <span className="text-[11px] font-bold text-[#0D2453]">
+                            Petugas di Lapangan
+                          </span>
+                          <span className="text-[10px] text-[#767676] mt-0.5">
+                            Wajib upload foto fisik untuk tutup tiket
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Official Response Box (Tindak Lanjut Desa) */}
+                  <div className="mt-4 p-4 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] border-l-4 border-l-[#0D2453] space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-[#0D2453]">
+                        {item.response.official}
+                      </span>
+                      <span className="text-[#767676]">{item.response.date}</span>
+                    </div>
+                    <p className="text-xs text-[#4A5568] leading-relaxed">
+                      {item.response.content}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Progress Timeline */}
-                <div className="space-y-3 pt-2">
-                  {trackedTicket.steps.map((st, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
+                {/* Card Footer: Budget / SPJ Link & Detail Trigger */}
+                <div className="pt-3 border-t border-[#F0F0F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {item.budgetInfo ? (
+                    <div className="flex items-center gap-2">
+                      <Receipt className="w-4 h-4 text-[#0D2453] shrink-0" />
+                      <div className="text-[11px]">
+                        <span className="text-[#767676]">Realisasi: </span>
+                        <span className="font-bold text-[#0D2453]">{item.budgetInfo.amount}</span>
+                        <Link
+                          href={item.budgetInfo.transparencyUrl}
+                          className="inline-flex items-center gap-0.5 text-[#0D2453] font-bold ml-2 hover:underline"
+                        >
+                          <span>Cek SPJ ↗</span>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-[#767676]">
+                      {item.reporter} • {item.date}
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveDetailItem(item)}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#F5F5F5] hover:bg-slate-200 text-xs font-bold text-[#0D2453] transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Linimasa Tiket</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 6. Bottom Banner: Report Issue CTA */}
+      <section className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-[#0D2453]">
+            Menemukan kejanggalan atau fasilitas rusak di desa wisata?
+          </h2>
+          <p className="text-xs text-[#767676] mt-1 max-w-2xl">
+            Sampaikan pengaduan melalui formulir instan di Beranda. Laporan Anda tercatat langsung di dashboard pengawasan Pemprov Jateng dengan garansi SLA tuntas.
+          </p>
+        </div>
+        <Link
+          href="/#buat-laporan"
+          className="inline-flex items-center justify-center gap-1.5 px-6 py-3 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold shadow-xs transition-all shrink-0 active:scale-95"
+        >
+          <span>Buka Formulir Beranda</span>
+          <ArrowUpRight className="w-4 h-4" />
+        </Link>
+      </section>
+
+      {/* 7. Modal: Timeline Detail */}
+      <AnimatePresence>
+        {activeDetailItem && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs"
+            onClick={() => setActiveDetailItem(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl border border-[#EBEBEB] max-w-lg w-full p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-[#EBEBEB] pb-4 mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-extrabold text-[#0D2453]">
+                      {activeDetailItem.ticketCode}
+                    </span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        activeDetailItem.status === 'Selesai'
+                          ? 'bg-[#E6FFFA] text-[#319795]'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {activeDetailItem.status}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-[#0D2453] mt-1">
+                    {activeDetailItem.title}
+                  </h3>
+                  <span className="text-xs text-[#767676] block mt-0.5">
+                    {activeDetailItem.desa}, {activeDetailItem.kabupaten}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveDetailItem(null)}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Timeline Steps */}
+              <div className="space-y-4 py-2">
+                <h4 className="text-xs font-bold text-[#767676] uppercase tracking-wider">
+                  Riwayat & Linimasa Penanganan
+                </h4>
+                <div className="space-y-3.5">
+                  {activeDetailItem.timeline.map((st, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
                       <div className="mt-0.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        {st.done ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                        )}
                       </div>
                       <div className="text-xs">
                         <div className="font-bold text-[#0D2453]">{st.title}</div>
                         <div className="text-[10px] text-[#767676] mt-0.5">{st.date}</div>
                         <div className="text-[11px] text-[#4A5568] mt-1 leading-snug">
-                          {st.desc}
+                          {st.note}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
+              </div>
 
-                {trackedTicket.villageLink && (
-                  <div className="pt-2">
-                    <Link
-                      href={trackedTicket.villageLink}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0D2453] hover:underline"
-                    >
-                      <span>Lihat Nota & Realisasi di Transparansi Dana</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </Link>
+              {/* Budget transparency link */}
+              {activeDetailItem.budgetInfo && (
+                <div className="mt-5 p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-[#767676] block uppercase font-bold">
+                      Realisasi Buku Kas
+                    </span>
+                    <span className="text-xs font-bold text-[#0D2453]">
+                      {activeDetailItem.budgetInfo.amount} ({activeDetailItem.budgetInfo.source})
+                    </span>
                   </div>
-                )}
+                  <Link
+                    href={activeDetailItem.budgetInfo.transparencyUrl}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] hover:underline"
+                  >
+                    <span>Buka SPJ</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+
+              <div className="mt-6 pt-3 border-t border-[#EBEBEB]">
+                <button
+                  type="button"
+                  onClick={() => setActiveDetailItem(null)}
+                  className="w-full py-2.5 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold transition-all"
+                >
+                  Tutup Rincian
+                </button>
               </div>
-            )}
+            </motion.div>
           </div>
+        )}
+      </AnimatePresence>
 
-          {/* Card B: Standard Operating Procedure (SOP) */}
-          <div className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-7 shadow-xs">
-            <h3 className="text-sm font-bold text-[#0D2453] uppercase tracking-wider mb-4">
-              Alur Garansi Penanganan Aduan
-            </h3>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#DCE7F5] text-[#0D2453] font-extrabold text-xs flex items-center justify-center shrink-0">
-                  1
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#0D2453]">
-                    Verifikasi Administrasi & Titik GPS
-                  </h4>
-                  <p className="text-[11px] text-[#767676] mt-0.5 leading-relaxed">
-                    Sistem memvalidasi keabsahan data GPS dan memastikan laporan bukan klaim palsu dalam tempo &lt; 24 jam.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#DCE7F5] text-[#0D2453] font-extrabold text-xs flex items-center justify-center shrink-0">
-                  2
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#0D2453]">
-                    Surat Perintah Kerja ke Pemdes
-                  </h4>
-                  <p className="text-[11px] text-[#767676] mt-0.5 leading-relaxed">
-                    Notifikasi eskalasi dikirim ke akun Pengelola Desa Wisata dengan batasan countdown SLA aktif.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#DCE7F5] text-[#0D2453] font-extrabold text-xs flex items-center justify-center shrink-0">
-                  3
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#0D2453]">
-                    Wajib Proof-of-Fix & Arsip Kas
-                  </h4>
-                  <p className="text-[11px] text-[#767676] mt-0.5 leading-relaxed">
-                    Status hanya dapat menjadi Selesai setelah pengelola mengunggah foto perbaikan dan nota belanja fisik.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Bottom Section: Verified Completed Reports Linked to Transparency */}
-      <section className="space-y-[24px] pt-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453] tracking-tight">
-            Aspirasi yang Selesai Ditindaklanjuti
-          </h2>
-          <p className="text-xs sm:text-sm text-[#767676] mt-1">
-            Daftar perbaikan nyata hasil tindak lanjut aduan masyarakat yang tercatat dalam buku kas terbuka.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Item 1 */}
-          <div className="bg-white rounded-3xl border border-[#EBEBEB] p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="text-xs font-bold text-[#0D2453]">DS-JTG-2026-0891</span>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E6FFFA] text-[#319795] border border-[#B2F5EA]">
-                  Selesai
-                </span>
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#0D2453]">
-                Akses ke curug buruk dan pagar pengaman lapuk
-              </h3>
-              <p className="text-xs text-[#4A5568] mt-1.5 leading-relaxed">
-                Realisasi rabat beton jalan setapak sepanjang 240 meter dan penggantian pagar pengaman besi di Desa Candirejo, Magelang.
-              </p>
-            </div>
-            <div className="pt-4 mt-4 border-t border-[#EBEBEB] flex items-center justify-between">
-              <span className="text-[11px] text-[#767676]">Realisasi: Rp 100.000.000</span>
-              <Link
-                href="/transparansi"
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] hover:underline"
-              >
-                <span>Buka Bukti Kuitansi</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Item 2 */}
-          <div className="bg-white rounded-3xl border border-[#EBEBEB] p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="text-xs font-bold text-[#0D2453]">DS-JTG-2026-0744</span>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E6FFFA] text-[#319795] border border-[#B2F5EA]">
-                  Selesai
-                </span>
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#0D2453]">
-                Wastafel mampet dan kran air toilet tidak mengalir
-              </h3>
-              <p className="text-xs text-[#4A5568] mt-1.5 leading-relaxed">
-                Penggantian total pipa sanitasi dan instalasi kran air higienis di pos toilet umum Desa Candirejo, Magelang.
-              </p>
-            </div>
-            <div className="pt-4 mt-4 border-t border-[#EBEBEB] flex items-center justify-between">
-              <span className="text-[11px] text-[#767676]">Realisasi: Rp 15.000.000</span>
-              <Link
-                href="/transparansi"
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] hover:underline"
-              >
-                <span>Buka Bukti Kuitansi</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Success Modal Dialog */}
+      {/* 8. Lightbox Modal */}
       <AnimatePresence>
-        {createdTicketCode && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+        {activeLightbox && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+            onClick={() => setActiveLightbox(null)}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-3xl border border-[#EBEBEB] max-w-md w-full p-6 sm:p-7 shadow-2xl relative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full shadow-2xl relative border border-slate-700/50"
             >
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mb-4">
-                <Check className="w-6 h-6 stroke-[3]" />
+              <div className="relative aspect-[16/10] bg-slate-900">
+                <img
+                  src={activeLightbox.url}
+                  alt={activeLightbox.title}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setActiveLightbox(null)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/60 text-white hover:bg-slate-900 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <span className="absolute bottom-4 left-4 px-3 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white text-xs font-bold">
+                  {activeLightbox.tag}
+                </span>
               </div>
-
-              <h3 className="text-lg font-bold text-[#0D2453]">
-                Laporan Berhasil Diajukan
-              </h3>
-              <p className="text-xs text-[#767676] mt-1.5 leading-relaxed">
-                Laporan Anda telah tercatat dalam sistem monitoring pengawasan desa wisata Jawa Tengah. Simpan nomor tiket berikut untuk melacak perkembangan penanganan.
-              </p>
-
-              <div className="mt-4 p-3.5 bg-[#F7F9FC] border border-[#EBEBEB] rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-semibold text-[#767676] block uppercase tracking-wide">
-                    Nomor Tiket Aduan
-                  </span>
-                  <span className="text-base font-extrabold text-[#0D2453] tracking-wider">
-                    {createdTicketCode}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyCode}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-[#EBEBEB] text-xs font-bold text-[#0D2453] hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-2xs"
-                >
-                  {copiedCode ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Tersalin</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Salin</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-6 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTicketSearchInput(createdTicketCode);
-                    setCreatedTicketCode(null);
-                    window.scrollTo({ top: 300, behavior: 'smooth' });
-                  }}
-                  className="w-full py-3 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold transition-all shadow-xs"
-                >
-                  Pantau Tiket Ini Sekarang
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreatedTicketCode(null)}
-                  className="w-full py-2.5 rounded-full bg-white hover:bg-slate-50 text-[#767676] text-xs font-bold transition-all"
-                >
-                  Tutup Jendela
-                </button>
+              <div className="p-4 sm:p-5 bg-white">
+                <h4 className="text-sm font-bold text-[#0D2453]">
+                  {activeLightbox.title}
+                </h4>
+                <p className="text-xs text-[#767676] mt-0.5">
+                  Foto bukti verifikasi fisik pengawasan tata kelola desa wisata Jawa Tengah.
+                </p>
               </div>
             </motion.div>
           </div>
