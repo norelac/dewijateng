@@ -32,15 +32,15 @@ export default function Navbar() {
 
       {/* Floating Header Wrapper */}
       <header
-        className={`fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4 sm:px-6 transition-all duration-300 ease-in-out ${
-          isScrolled ? 'top-3 sm:top-4' : 'top-6'
+        className={`fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4 sm:px-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isScrolled ? 'top-3.5 sm:top-4' : 'top-6'
         }`}
       >
         <div
-          className={`pointer-events-auto flex items-center justify-between transition-all duration-300 ease-in-out ${
+          className={`pointer-events-auto flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isScrolled
-              ? 'w-full max-w-4xl h-[60px] px-5 sm:px-6 rounded-full bg-white/95 backdrop-blur-md border border-[#E6ECF5] shadow-[0_10px_30px_rgba(0,0,0,0.08)] text-[#0D2453]'
-              : 'w-full max-w-[1280px] h-[76px] px-5 sm:px-6 rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]'
+              ? 'w-full max-w-[1060px] h-[68px] px-6 sm:px-8 rounded-full bg-white/95 backdrop-blur-md border border-[#E6ECF5] shadow-[0_12px_36px_rgba(13,36,83,0.09)] text-[#0D2453]'
+              : 'w-full max-w-[1280px] h-[76px] px-6 sm:px-8 rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]'
           }`}
         >
           {/* Brand Logo with Pemprov Jateng Image */}
@@ -58,11 +58,7 @@ export default function Navbar() {
           </Link>
 
           {/* Center Navigation Links */}
-          <nav
-            className={`hidden md:flex items-center transition-all duration-300 ${
-              isScrolled ? 'gap-5 lg:gap-6' : 'gap-7 lg:gap-8'
-            }`}
-          >
+          <nav className="hidden md:flex items-center gap-7 lg:gap-8">
             {navItems.map((item) => {
               if (item.disabled) {
                 return (
@@ -98,14 +94,10 @@ export default function Navbar() {
           </nav>
 
           {/* Right Actions: + Buat Laporan & Masuk */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-3">
             <Link
               href="/#buat-laporan"
-              className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all shadow-xs active:scale-95 ${
-                isScrolled
-                  ? 'px-3.5 sm:px-4 py-2 text-xs sm:text-sm'
-                  : 'px-4 sm:px-5 py-2.5 text-xs sm:text-sm'
-              }`}
+              className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all shadow-xs active:scale-95"
             >
               <span className="text-sm font-light leading-none">+</span>
               <span>Buat Laporan</span>
@@ -114,11 +106,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={(e) => e.preventDefault()}
-              className={`inline-flex items-center rounded-full font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all shadow-xs active:scale-95 cursor-pointer ${
-                isScrolled
-                  ? 'px-3.5 sm:px-4 py-2 text-xs sm:text-sm'
-                  : 'px-4 sm:px-5 py-2.5 text-xs sm:text-sm'
-              }`}
+              className="inline-flex items-center px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all shadow-xs active:scale-95 cursor-pointer"
             >
               Masuk
             </button>

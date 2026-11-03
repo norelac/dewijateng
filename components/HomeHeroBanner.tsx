@@ -112,8 +112,8 @@ export default function HomeHeroBanner() {
         <p className="text-white/85 text-sm sm:text-[18px] max-w-[720px] leading-relaxed drop-shadow-sm font-normal min-h-[50px] sm:min-h-[54px] flex items-center">
           <HeroTypewriter
             text="Pantau penggunaan dana desa secara terbuka dan laporkan kendala fasilitas wisata secara cepat"
-            speed={22}
-            delay={500}
+            speed={50}
+            delay={600}
           />
         </p>
 
@@ -171,44 +171,79 @@ export default function HomeHeroBanner() {
 
 function HeroTypewriter({
   text,
-  speed = 22,
-  delay = 500,
+  speed = 45,
+  delay = 600,
+  holdDelay = 4500,
 }: {
   text: string;
   speed?: number;
   delay?: number;
+  holdDelay?: number;
 }) {
   const [length, setLength] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    // ponytail: interval typewriter. Upgrade to Web Animations API if complex pause/resume needed.
-    let intervalId: NodeJS.Timeout;
-    const timeoutId = setTimeout(() => {
+    // ponytail: natural loop with smooth fade reset. Upgrade to multi-sentence carousel if plural phrases needed.
+    let timer: NodeJS.Timeout;
+    let currentLength = 0;
+    let isActive = true;
+
+    const startTyping = () => {
+      setIsFading(false);
       setIsTyping(true);
-      let current = 0;
-      intervalId = setInterval(() => {
-        current++;
-        setLength(current);
-        if (current >= text.length) {
-          clearInterval(intervalId);
+
+      const typeStep = () => {
+        if (!isActive) return;
+        currentLength++;
+        setLength(currentLength);
+
+        if (currentLength >= text.length) {
           setIsTyping(false);
+          // Hold full text for reading, then soft fade
+          timer = setTimeout(() => {
+            if (!isActive) return;
+            setIsFading(true);
+            timer = setTimeout(() => {
+              if (!isActive) return;
+              currentLength = 0;
+              setLength(0);
+              timer = setTimeout(() => {
+                if (!isActive) return;
+                startTyping();
+              }, 300);
+            }, 450);
+          }, holdDelay);
+          return;
         }
-      }, speed);
-    }, delay);
+
+        timer = setTimeout(typeStep, speed);
+      };
+
+      timer = setTimeout(typeStep, speed);
+    };
+
+    timer = setTimeout(startTyping, delay);
 
     return () => {
-      clearTimeout(timeoutId);
-      if (intervalId) clearInterval(intervalId);
+      isActive = false;
+      clearTimeout(timer);
     };
-  }, [text, speed, delay]);
+  }, [text, speed, delay, holdDelay]);
 
   return (
-    <span className="inline-block select-none">
+    <span
+      className={`inline-block select-none transition-opacity duration-400 ease-in-out ${
+        isFading ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
       <span>{text.slice(0, length)}</span>
-      {isTyping && (
-        <span className="inline-block w-[2px] h-[0.9em] ml-1 bg-white align-baseline animate-pulse" />
-      )}
+      <span
+        className={`inline-block w-[2px] h-[0.9em] ml-1 bg-white align-baseline ${
+          isTyping ? 'opacity-100' : 'animate-pulse'
+        }`}
+      />
     </span>
   );
 }
