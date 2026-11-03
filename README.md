@@ -8,24 +8,60 @@ Repository ini dikembangkan oleh Tim sotodiensracing (Universitas Dian Nuswantor
 
 ## Tech Stack
 
-### Frontend & Backend (Fullstack)
-- Framework: Next.js 14 (App Router) & React 18
-- Bahasa: TypeScript / JavaScript
-- Styling: Tailwind CSS 3.4
-- Komponen & Ikon: Lucide React & Framer Motion
-- Peta & Geospasial: Leaflet.js & OpenStreetMap (Pinpoint GPS & Dynamic Address Geocoding)
+### Frontend & Core Platform
+- **Framework**: Next.js 14 (App Router) & React 18
+- **Bahasa**: TypeScript (Strict Mode)
+- **Styling**: Tailwind CSS 3.4 & PostCSS
+- **Animasi & Interaktivitas**: Framer Motion 11.x
+- **Ikon**: Lucide React
+- **Peta & Geospasial**: Leaflet.js & OpenStreetMap (Pinpoint GPS & Dynamic Address Geocoding)
+- **Fonts**: Plus Jakarta Sans, Montserrat, MonteCarlo
 
 ### Basis Data & Penyimpanan
-- Database: PostgreSQL (Relational Database Management System)
-- Ekstensi Spasial: PostGIS (Kueri Geofencing `ST_DWithin` radius <500 meter)
-- Layanan BaaS & Auth: Supabase (PostgreSQL, Row-Level Security, Database Webhooks)
-- Penyimpanan Berkas: Supabase Storage (Dokumen APBDes, foto perbaikan, dan kuitansi nota)
+- **Database**: PostgreSQL (Relational Database Management System)
+- **Ekstensi Spasial**: PostGIS (Kueri Geofencing `ST_DWithin` radius <500 meter)
+- **Layanan BaaS & Auth**: Supabase (PostgreSQL, Row-Level Security, Database Webhooks)
+- **Penyimpanan Berkas**: Supabase Storage (Dokumen APBDes, foto perbaikan, dan kuitansi nota)
 
 ### Layanan Kecerdasan Buatan (AI Engine)
-- OCR & Receipt Auditor: Vision API untuk ekstraksi data kuitansi toko material dan deteksi markup harga terhadap Standar Satuan Harga (SSH) Pemprov Jateng
-- Image Verification: Computer Vision & validasi metadata EXIF (tanggal dan koordinat GPS) untuk verifikasi foto hasil perbaikan
-- Voice Transcription: Whisper API untuk konversi rekaman suara aduan darurat menjadi teks
-- Decision Support: Dynamic Trust Score Engine (algoritma kepatuhan 0–100 pada Command Center)
+- **OCR & Receipt Auditor**: Vision API untuk ekstraksi data kuitansi toko material dan deteksi markup harga terhadap Standar Satuan Harga (SSH) Pemprov Jateng
+- **Image Verification**: Computer Vision & validasi metadata EXIF (tanggal dan koordinat GPS) untuk verifikasi foto hasil perbaikan (*Proof-of-Fix*)
+- **Voice Transcription**: Whisper API untuk konversi rekaman suara aduan darurat menjadi teks
+- **Decision Support**: Dynamic Trust Score Engine (algoritma kepatuhan 0–100 pada Command Center)
+
+---
+
+## Struktur Direktori
+
+```text
+dewi-jateng/
+├── app/                  # Next.js 14 App Router
+│   ├── edukasi/          # Halaman edukasi & regulasi (/edukasi)
+│   ├── lapor/            # Halaman kanal aduan publik (/lapor)
+│   ├── pengelola/        # Halaman dashboard pengelola pokdarwis (/pengelola)
+│   ├── transparansi/     # Halaman transparansi dana desa (/transparansi)
+│   ├── globals.css       # Style global & token warna Figma
+│   ├── layout.tsx        # Root layout, Google Fonts, & metadata
+│   └── page.tsx          # Halaman beranda (/), hero banner, feed, form
+├── components/           # Komponen UI React
+│   ├── CashbookTable.tsx
+│   ├── Footer.tsx
+│   ├── HeroMotion.tsx
+│   ├── HomeKpiCounters.tsx
+│   ├── HomeReportFeed.tsx
+│   ├── HomeReportForm.tsx
+│   ├── Navbar.tsx
+│   ├── PengelolaTicketBoard.tsx
+│   ├── ProofOfFixSlider.tsx
+│   └── ReportFormMotion.tsx
+├── docs/                 # Dokumentasi arsitektur, BRD, PRD, & desain sistem
+├── lib/                  # Helper utilities & mock dataset desa wisata
+├── public/               # Asset statis, logo Pemprov Jateng, favicon
+├── types/                # Definisi antarmuka TypeScript
+├── next.config.mjs       # Konfigurasi Next.js
+├── tailwind.config.mjs   # Konfigurasi Tailwind & token desain Figma
+└── tsconfig.json         # Konfigurasi TypeScript compiler & alias path (@/*)
+```
 
 ---
 
@@ -78,6 +114,11 @@ npm run dev
 
 Aplikasi dapat diakses melalui peramban di `http://localhost:3000`.
 
+5. Build produksi dan verifikasi tipe:
+```bash
+npm run build
+```
+
 ---
 
 ## Progress Saat Ini
@@ -108,6 +149,6 @@ Proyek saat ini berada pada tahap **First Draft Submission (01 November 2026)**:
 ## Tim Pengembang
 
 Tim sotodiensracing - Universitas Dian Nuswantoro, Semarang:
-1. Muhammad Ilham Maulana - Hacker (Lead Fullstack Developer)
-2. Delvia Mareta Dealova - Hipster (UI/UX & Product Designer)
-3. Muhammad Iqbal Junialdi - Hustler (System Analyst & Project Strategist)
+1. **Muhammad Ilham Maulana** - Hacker (Lead Fullstack Developer)
+2. **Delvia Mareta Dealova** - Hipster (UI/UX & Product Designer)
+3. **Muhammad Iqbal Junialdi** - Hustler (System Analyst & Project Strategist)
