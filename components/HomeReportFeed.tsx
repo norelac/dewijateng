@@ -159,7 +159,7 @@ export default function HomeReportFeed() {
       </div>
 
       {/* Unified Report Cards */}
-      <div className="space-y-6">
+      <div className="space-y-[32px]">
         {filteredReports.map((item) => {
           const isSlider = !!sliderModes[item.id];
           const pos = sliderPos[item.id] ?? 50;
@@ -341,11 +341,11 @@ export default function HomeReportFeed() {
                 {/* Right Column (Span 5): CATATAN DARI DESA Timeline */}
                 <div className="lg:col-span-5 lg:border-l lg:border-[#EBEBEB] lg:pl-8 flex flex-col justify-between h-full pt-6 lg:pt-0 border-t lg:border-t-0 border-[#EBEBEB]">
                   <div>
-                    <h4 className="text-[11px] font-bold text-[#767676] uppercase tracking-wider mb-5">
+                    <h4 className="text-[11px] font-bold text-[#767676] uppercase tracking-wider mb-[28px]">
                       CATATAN DARI DESA
                     </h4>
 
-                    <div className="space-y-6">
+                    <div className="space-y-[28px]">
                       {item.timeline.map((entry, idx) => (
                         <div key={idx} className="space-y-1.5">
                           <span className="text-[11px] font-bold text-[#767676] block uppercase tracking-wide">
@@ -364,10 +364,6 @@ export default function HomeReportFeed() {
                             <span>{entry.villageLink}</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
                           </Link>
-
-                          {idx < item.timeline.length - 1 && (
-                            <div className="border-t border-[#EBEBEB] pt-4"></div>
-                          )}
                         </div>
                       ))}
                     </div>

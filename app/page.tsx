@@ -77,7 +77,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. Section Dari Laporan, Menjadi Perbaikan */}
-      <section className="mt-[44px] pt-4 sm:pt-6 space-y-8">
+      <section className="mt-[44px] pt-4 sm:pt-6 space-y-[32px]">
         <div className="mb-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#0D2453] tracking-tight">
             Dari Laporan, Menjadi Perbaikan
@@ -94,10 +94,10 @@ export default function HomePage() {
         <div className="flex justify-end pt-2 pb-8">
           <Link
             href="/#buat-laporan"
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white border border-[#EBEBEB] text-[#0D2453] hover:bg-slate-50 text-xs font-bold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white text-xs font-bold shadow-sm transition-all active:scale-95 group"
           >
             <span>Lihat Lainnya</span>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <ChevronRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
       </section>

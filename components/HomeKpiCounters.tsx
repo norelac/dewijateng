@@ -52,14 +52,14 @@ export default function HomeKpiCounters() {
   ];
 
   return (
-    <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+    <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-[32px]">
       {metrics.map((item, idx) => (
         <motion.div
           key={item.label}
           initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.4, delay: idx * 0.1 }}
-          className="bg-white rounded-2xl border border-[#EBEBEB] p-4 sm:p-5 shadow-xs flex items-center gap-3.5 sm:gap-4 hover:shadow-sm hover:border-slate-300 transition-all group"
+          className="bg-white rounded-2xl border border-[#EBEBEB] p-4 sm:p-5 shadow-xs flex items-center gap-[32px] hover:shadow-sm hover:border-slate-300 transition-all group"
         >
           {/* ponytail: squircle icon box, swap to category-specific tints if requested */}
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#DCE7F5]/70 text-[#0D2453] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
@@ -77,7 +77,7 @@ export default function HomeKpiCounters() {
                 fallback={item.value}
               />
             </div>
-            <div className="text-xs text-[#767676] mt-1 font-medium group-hover:text-slate-900 transition-colors line-clamp-1">
+            <div className="text-xs text-[#767676] mt-0.5 font-medium group-hover:text-slate-900 transition-colors leading-snug">
               {item.label}
             </div>
           </div>
