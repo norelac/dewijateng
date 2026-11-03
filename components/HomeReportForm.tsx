@@ -241,22 +241,14 @@ export default function HomeReportForm() {
             <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
               Judul Laporan
             </label>
-            <div className="relative">
-              <select
-                value={selectedTitle}
-                onChange={(e) => setSelectedTitle(e.target.value)}
-                required
-                className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer font-medium"
-              >
-                <option value="" disabled>Contoh: Pohon tumbang</option>
-                <option value="Akses ke curug buruk">Akses ke curug buruk &amp; pagar pengaman lapuk</option>
-                <option value="Wastafel dan toilet kotor sekali">Wastafel dan toilet kotor sekali / kran mati</option>
-                <option value="Pungli parkir liar">Pungutan liar parkir tanpa karcis resmi BUMDes</option>
-                <option value="Jembatan goyang">Jembatan titian kayu goyang dan berbahaya</option>
-                <option value="Tumpukan sampah">Tumpukan sampah plastik di area gardu pandang</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#767676] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            <input
+              type="text"
+              required
+              value={selectedTitle}
+              onChange={(e) => setSelectedTitle(e.target.value)}
+              placeholder="Contoh: Pohon tumbang"
+              className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none font-medium"
+            />
           </div>
 
           {/* Alamat Lokasi */}

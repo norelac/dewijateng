@@ -243,9 +243,6 @@ export default function HomeReportFeed() {
                         aria-label="Geser untuk membandingkan kondisi fisik sebelum dan sesudah perbaikan"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-2 text-center font-medium">
-                      Geser garis tengah ke kiri atau kanan untuk membandingkan foto fisik kondisi sebelum vs sesudah
-                    </p>
                   </div>
                 ) : (
                   /* Side-by-side Photos */

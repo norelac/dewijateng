@@ -1,7 +1,9 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Newspaper, ChevronRight } from 'lucide-react';
 import HomeHeroBanner from '@/components/HomeHeroBanner';
-import HomeLiveTicker from '@/components/HomeLiveTicker';
 import HomeKpiCounters from '@/components/HomeKpiCounters';
 import HomeReportForm from '@/components/HomeReportForm';
 import HomeReportFeed from '@/components/HomeReportFeed';
@@ -12,12 +14,8 @@ export default function HomePage() {
       {/* 1. Dynamic Hero Banner with Slideshow & Entrance Animations */}
       <HomeHeroBanner />
 
-      {/* 2. Live Activity Ticker Strip & Unified Navy KPI Counters */}
-      <section className="w-full space-y-4">
-        {/* Real-time Civic Update Ticker */}
-        <HomeLiveTicker />
-
-        {/* 4 KPI Metrics Strip */}
+      {/* 2. Unified Navy KPI Counters */}
+      <section className="w-full">
         <HomeKpiCounters />
       </section>
 
@@ -45,14 +43,20 @@ export default function HomePage() {
 
       {/* 4. Section Dari Laporan, Menjadi Perbaikan */}
       <section className="w-full space-y-6">
-        <div>
-          <h2 className="text-xl sm:text-[20px] font-semibold text-[#0D2453] tracking-tight">
+        {/* Animated Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
+          <h2 className="text-xl sm:text-[22px] font-semibold text-[#0D2453] tracking-tight">
             Dari Laporan, Menjadi Perbaikan
           </h2>
           <p className="text-xs sm:text-[14px] text-[#64748B] mt-1">
             Ikuti kabar penggunaan dana dan fasilitas desa.
           </p>
-        </div>
+        </motion.div>
 
         {/* 2-Row Feed with Before/After Drag Slider and Lightbox */}
         <HomeReportFeed />

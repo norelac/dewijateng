@@ -71,28 +71,48 @@ export default function HomeHeroBanner() {
 
       {/* Hero Content with Staggered Entrance */}
       <div className="relative z-10 max-w-[760px] text-white space-y-5">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="space-y-1"
-        >
+        <div className="space-y-1">
           {/* Cursive Subtitle */}
-          <p className="font-cursive text-white text-3xl sm:text-4xl lg:text-[40px] leading-tight drop-shadow-sm font-normal">
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+            className="font-cursive text-white text-3xl sm:text-4xl lg:text-[40px] leading-tight drop-shadow-sm font-normal"
+          >
             Desa Wisata Jawa Tengah
-          </p>
+          </motion.p>
 
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-[72px] font-heading font-bold tracking-tight leading-[1.05] text-white drop-shadow-sm">
-            Dari Laporan,<br />Menjadi Perbaikan
-          </h1>
-        </motion.div>
+          {/* Main Headline with Smooth Stagger Reveal */}
+          <div className="overflow-hidden">
+            <motion.h1
+              className="text-4xl sm:text-6xl lg:text-[72px] font-heading font-bold tracking-tight leading-[1.05] text-white drop-shadow-sm"
+            >
+              <motion.span
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.75, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="inline-block"
+              >
+                Dari Laporan,
+              </motion.span>
+              <br />
+              <motion.span
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.75, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                className="inline-block"
+              >
+                Menjadi Perbaikan
+              </motion.span>
+            </motion.h1>
+          </div>
+        </div>
 
         {/* Subheadline */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.25 }}
+          transition={{ duration: 0.6, delay: 0.52 }}
           className="text-white/85 text-sm sm:text-[18px] max-w-[720px] leading-relaxed drop-shadow-sm font-normal"
         >
           Pantau penggunaan dana desa secara terbuka dan laporkan kendala fasilitas wisata secara cepat
@@ -102,7 +122,7 @@ export default function HomeHeroBanner() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.65 }}
           className="flex flex-wrap items-center gap-3 pt-2"
         >
           <motion.a
