@@ -102,79 +102,69 @@ export async function calculateVillageTrustScore(
  * Rekalkulasi massal Trust Score seluruh desa wisata terdaftar.
  * Digunakan untuk keperluan maintenance, cron job, atau refresh setelah migrasi data.
  *
- * Menggunakan single SQL query dengan subquery agregasi untuk menghitung
- * S_LPJ dan S_Aduan sekaligus, lalu batch UPDATE dalam 1 transaksi.
+ * Menggunakan satu query SQL UPDATE ... FROM terpadu dengan ekspresi kondisional (CTE)
+ * untuk mengeliminasi masalah N+1 query.
  */
 export async function recalculateAllVillages(): Promise<BatchRecalcResult> {
   const startTime = Date.now();
 
-  // Single query: hitung S_LPJ dan S_Aduan untuk seluruh desa sekaligus
-  const calcRes = await query<{
-    id: string;
-    total_grants: string;
-    verified_grants: string;
-    total_reports: string;
-    resolved_reports: string;
-  }>(
-    `SELECT
-       tv.id,
-       COALESCE(g.total_grants, 0) as total_grants,
-       COALESCE(g.verified_grants, 0) as verified_grants,
-       COALESCE(r.total_reports, 0) as total_reports,
-       COALESCE(r.resolved_reports, 0) as resolved_reports
-     FROM tourist_villages tv
-     LEFT JOIN (
-       SELECT village_id,
-              COUNT(*) as total_grants,
-              COUNT(CASE WHEN lpj_status IN ('VERIFIED', 'SUBMITTED') THEN 1 END) as verified_grants
-       FROM village_grants GROUP BY village_id
-     ) g ON g.village_id = tv.id
-     LEFT JOIN (
-       SELECT village_id,
-              COUNT(*) as total_reports,
-              COUNT(CASE WHEN status = 'RESOLVED' THEN 1 END) as resolved_reports
-       FROM incident_reports GROUP BY village_id
-     ) r ON r.village_id = tv.id`
+  const updateRes = await query<{ id: string; trust_score: string }>(
+    `WITH aggregated AS (
+       SELECT
+         tv.id,
+         COALESCE(g.total_grants, 0) as total_grants,
+         COALESCE(g.verified_grants, 0) as verified_grants,
+         COALESCE(r.total_reports, 0) as total_reports,
+         COALESCE(r.resolved_reports, 0) as resolved_reports
+       FROM tourist_villages tv
+       LEFT JOIN (
+         SELECT village_id, COUNT(*) as total_grants,
+                COUNT(CASE WHEN lpj_status IN ('VERIFIED', 'SUBMITTED') THEN 1 END) as verified_grants
+         FROM village_grants GROUP BY village_id
+       ) g ON g.village_id = tv.id
+       LEFT JOIN (
+         SELECT village_id, COUNT(*) as total_reports,
+                COUNT(CASE WHEN status = 'RESOLVED' THEN 1 END) as resolved_reports
+         FROM incident_reports GROUP BY village_id
+       ) r ON r.village_id = tv.id
+     ),
+     scores AS (
+       SELECT
+         id,
+         ROUND(
+           (0.50 * (CASE WHEN total_grants > 0 THEN (verified_grants::numeric / total_grants) * 100 ELSE 80.00 END) +
+            0.50 * (CASE WHEN total_reports > 0 THEN (resolved_reports::numeric / total_reports) * 100 ELSE 80.00 END))::numeric,
+           2
+         ) as calculated_score
+       FROM aggregated
+     )
+     UPDATE tourist_villages tv
+     SET trust_score = s.calculated_score, updated_at = NOW()
+     FROM scores s
+     WHERE tv.id = s.id
+     RETURNING tv.id, tv.trust_score`
   );
 
-  let updated = 0;
   let green = 0;
   let yellow = 0;
   let red = 0;
   let scoreSum = 0;
 
-  // Batch update per desa
-  for (const row of calcRes.rows) {
-    const tg = parseInt(row.total_grants, 10);
-    const vg = parseInt(row.verified_grants, 10);
-    const tr = parseInt(row.total_reports, 10);
-    const rr = parseInt(row.resolved_reports, 10);
-
-    const sLpj = tg > 0 ? (vg / tg) * 100.0 : 80.0;
-    const sAduan = tr > 0 ? (rr / tr) * 100.0 : 80.0;
-    const score = Number((0.5 * sLpj + 0.5 * sAduan).toFixed(2));
-
-    await query(
-      `UPDATE tourist_villages SET trust_score = $1, updated_at = NOW() WHERE id = $2`,
-      [score, row.id]
-    );
-
-    const status = classifyTrustStatus(score);
-    if (status === 'GREEN') green++;
-    else if (status === 'YELLOW') yellow++;
+  for (const r of updateRes.rows) {
+    const val = parseFloat(r.trust_score);
+    scoreSum += val;
+    if (val >= 80) green++;
+    else if (val >= 60) yellow++;
     else red++;
-
-    scoreSum += score;
-    updated++;
   }
 
   return {
-    total_villages: calcRes.rows.length,
-    updated,
+    total_villages: updateRes.rows.length,
+    updated: updateRes.rows.length,
     green,
     yellow,
     red,
-    average_score: updated > 0 ? Number((scoreSum / updated).toFixed(2)) : 80.0,
+    average_score: updateRes.rows.length > 0 ? Number((scoreSum / updateRes.rows.length).toFixed(2)) : 80.0,
     duration_ms: Date.now() - startTime,
   };
 }
