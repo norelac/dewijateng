@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UploadCloud,
@@ -10,7 +11,8 @@ import {
   FileCheck2,
   Loader2,
   Search,
-  Check
+  Check,
+  Navigation
 } from 'lucide-react';
 
 interface LocationCoord {
@@ -227,7 +229,7 @@ export default function HomeReportForm() {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      setSuccessTicket(`DS-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+      setSuccessTicket(`LP-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
     }, 800);
   };
 
@@ -283,9 +285,37 @@ export default function HomeReportForm() {
 
           {/* Tandai di Peta */}
           <div>
-            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
-              Tandai di Peta
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm sm:text-[17px] text-black font-normal">
+                Tandai di Peta
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!navigator.geolocation) {
+                    alert('Browser tidak mendukung geolokasi');
+                    return;
+                  }
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      const { latitude, longitude } = pos.coords;
+                      moveMapTo(latitude, longitude, 16);
+                      setLocationLabel('Lokasi GPS Anda terdeteksi');
+                    },
+                    (err) => {
+                      console.error(err);
+                      alert('Gagal mengambil lokasi GPS. Izinkan akses lokasi di browser.');
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-[11px] font-semibold border border-blue-200 transition-colors cursor-pointer"
+                title="Ambil lokasi GPS saat ini"
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                <span>Gunakan Lokasi Saya</span>
+              </button>
+            </div>
 
             <div className="relative w-full h-[244px] rounded-[17px] overflow-hidden border border-[#EBEBEB] bg-[#E8ECEF] shadow-2xs">
               <div ref={mapContainerRef} className="w-full h-full z-0" />
@@ -422,20 +452,31 @@ export default function HomeReportForm() {
 
               <div className="p-3.5 bg-[#F7F9FC] rounded-2xl border border-slate-200">
                 <span className="text-[11px] text-slate-500 font-medium block">
-                  KODE RESMI DISPOSISI:
+                  KODE PELAPORAN RESMI:
                 </span>
                 <span className="text-base font-extrabold text-[#0D2453] tracking-wider font-mono">
                   {successTicket}
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSuccessTicket(null)}
-                className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs sm:text-sm transition-all"
-              >
-                Selesai &amp; Pantau Tiket
-              </button>
+              <div className="flex flex-col gap-2">
+                <Link
+                  href={`/lapor?code=${successTicket}`}
+                  className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs sm:text-sm transition-all text-center"
+                >
+                  Pantau Status Laporan
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(successTicket);
+                    alert('Kode tiket berhasil disalin!');
+                  }}
+                  className="w-full py-3 rounded-xl bg-white border border-[#0D2453] text-[#0D2453] font-bold text-xs sm:text-sm transition-all hover:bg-slate-50"
+                >
+                  Salin Kode Tiket
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

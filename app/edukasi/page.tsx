@@ -15,6 +15,10 @@ import {
   Check,
   X,
   MessagesSquare,
+  Scale,
+  AlertTriangle,
+  Phone,
+  HeartPulse,
 } from 'lucide-react';
 
 interface GuideItem {
@@ -403,7 +407,195 @@ export default function EdukasiPage() {
         </div>
       </section>
 
-      {/* 6. FAQ Section */}
+      {/* 6. Modul Literasi Hukum & Standar K3 Section */}
+      <section className="w-full flex flex-col gap-8">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
+            Literasi Hukum & Standar K3 Wisata
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B] font-normal">
+            Pemahaman hak warga, SOP penanganan, dan standar kelaikan fasilitas wisata.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Modul 1: UU KIP No. 14/2008 */}
+          <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-[14px] bg-[#EDE9FE] flex items-center justify-center text-[#6D28D9] shrink-0">
+                <Scale className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="text-[10px] font-bold tracking-wider text-[#6D28D9] uppercase">
+                  Modul 1
+                </span>
+                <h3 className="text-lg font-bold text-[#0D2453] mt-1 leading-snug">
+                  Hak Warga atas Informasi Anggaran Desa
+                </h3>
+                <p className="text-xs text-[#64748B] mt-1 leading-relaxed font-normal">
+                  Berdasarkan UU No. 14 Tahun 2008 tentang Keterbukaan Informasi Publik (KIP).
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-[13px] text-[#0D2453] leading-relaxed">
+              <p>
+                Setiap warga berhak memperoleh informasi tentang perencanaan, pelaksanaan, dan pertanggungjawaban anggaran desa, termasuk bantuan keuangan dari Pemerintah Provinsi dan APBDes.
+              </p>
+              <ul className="space-y-2 pl-4">
+                <li className="relative before:content-[''] before:absolute before:left-[-16px] before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#6D28D9]">
+                  <strong>Badan Pemberdayaan Masyarakat Desa (BPMD)</strong> wajib mempublikasikan LPJ bantuan sarana prasarana wisata minimal Rp 100 juta per desa.
+                </li>
+                <li className="relative before:content-[''] before:absolute before:left-[-16px] before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#6D28D9]">
+                  Warga dapat mengajukan keberatan kepada <strong>Komisi Informasi Provinsi</strong> jika dokumen ditolak tanpa alasan yang sah.
+                </li>
+                <li className="relative before:content-[''] before:absolute before:left-[-16px] before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#6D28D9]">
+                  Pelanggaran keterbukaan informasi dapat dikenakan sanksi administratif hingga pencabutan izin usaha wisata.
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-[#F5F3FF] rounded-[14px] p-4 border border-[#E9D5FF]">
+              <span className="text-[11px] font-semibold text-[#6D28D9] block mb-1">
+                Rujukan Hukum:
+              </span>
+              <span className="text-xs text-[#4C1D95] font-medium">
+                UU No. 14/2008 Pasal 4, 7, 9 · PP No. 61/2010 · Permendagri No. 20/2020
+              </span>
+            </div>
+          </div>
+
+          {/* Modul 2: SOP 4-Tahap Pokdarwis */}
+          <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-[14px] bg-[#DBEAFE] flex items-center justify-center text-[#1E40AF] shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="text-[10px] font-bold tracking-wider text-[#1E40AF] uppercase">
+                  Modul 2
+                </span>
+                <h3 className="text-lg font-bold text-[#0D2453] mt-1 leading-snug">
+                  SOP 4-Tahap Penanganan Aduan Pokdarwis
+                </h3>
+                <p className="text-xs text-[#64748B] mt-1 leading-relaxed font-normal">
+                  Alur standar dari laporan masuk hingga bukti fisik perbaikan.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { num: 1, title: 'Verifikasi < 24 Jam', desc: 'Pokdarwis memeriksa validitas lokasi dan kategori aduan.' },
+                { num: 2, title: 'Pengadaan Standar SSH', desc: 'Menggunakan Standar Satuan Harga Pemprov Jateng sebagai acuan.' },
+                { num: 3, title: 'Pengerjaan Fisik', desc: 'Pelaksanaan perbaikan dilapangan dengan dokumentasi progres.' },
+                { num: 4, title: 'Unggah Proof-of-Fix', desc: 'Foto sesudah wajib diverifikasi EXIF timestamp sebelum tiket ditutup.' },
+              ].map((step) => (
+                <div key={step.num} className="p-3.5 rounded-[14px] bg-[#F1F5F9] border border-[#E2E8F0]">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-6 h-6 rounded-full bg-[#0D2453] text-white text-xs font-bold flex items-center justify-center">
+                      {step.num}
+                    </span>
+                    <span className="text-xs font-bold text-[#0D2453]">{step.title}</span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Modul 3: K3 Wisata Buatan (The Geong Lesson) */}
+          <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-[14px] bg-[#FEE2E2] flex items-center justify-center text-[#991B1B] shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="text-[10px] font-bold tracking-wider text-[#991B1B] uppercase">
+                  Modul 3
+                </span>
+                <h3 className="text-lg font-bold text-[#0D2453] mt-1 leading-snug">
+                  Standar K3 Wisata Buatan
+                </h3>
+                <p className="text-xs text-[#64748B] mt-1 leading-relaxed font-normal">
+                  Pelajaran dari insiden The Geong Banyumas 2023.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-[13px] text-[#0D2453] leading-relaxed">
+              <p>
+                Insiden runtuhnya jembatan kaca di The Geong, Limpakuwus, menewaskan pengunjung dan melukai puluhan. Investigasi menemukan kaca tempered tidak memenuhi standar ketebalan dan pemasangan struktural.
+              </p>
+
+              <div className="bg-[#FEF2F2] rounded-[14px] p-4 border border-[#FECACA]">
+                <span className="text-[11px] font-bold text-[#991B1B] block mb-2">
+                  Syarat Minimum K3 Fasilitas Wisata Buatan:
+                </span>
+                <ul className="space-y-1.5 text-xs text-[#7F1D1D]">
+                  <li>• Kaca laminated tempered <strong>min. 25mm</strong> untuk lantai vertikal</li>
+                  <li>• Railing galvanis tahan beban <strong>100 kg/m</strong></li>
+                  <li>• Pelampung SNI di curug dan kolam renang</li>
+                  <li>• Inspeksi berkala tiap 6 bulan oleh ahli teknik</li>
+                  <li>• Asuransi pengunjung minimal Rp 50 juta/kejadian</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-[#64748B]">
+              <strong>Dasar Hukum:</strong> PP No. 50/2012 tentang K3, Permenpar No. 17/2015, dan SNI 03-4432-1997.
+            </div>
+          </div>
+
+          {/* Modul 4: Direktori Darurat Jateng */}
+          <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-[14px] bg-[#DCFCE7] flex items-center justify-center text-[#166534] shrink-0">
+                <HeartPulse className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="text-[10px] font-bold tracking-wider text-[#166534] uppercase">
+                  Modul 4
+                </span>
+                <h3 className="text-lg font-bold text-[#0D2453] mt-1 leading-snug">
+                  Direktori Cepat Tanggap Darurat Jateng
+                </h3>
+                <p className="text-xs text-[#64748B] mt-1 leading-relaxed font-normal">
+                  Nomor darurat se-Jawa Tengah dengan klik langsung.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { name: 'Basarnas Jateng', num: '(024) 760-7777', desc: 'Pencarian & pertolongan' },
+                { name: 'PMI Jawa Tengah', num: '(024) 354-3500', desc: 'Donor darah & ambulans' },
+                { name: 'Call Center 112', num: '112', desc: 'Darurat terpadu (gratis)' },
+                { name: 'Disporapar Jateng', num: '(024) 354-6681', desc: 'Pengaduan wisata' },
+              ].map((contact) => (
+                <a
+                  key={contact.num}
+                  href={`tel:${contact.num.replace(/[^0-9+]/g, '')}`}
+                  className="p-4 rounded-[14px] bg-[#F0FDF4] border border-[#BBF7D0] hover:bg-[#DCFCE7] transition-colors cursor-pointer flex flex-col gap-1.5 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#166534]">{contact.name}</span>
+                    <Phone className="w-4 h-4 text-[#166534] group-hover:scale-110 transition-transform" />
+                  </div>
+                  <span className="text-sm font-extrabold text-[#0D2453] font-mono">{contact.num}</span>
+                  <span className="text-[10px] text-[#15803D]">{contact.desc}</span>
+                </a>
+              ))}
+            </div>
+
+            <div className="text-[11px] text-center text-[#64748B] bg-[#F7F9FC] rounded-[12px] py-2.5">
+              Tombol di atas akan langsung menghubungi nomor terkait via ponsel Anda.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. FAQ Section */}
       <section className="w-full flex flex-col lg:flex-row items-start justify-between gap-8">
         {/* Left Col Intro */}
         <div className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
