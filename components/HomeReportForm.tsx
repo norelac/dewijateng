@@ -12,8 +12,9 @@ import {
   Loader2,
   Search,
   Check,
-  Navigation
+  AlertCircle
 } from 'lucide-react';
+import { submitReportAction } from '@/app/actions/reportActions';
 
 interface LocationCoord {
   lat: number;
@@ -76,11 +77,13 @@ const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
 
 export default function HomeReportForm() {
   const [selectedTitle, setSelectedTitle] = useState('');
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState('Nama Desa, Kecamatan, Kabupaten');
   const [description, setDescription] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [rawFiles, setRawFiles] = useState<File[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
 
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
@@ -91,7 +94,6 @@ export default function HomeReportForm() {
     'Jl. Pamularsih Raya, Bongsari, Semarang Barat, Kota Semarang'
   );
   const [isSearchingMap, setIsSearchingMap] = useState<boolean>(false);
-  const [isGpsLoading, setIsGpsLoading] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -164,44 +166,6 @@ export default function HomeReportForm() {
     };
   }, []);
 
-  const reverseGeocode = async (lat: number, lng: number) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=id`
-      );
-      const data = await res.json();
-      if (data?.display_name) {
-        const short = data.display_name.split(',').slice(0, 4).join(',').trim();
-        setAddress(short);
-      }
-    } catch {
-      // keep existing address on network fail
-    }
-  };
-
-  const triggerGps = () => {
-    if (!navigator.geolocation) {
-      alert('Browser tidak mendukung geolokasi');
-      return;
-    }
-    setIsGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        moveMapTo(latitude, longitude, 16);
-        setLocationLabel('Lokasi GPS Anda terdeteksi');
-        await reverseGeocode(latitude, longitude);
-        setIsGpsLoading(false);
-      },
-      (err) => {
-        console.error(err);
-        setIsGpsLoading(false);
-        alert('Gagal mengambil lokasi GPS. Izinkan akses lokasi di browser.');
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
   const moveMapTo = (lat: number, lng: number, zoomLevel = 15) => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([lat, lng], zoomLevel, { duration: 1.2 });
@@ -214,7 +178,7 @@ export default function HomeReportForm() {
 
   const handleGeocode = async (queryText: string) => {
     const clean = queryText.trim().toLowerCase();
-    if (!clean) return;
+    if (!clean || clean === 'nama desa, kecamatan, kabupaten') return;
 
     setIsSearchingMap(true);
 
@@ -249,7 +213,7 @@ export default function HomeReportForm() {
   };
 
   useEffect(() => {
-    if (!address.trim()) return;
+    if (!address.trim() || address === 'Nama Desa, Kecamatan, Kabupaten') return;
     const timer = setTimeout(() => {
       handleGeocode(address);
     }, 450);
@@ -257,19 +221,59 @@ export default function HomeReportForm() {
   }, [address]);
 
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setUploadedFiles((prev) => [...prev, file.name]);
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      setRawFiles((prev) => [...prev, ...filesArray]);
+      setUploadedFiles((prev) => [...prev, ...filesArray.map((f) => f.name)]);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsSubmitting(true);
-    setTimeout(() => {
+
+    try {
+      const formData = new FormData();
+      formData.append('title', selectedTitle);
+
+      // Kategori otomatis berdasarkan judul
+      let category = 'FASILITAS_RUSAK';
+      if (selectedTitle.toLowerCase().includes('kotor') || selectedTitle.toLowerCase().includes('sampah')) {
+        category = 'KEBERSIHAN';
+      } else if (selectedTitle.toLowerCase().includes('pungli')) {
+        category = 'PUNGLI';
+      } else if (selectedTitle.toLowerCase().includes('goyang') || selectedTitle.toLowerCase().includes('bahaya')) {
+        category = 'BAHAYA_K3';
+      }
+
+      formData.append('category', category);
+      formData.append('description', description);
+      formData.append('latitude', coords.lat.toString());
+      formData.append('longitude', coords.lng.toString());
+      formData.append('is_anonymous', isAnonymous ? 'true' : 'false');
+
+      if (rawFiles.length > 0) {
+        formData.append('photo', rawFiles[0]);
+      }
+
+      const res = await submitReportAction(formData);
+
+      if (res.success && res.data) {
+        setSuccessTicket(res.data.reportCode);
+        setSelectedTitle('');
+        setDescription('');
+        setUploadedFiles([]);
+        setRawFiles([]);
+        setErrorMessage(null);
+      } else {
+        setErrorMessage(res.error || 'Gagal mengirimkan laporan aduan. Silakan coba lagi.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Terjadi kesalahan sistem saat memproses laporan aduan.');
+    } finally {
       setIsSubmitting(false);
-      setSuccessTicket(`LP-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
-    }, 800);
+    }
   };
 
   return (
@@ -292,24 +296,28 @@ export default function HomeReportForm() {
             />
           </div>
 
-          {/* Alamat Lokasi — auto-isi dari GPS */}
+          {/* Alamat Lokasi */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm sm:text-[17px] text-black font-normal">
                 Alamat Lokasi
               </label>
-              {isSearchingMap && (
+              {isSearchingMap ? (
                 <span className="text-[11px] text-blue-700 font-medium flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Mencari...
                 </span>
-              )}
+              ) : null}
             </div>
+
             <div className="relative">
               <input
                 type="text"
                 required
                 value={address}
+                onFocus={() => {
+                  if (address === 'Nama Desa, Kecamatan, Kabupaten') setAddress('');
+                }}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Nama Desa, Kecamatan, Kabupaten"
                 className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 pr-10 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none font-medium"
@@ -318,41 +326,14 @@ export default function HomeReportForm() {
             </div>
           </div>
 
-          {/* Tandai di Peta — label clickable + GPS button */}
+          {/* Tandai di Peta */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <button
-                type="button"
-                onClick={triggerGps}
-                className="flex items-center gap-1.5 text-sm sm:text-[17px] text-black font-normal hover:text-[#0D2453] transition-colors cursor-pointer"
-                title="Ketuk untuk mendeteksi lokasi via GPS"
-              >
-                <MapPin className="w-4 h-4 text-red-500" />
-                Tandai di Peta
-              </button>
-              <button
-                type="button"
-                onClick={triggerGps}
-                disabled={isGpsLoading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EDF3FC] hover:bg-[#DCE7F5] text-[#0D2453] text-[11px] font-semibold border border-[#E6ECF5] transition-colors cursor-pointer disabled:opacity-50"
-                title="Ambil lokasi GPS saat ini"
-              >
-                {isGpsLoading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Navigation className="w-3.5 h-3.5" />
-                )}
-                <span>{isGpsLoading ? 'Mendeteksi...' : 'Gunakan Lokasi Saya'}</span>
-              </button>
-            </div>
+            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
+              Tandai di Peta
+            </label>
 
             <div className="relative w-full h-[244px] rounded-[17px] overflow-hidden border border-[#EBEBEB] bg-[#E8ECEF] shadow-2xs">
               <div ref={mapContainerRef} className="w-full h-full z-0" />
-
-              {/* Hint */}
-              <p className="absolute top-2.5 left-2.5 z-10 text-[10px] bg-white/90 backdrop-blur-xs rounded-lg px-2 py-1 text-[#64748B] border border-slate-200/60 select-none">
-                Ketuk peta untuk pindah pin
-              </p>
 
               {/* Status Pill */}
               <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-xl px-3 py-1.5 border border-slate-200/80 shadow-md flex items-center justify-between gap-2 text-xs">
@@ -397,7 +378,7 @@ export default function HomeReportForm() {
             <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
               Foto / Video Bukti
             </label>
-            <label className="border border-dashed border-[#0D2453] rounded-[9px] h-[175px] p-4 text-center bg-white cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center">
+            <label className="border border-dashed border-[#0D2453] rounded-[9px] h-[175px] p-4 text-center bg-white cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center block">
               <input
                 type="file"
                 multiple
@@ -443,6 +424,14 @@ export default function HomeReportForm() {
             </label>
           </div>
 
+          {/* Error Message Alert */}
+          {errorMessage && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -486,29 +475,32 @@ export default function HomeReportForm() {
 
               <div className="p-3.5 bg-[#F7F9FC] rounded-2xl border border-slate-200">
                 <span className="text-[11px] text-slate-500 font-medium block">
-                  KODE PELAPORAN RESMI:
+                  KODE RESMI DISPOSISI:
                 </span>
                 <span className="text-base font-extrabold text-[#0D2453] tracking-wider font-mono">
                   {successTicket}
                 </span>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
                 <Link
                   href={`/lapor?code=${successTicket}`}
-                  className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs sm:text-sm transition-all text-center"
+                  className="flex-1 py-3 px-4 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                 >
-                  Pantau Status Laporan
+                  <span>Telusuri Status Aduan</span>
                 </Link>
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(successTicket);
-                    alert('Kode tiket berhasil disalin!');
+                    setSuccessTicket(null);
+                    setSelectedTitle('');
+                    setDescription('');
+                    setUploadedFiles([]);
+                    setRawFiles([]);
                   }}
-                  className="w-full py-3 rounded-xl bg-white border border-[#0D2453] text-[#0D2453] font-bold text-xs sm:text-sm transition-all hover:bg-slate-50"
+                  className="py-3 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
                 >
-                  Salin Kode Tiket
+                  Tutup
                 </button>
               </div>
             </motion.div>

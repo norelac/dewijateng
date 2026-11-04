@@ -96,6 +96,24 @@ export default function Footer() {
                   <span>Edukasi &amp; Panduan</span>
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/pengelola"
+                  className="flex items-center gap-2.5 hover:text-white transition-colors"
+                >
+                  <FileText className="w-4 h-4 text-white/60" />
+                  <span>Portal Pengelola &amp; Balai Desa</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/disporapar"
+                  className="flex items-center gap-2.5 hover:text-white transition-colors"
+                >
+                  <BarChart2 className="w-4 h-4 text-white/60" />
+                  <span>Command Center Disporapar</span>
+                </Link>
+              </li>
             </ul>
           </div>
 

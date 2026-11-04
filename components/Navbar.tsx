@@ -103,13 +103,12 @@ export default function Navbar() {
               <span>Buat Laporan</span>
             </Link>
 
-            <button
-              type="button"
-              onClick={(e) => e.preventDefault()}
+            <Link
+              href="/pengelola"
               className="inline-flex items-center px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all shadow-xs active:scale-95 cursor-pointer"
             >
               Masuk
-            </button>
+            </Link>
           </div>
         </div>
       </header>
