@@ -33,8 +33,10 @@ Membangun algoritma audit kepatuhan otomatis (`lib/services/priceAnomalyChecker.
 
 | Komponen | Path Berkas | Aksi / Peran |
 | :--- | :--- | :--- |
-| Anomaly Service | `lib/services/priceAnomalyChecker.ts` | Algoritma fuzzy string matching & kalkulasi deviasi persentase |
-| Compliance Route | `app/api/compliance/check-anomaly/route.ts` | Endpoint evaluasi pos belanja sebelum publikasi LPJ |
+| Anomaly Domain Service | `lib/services/priceAnomalyChecker.ts` | Algoritma fuzzy string matching & kalkulasi deviasi persentase |
+| Internal Caller (Server Action) | `app/actions/lpjActions.ts` | Panggilan langsung audit harga saat pemrosesan dokumen LPJ |
+| Internal Caller (Server Component) | `app/transparansi/page.tsx` | Penyajian status anomali pada tabel LPJ langsung dari basis data |
+| Compliance Route (Public API) | `app/api/compliance/check-anomaly/route.ts` | Endpoint evaluasi pos belanja untuk audit pihak eksternal |
 | Database Helper | `lib/db.ts` | Kueri pencarian acuan standar pada tabel `ssh_reference_rates` |
 
 ## 4. Spesifikasi Algoritma & Alur Eksekusi

@@ -1,21 +1,19 @@
-# Dependencies & Build
 node_modules/
-dist/
-.astro/
 .next/
+dist/
 out/
 build/
-
-# Environment Variables
-.env
-.env.local
-.env.*.local
-
-# OS & Editor
 .DS_Store
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env*.local
+!.env.example
 Thumbs.db
 .vscode/
 .idea/
-
-
+.playwright-mcp/
+*.tsbuildinfo
 CLAUDE.md

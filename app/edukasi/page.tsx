@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function EdukasiPage() {
   return (
-    <div className="space-y-12 pb-16">
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 space-y-12 py-8 pb-16">
       {/* Header Banner */}
       <section className="bg-gradient-to-b from-slate-900 via-[#0D2453] to-slate-900 text-white py-14 rounded-3xl border border-slate-800 shadow-sm relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-15 pointer-events-none" />

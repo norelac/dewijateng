@@ -3,7 +3,7 @@ type: project-issue
 project_id: "Dewi-Jateng"
 subproject: "ai_dewijateng"
 issue_id: "BE-08"
-title: "Kalkulator Matematis Transparan Trust Score 50/50 & API Agregasi"
+title: "Kalkulator Matematis Transparan Trust Score 50/50 & Agregasi Peta Kendali"
 status: open
 priority: high
 created: 2026-11-04
@@ -16,10 +16,13 @@ tags:
   - aggregation
 ---
 
-# ISSUE-BE-08: Kalkulator Matematis Transparan Trust Score 50/50 & API Agregasi
+# ISSUE-BE-08: Kalkulator Matematis Transparan Trust Score 50/50 & Agregasi Peta Kendali
 
 ## 1. Konteks & Deskripsi Fitur
-Membangun modul kalkulator indeks kepatuhan (*Trust Score*) berbasis formula berbobot transparan 50/50 (`lib/services/trustScoreCalculator.ts`), endpoint pembaruan skor (`POST /api/compliance/trust-score`), serta API penyedia data agregasi spasial 35 Kabupaten/Kota untuk layar pantau Peta Kendali Disporapar Pemprov Jateng (`GET /api/disporapar/overview`).
+Membangun modul kalkulator indeks kepatuhan (*Trust Score*) berbasis formula berbobot transparan 50/50 (`lib/services/trustScoreCalculator.ts`) yang menerapkan arsitektur **Next.js 14 Best Practice**:
+1. **Direct Data Flow di Server Component (`app/disporapar/page.tsx`):** Dasbor Peta Kendali Disporapar memanggil fungsi kalkulasi dan agregasi spasial secara langsung di sisi server saat render halaman, menghasilkan kecepatan muat instan tanpa ketergantungan fetch API internal.
+2. **Domain Service (`lib/services/trustScoreCalculator.ts`):** Mengisolasi formula deterministik 50% LPJ + 50% Aduan yang dapat dipanggil saat penyelesaian tiket aduan maupun penerbitan LPJ.
+3. **Public Open Data API (`app/api/disporapar/overview/route.ts`):** Menyediakan REST API publik untuk integrasi eksternal portal Satu Data Jateng atau visualisasi pihak ketiga.
 
 ## 2. Acuan Desain & Formula Matematis Transparan
 - Dokumen Rujukan: [[Dewi-Jateng - Business-Logic-and-Transparency-Rules]] & [[Dewi-Jateng - Product-Requirements-Document-PRD]]
@@ -42,8 +45,9 @@ Membangun modul kalkulator indeks kepatuhan (*Trust Score*) berbasis formula ber
 | Komponen | Path Berkas | Aksi / Peran |
 | :--- | :--- | :--- |
 | Calculator Engine | `lib/services/trustScoreCalculator.ts` | Algoritma kalkulasi nilai $S_{\text{LPJ}}$, $S_{\text{Aduan}}$, dan Trust Score |
-| Recalculate Route | `app/api/compliance/trust-score/route.ts` | Endpoint trigger rekalkulasi skor desa pasca-unggah LPJ / penyelesaian aduan |
-| Overview Aggregator | `app/api/disporapar/overview/route.ts` | Route handler penyedia agregasi statistik 35 Kabupaten/Kota untuk Command Center |
+| Direct Server Component UI | `app/disporapar/page.tsx` | Konsumsi data agregasi langsung di server tanpa fetch HTTP |
+| Overview Aggregator (Open API) | `app/api/disporapar/overview/route.ts` | Route handler penyedia agregasi statistik 35 Kab/Kota untuk publik |
+| Recalculate Trigger | `lib/services/trustScoreCalculator.ts` | Helper rekalkulasi skor desa pasca-unggah LPJ / penyelesaian aduan |
 | Database Helper | `lib/db.ts` | Kueri agregasi SQL performa tinggi |
 
 ## 4. Spesifikasi Endpoint & Format Respon

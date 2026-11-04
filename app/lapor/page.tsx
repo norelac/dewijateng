@@ -1,461 +1,801 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  ShieldCheck,
+  ChevronDown,
+  Plus,
   MapPin,
-  Camera,
-  Share2,
-  Calendar,
-  Building2,
-  FileCheck2,
-  ArrowRight,
-  ExternalLink,
-  ChevronRight,
-  Sparkles,
-  Info
+  Check,
+  ShieldCheck,
+  X,
+  Maximize2,
 } from 'lucide-react';
-import { formatDateIndo } from '@/lib/utils';
 
-interface ReportDetail {
-  id: string;
-  report_code: string;
-  village: {
-    id: string;
-    name: string;
-    regency: string;
-    district: string;
-    pokdarwis_name: string;
-    contact_phone: string;
-    trust_score: number;
-  };
-  category: string;
+interface TimelineStep {
   title: string;
-  description: string;
-  photo_before_url: string;
-  latitude: number;
-  longitude: number;
-  is_anonymous: boolean;
-  status: 'SUBMITTED' | 'IN_PROGRESS' | 'RESOLVED';
-  created_at: string;
-  updated_at: string;
-  resolution: {
-    action_summary: string;
-    photo_after_url: string;
-    officer_name: string;
-    exif_timestamp_verified: boolean;
-    exif_photo_date: string | null;
-    resolved_at: string;
-  } | null;
+  date: string;
+  done: boolean;
 }
 
-function TrackReportContent() {
-  const searchParams = useSearchParams();
-  const initialCode = searchParams.get('code') || '';
-
-  const [inputCode, setInputCode] = useState(initialCode);
-  const [currentCode, setCurrentCode] = useState(initialCode);
-  const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<ReportDetail | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [sliderPos, setSliderPos] = useState(50);
-  const [copied, setCopied] = useState(false);
-
-  // Fetch report by code
-  const fetchReport = async (codeToFetch: string) => {
-    if (!codeToFetch.trim()) return;
-    setLoading(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await fetch(`/api/reports/${encodeURIComponent(codeToFetch.trim())}`);
-      const json = await res.json();
-
-      if (json.success && json.data) {
-        setReport(json.data);
-        setCurrentCode(codeToFetch.trim().toUpperCase());
-      } else {
-        setReport(null);
-        setErrorMsg(json.error || `Laporan dengan kode "${codeToFetch}" tidak ditemukan.`);
-      }
-    } catch (err: any) {
-      setReport(null);
-      setErrorMsg('Gagal menghubungkan ke server. Silakan coba kembali.');
-    } finally {
-      setLoading(false);
-    }
+interface ReportItem {
+  id: string;
+  ticketCode: string;
+  status: 'Masuk' | 'Diverifikasi' | 'Diproses' | 'Selesai';
+  title: string;
+  summary: string;
+  detailDesc: string;
+  locationShort: string;
+  locationFull: string;
+  date: string;
+  category: string;
+  kabupaten: string;
+  desa: string;
+  thumbImg: string;
+  beforePhoto?: {
+    url: string;
+    label: string;
   };
+  afterPhoto?: {
+    url: string;
+    label: string;
+  };
+  timeline: TimelineStep[];
+}
+
+const REPORTS_DATA: ReportItem[] = [
+  {
+    id: 'rep-0891',
+    ticketCode: 'DS-JTG-2026-0891',
+    status: 'Selesai',
+    title: 'Akses ke curug buruk',
+    summary: 'Jalur berlubang dan licin mengganggu akses pengunjung menuju curug.',
+    detailDesc:
+      'Permukaan akses ke curug rusak dan tergenang setelah hujan. Kondisi ini menyulitkan wisatawan yang berjalan kaki. Foto awal menunjukkan titik jalur yang perlu ditangani.',
+    locationShort: 'Candirejo, Magelang',
+    locationFull: 'Desa Candirejo, Borobudur, Magelang',
+    date: '1 Ags 2026',
+    category: 'Akses & Jalan',
+    kabupaten: 'Kabupaten Magelang',
+    desa: 'Desa Candirejo',
+    thumbImg: '/img/figma/aduan-curug-sebelum.png',
+    beforePhoto: {
+      url: '/img/figma/aduan-curug-sebelum.png',
+      label: 'Sebelum · 1 Ags 2026',
+    },
+    afterPhoto: {
+      url: '/img/figma/aduan-curug-sesudah.png',
+      label: 'Sesudah · 12 Okt 2026',
+    },
+    timeline: [
+      {
+        title: 'Laporan terkirim',
+        date: '1 Ags 2026 · 09.10 WIB',
+        done: true,
+      },
+      {
+        title: 'Diverifikasi desa',
+        date: '3 Ags 2026 · 10.00 WIB',
+        done: true,
+      },
+      {
+        title: 'Proses perbaikan lapangan',
+        date: '5 Okt 2026 · 08.30 WIB',
+        done: true,
+      },
+      {
+        title: 'Selesai',
+        date: '12 Okt 2026 · 11.30 WIB',
+        done: true,
+      },
+    ],
+  },
+  {
+    id: 'rep-0942',
+    ticketCode: 'DS-JTG-2026-0942',
+    status: 'Diproses',
+    title: 'Sampah menumpuk di area istirahat',
+    summary: 'Tempat sampah penuh di sekitar bangku pengunjung dan perlu dibersihkan.',
+    detailDesc:
+      'Tempat sampah penuh di sekitar bangku peristirahatan dan jalur taman wisata belum terangkut. Perlu penambahan frekuensi pengangkutan dan tempat sampah pilah baru.',
+    locationShort: 'Candirejo, Magelang',
+    locationFull: 'Desa Candirejo, Borobudur, Magelang',
+    date: '25 Okt 2026',
+    category: 'Fasilitas & Sanitasi',
+    kabupaten: 'Kabupaten Magelang',
+    desa: 'Desa Candirejo',
+    thumbImg: '/img/figma/aduan-sampah.png',
+    beforePhoto: {
+      url: '/img/figma/aduan-sampah.png',
+      label: 'Sebelum · 25 Okt 2026',
+    },
+    timeline: [
+      {
+        title: 'Laporan terkirim',
+        date: '25 Okt 2026 · 14.15 WIB',
+        done: true,
+      },
+      {
+        title: 'Diverifikasi desa',
+        date: '26 Okt 2026 · 09.00 WIB',
+        done: true,
+      },
+      {
+        title: 'Proses pembersihan & pengadaan',
+        date: '27 Okt 2026 · 10.30 WIB',
+        done: true,
+      },
+    ],
+  },
+  {
+    id: 'rep-0948',
+    ticketCode: 'DS-JTG-2026-0948',
+    status: 'Diverifikasi',
+    title: 'Pungli parkir tidak sesuai',
+    summary: 'Pengunjung menemukan perbedaan tarif yang diminta dengan informasi di lokasi.',
+    detailDesc:
+      'Pengunjung menemukan perbedaan tarif parkir kendaraan roda empat yang diminta petugas lapangan dengan papan tarif resmi desa. Belum diberikan tiket/karcis bernomor seri.',
+    locationShort: 'Candirejo, Magelang',
+    locationFull: 'Desa Candirejo, Borobudur, Magelang',
+    date: '27 Okt 2026',
+    category: 'Pungutan Liar',
+    kabupaten: 'Kabupaten Magelang',
+    desa: 'Desa Candirejo',
+    thumbImg: '/img/figma/aduan-parkir.png',
+    beforePhoto: {
+      url: '/img/figma/aduan-parkir.png',
+      label: 'Sebelum · 27 Okt 2026',
+    },
+    timeline: [
+      {
+        title: 'Laporan terkirim',
+        date: '27 Okt 2026 · 11.20 WIB',
+        done: true,
+      },
+      {
+        title: 'Diverifikasi desa',
+        date: '28 Okt 2026 · 08.45 WIB',
+        done: true,
+      },
+    ],
+  },
+  {
+    id: 'rep-0953',
+    ticketCode: 'DS-JTG-2026-0953',
+    status: 'Masuk',
+    title: 'Keran wastafel rusak',
+    summary: 'Keran di dekat toilet pengunjung belum mengalir saat digunakan.',
+    detailDesc:
+      'Kran cuci tangan wastafel di area toilet utama patah dan air tidak mengalir. Pengunjung kesulitan mencuci tangan setelah keluar dari toilet fasilitas umum.',
+    locationShort: 'Candirejo, Magelang',
+    locationFull: 'Desa Candirejo, Borobudur, Magelang',
+    date: '28 Okt 2026',
+    category: 'Fasilitas & Sanitasi',
+    kabupaten: 'Kabupaten Magelang',
+    desa: 'Desa Candirejo',
+    thumbImg: '/img/figma/aduan-wastafel.png',
+    beforePhoto: {
+      url: '/img/figma/aduan-wastafel.png',
+      label: 'Sebelum · 28 Okt 2026',
+    },
+    timeline: [
+      {
+        title: 'Laporan terkirim',
+        date: '28 Okt 2026 · 16.40 WIB',
+        done: true,
+      },
+    ],
+  },
+];
+
+const STATUS_FILTERS = ['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const;
+
+function LaporContent() {
+  const searchParams = useSearchParams();
+  const codeParam = searchParams.get('code') || '';
+
+  const [searchQuery, setSearchQuery] = useState(codeParam);
+  const [selectedKabupaten, setSelectedKabupaten] = useState('Kabupaten Magelang');
+  const [selectedDesa, setSelectedDesa] = useState('Desa Candirejo');
+  const [selectedKategori, setSelectedKategori] = useState('Semua kategori');
+  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>('Semua');
+
+  const [activeReportId, setActiveReportId] = useState<string>(() => {
+    if (codeParam) {
+      const match = REPORTS_DATA.find((r) => r.ticketCode.toLowerCase() === codeParam.toLowerCase());
+      if (match) return match.id;
+    }
+    return REPORTS_DATA[0].id;
+  });
 
   useEffect(() => {
-    if (initialCode) {
-      fetchReport(initialCode);
+    if (codeParam) {
+      setSearchQuery(codeParam);
+      const match = REPORTS_DATA.find((r) => r.ticketCode.toLowerCase() === codeParam.toLowerCase());
+      if (match) setActiveReportId(match.id);
     }
-  }, [initialCode]);
+  }, [codeParam]);
+  const [lightboxImg, setLightboxImg] = useState<{ url: string; label: string } | null>(null);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputCode.trim()) {
-      fetchReport(inputCode);
+  const filteredReports = useMemo(() => {
+    return REPORTS_DATA.filter((item) => {
+      if (statusFilter !== 'Semua' && item.status !== statusFilter) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchCode = item.ticketCode.toLowerCase().includes(q);
+        const matchTitle = item.title.toLowerCase().includes(q);
+        const matchDesc = item.summary.toLowerCase().includes(q);
+        if (!matchCode && !matchTitle && !matchDesc) return false;
+      }
+      if (selectedKategori !== 'Semua kategori' && item.category !== selectedKategori) {
+        return false;
+      }
+      return true;
+    });
+  }, [statusFilter, searchQuery, selectedKategori]);
+
+  const activeReport = useMemo(() => {
+    const found = REPORTS_DATA.find((r) => r.id === activeReportId);
+    return found || filteredReports[0] || REPORTS_DATA[0];
+  }, [activeReportId, filteredReports]);
+
+  const renderStatusBadge = (status: ReportItem['status']) => {
+    switch (status) {
+      case 'Selesai':
+        return (
+          <span className="bg-[#E4F6E8] text-[#216B55] px-3 py-1.5 rounded-full text-xs font-medium">
+            Selesai
+          </span>
+        );
+      case 'Diproses':
+        return (
+          <span className="bg-[#FFF4DC] text-[#936015] px-3 py-1.5 rounded-full text-xs font-medium">
+            Diproses
+          </span>
+        );
+      case 'Diverifikasi':
+        return (
+          <span className="bg-[#EDF3FC] text-[#0D2453] px-3 py-1.5 rounded-full text-xs font-medium">
+            Diverifikasi
+          </span>
+        );
+      case 'Masuk':
+      default:
+        return (
+          <span className="bg-[#EDF3FC] text-[#0D2453] px-3 py-1.5 rounded-full text-xs font-medium">
+            Masuk
+          </span>
+        );
     }
   };
-
-  const handleShare = () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    const text = `Pantau penanganan aduan fasilitas ${report?.report_code} di DEWI JATENG: ${url}`;
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(waUrl, '_blank');
-  };
-
-  const sampleCodes = ['LP-JTG-2026-0012', 'LP-JTG-2026-0001', 'LP-JTG-2026-0002'];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-      {/* 1. Header Page */}
-      <div className="text-center max-w-2xl mx-auto space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-900 text-xs font-bold">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-800" />
-          <span>Closed-Loop Civic Tracking &amp; Proof-of-Fix</span>
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
+      {/* 1. Breadcrumbs */}
+      <nav aria-label="Breadcrumb" className="text-[13px] text-[#64748B] font-normal">
+        <ol className="flex items-center gap-1.5">
+          <li>
+            <Link href="/" className="hover:text-[#0D2453] transition-colors">
+              Beranda
+            </Link>
+          </li>
+          <li aria-hidden="true" className="text-slate-400">/</li>
+          <li className="text-[#0D2453] font-semibold" aria-current="page">
+            Telusuri Laporan
+          </li>
+        </ol>
+      </nav>
+
+      {/* 2. Header Section */}
+      <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-[983px]">
+          <div className="flex items-center gap-3.5 text-[#0D2453]">
+            <Search className="w-6 h-6 text-[#0D2453]" />
+            <h1 className="text-2xl font-semibold tracking-tight text-[#0D2453]">
+              Telusuri Laporan
+            </h1>
+          </div>
+          <p className="text-[16px] text-[#64748B] mt-3 font-normal leading-[1.7]">
+            Dari laporan terkirim hingga perbaikan selesai. Temukan laporan dan ikuti perkembangannya di desa wisata Jawa Tengah.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-[#0D2453] tracking-tight">
-          Telusuri Aduan Publik
-        </h1>
-        <p className="text-xs sm:text-sm text-[#767676]">
-          Setiap aduan warga wajib disertai dokumentasi fisik perbaikan sebelum tiket dinyatakan tuntas.
-          Masukkan Kode Pelaporan Anda di bawah ini.
-        </p>
+
+        <Link
+          href="/#buat-laporan"
+          className="bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-[13px] font-semibold flex items-center gap-2 transition-colors duration-150 shrink-0 self-start md:self-center cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Buat Laporan</span>
+        </Link>
       </div>
 
-      {/* 2. Search Box Card */}
-      <div className="max-w-2xl mx-auto bg-white p-4 sm:p-5 rounded-3xl border border-[#EBEBEB] shadow-sm">
-        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2.5">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={inputCode}
-              onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-              placeholder="Contoh: LP-JTG-2026-0012"
-              className="w-full pl-11 pr-4 py-3 bg-[#F5F5F5] border-0 rounded-2xl text-xs sm:text-sm text-[#0D2453] font-mono font-bold tracking-wider placeholder:font-normal placeholder:tracking-normal focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none uppercase"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !inputCode.trim()}
-            className="py-3 px-6 rounded-2xl bg-[#0D2453] hover:bg-[#132d66] text-white text-xs sm:text-sm font-bold transition-all shadow-xs disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <span>Mencari...</span>
-            ) : (
-              <>
-                <span>Lacak Aduan</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
+      {/* 3. Search & Filter Card */}
+      <section className="w-full bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] flex flex-col gap-6">
+        {/* Ticket search row */}
+        <div className="space-y-2.5">
+          <label className="block text-[16px] font-semibold text-[#0D2453]">
+            Cari kode tiket atau kata kunci laporan
+          </label>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="border border-[#E6ECF5] rounded-[14px] h-[50px] px-4 py-3 flex-1 w-full flex items-center gap-3 transition-colors duration-150 focus-within:border-[#0D2453]/35 focus-within:ring-1 focus-within:ring-[#0D2453]/15">
+              <Search className="w-5 h-5 text-[#64748B] shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Contoh: DS-JTG-2026-0891 atau akses ke curug"
+                className="w-full bg-transparent border-0 text-[14px] text-[#0D2453] placeholder:text-[#64748B] focus:outline-none"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-        {/* Quick Sample Links */}
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex-wrap">
-          <span className="font-medium text-slate-400">Contoh kode tiket:</span>
-          {sampleCodes.map((code) => (
             <button
-              key={code}
               type="button"
-              onClick={() => {
-                setInputCode(code);
-                fetchReport(code);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-900 text-slate-700 font-mono font-semibold transition-colors"
+              className="w-full sm:w-auto bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-5 py-3 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0"
             >
-              {code}
+              Cari Laporan
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 3. Error Message */}
-      {errorMsg && (
-        <div className="max-w-2xl mx-auto p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">Aduan Tidak Ditemukan</p>
-            <p className="text-red-700 mt-0.5">{errorMsg}</p>
           </div>
         </div>
-      )}
 
-      {/* 4. Report Details View */}
-      {report && (
-        <div className="space-y-6">
-          {/* Main Ticket Summary Card */}
-          <div className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-8 shadow-xs">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-6 border-b border-slate-100">
-              <div>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="font-mono text-xl sm:text-2xl font-black text-[#0D2453]">
-                    {report.report_code}
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      report.status === 'RESOLVED'
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        : report.status === 'IN_PROGRESS'
-                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                        : 'bg-blue-100 text-blue-800 border border-blue-300'
+        {/* Dropdowns row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* Kabupaten */}
+          <div className="space-y-2.5">
+            <label className="block text-[13px] font-normal text-[#0D2453]">
+              Kabupaten
+            </label>
+            <div className="relative">
+              <select
+                value={selectedKabupaten}
+                onChange={(e) => setSelectedKabupaten(e.target.value)}
+                className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-[13px] text-[#0D2453] font-normal focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="Kabupaten Magelang">Kabupaten Magelang</option>
+                <option value="Kabupaten Banyumas">Kabupaten Banyumas</option>
+                <option value="Kabupaten Kendal">Kabupaten Kendal</option>
+                <option value="Kabupaten Karanganyar">Kabupaten Karanganyar</option>
+                <option value="Kabupaten Banjarnegara">Kabupaten Banjarnegara</option>
+                <option value="Kabupaten Wonosobo">Kabupaten Wonosobo</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Desa wisata */}
+          <div className="space-y-2.5">
+            <label className="block text-[13px] font-normal text-[#0D2453]">
+              Desa wisata
+            </label>
+            <div className="relative">
+              <select
+                value={selectedDesa}
+                onChange={(e) => setSelectedDesa(e.target.value)}
+                className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-[13px] text-[#0D2453] font-normal focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="Desa Candirejo">Desa Candirejo</option>
+                <option value="Desa Limpakuwus">Desa Limpakuwus</option>
+                <option value="Desa Dieng Kulon">Desa Dieng Kulon</option>
+                <option value="Desa Berjo">Desa Berjo</option>
+                <option value="Desa Getas (Tubing Genting)">Desa Getas (Tubing Genting)</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Kategori */}
+          <div className="space-y-2.5">
+            <label className="block text-[13px] font-normal text-[#0D2453]">
+              Kategori
+            </label>
+            <div className="relative">
+              <select
+                value={selectedKategori}
+                onChange={(e) => setSelectedKategori(e.target.value)}
+                className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-[13px] text-[#0D2453] font-normal focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="Semua kategori">Semua kategori</option>
+                <option value="Akses & Jalan">Akses &amp; Jalan</option>
+                <option value="Fasilitas & Sanitasi">Fasilitas &amp; Sanitasi</option>
+                <option value="Pungutan Liar">Pungutan Liar</option>
+                <option value="Bahaya Keselamatan (K3)">Bahaya Keselamatan (K3)</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Results & Master-Detail Section */}
+      <section className="w-full flex flex-col gap-6">
+        {/* Status Filter Pills */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+          {STATUS_FILTERS.map((st) => {
+            const isActive = statusFilter === st;
+            return (
+              <button
+                key={st}
+                type="button"
+                onClick={() => setStatusFilter(st)}
+                className={`px-5 py-3 rounded-full text-[14px] transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'bg-[#0D2453] text-white font-semibold'
+                    : 'bg-white border border-[#E6ECF5] text-[#0D2453] font-normal hover:border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                }`}
+              >
+                {st}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Section Header Meta */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-[20px] font-semibold text-[#0D2453]">
+            Laporan di {selectedDesa}
+          </h2>
+          <span className="text-[13px] font-normal text-[#64748B]">
+            Urutan: relevansi pencarian ↓
+          </span>
+        </div>
+
+        {/* 2-Column Master-Detail Layout */}
+        <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
+          {/* Left Column: Report Cards List (560px on desktop) */}
+          <div className="w-full lg:w-[560px] shrink-0 flex flex-col gap-4">
+            {filteredReports.length === 0 ? (
+              <div className="bg-white rounded-[20px] border border-[#E6ECF5] p-8 text-center text-[#64748B] text-sm shadow-[0_1px_2px_rgba(13,36,83,0.035),0_6px_14px_-8px_rgba(13,36,83,0.10)]">
+                Tidak ada laporan yang sesuai dengan filter pencarian.
+              </div>
+            ) : (
+              filteredReports.map((report) => {
+                const isActive = report.id === activeReport.id;
+                return (
+                  <div
+                    key={report.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isActive}
+                    onClick={() => setActiveReportId(report.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveReportId(report.id);
+                      }
+                    }}
+                    className={`rounded-[20px] p-6 cursor-pointer flex flex-col gap-3.5 border outline-offset-2 transition-[background-color,border-color,box-shadow] duration-150 ${
+                      isActive
+                        ? 'bg-[#EDF3FC] border-[#0D2453]/20 shadow-[0_1px_2px_rgba(13,36,83,0.05),0_6px_14px_-4px_rgba(13,36,83,0.10),0_18px_32px_-12px_rgba(13,36,83,0.12)]'
+                        : 'bg-white border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.035),0_6px_14px_-8px_rgba(13,36,83,0.10)] hover:border-[#CBD5E1] hover:shadow-[0_1px_2px_rgba(13,36,83,0.04),0_10px_22px_-8px_rgba(13,36,83,0.14)]'
                     }`}
                   >
-                    {report.status === 'RESOLVED'
-                      ? 'SELESAI (BERBUKTI)'
-                      : report.status === 'IN_PROGRESS'
-                      ? 'SEDANG DIKERJAKAN'
-                      : 'LAPORAN DITERIMA'}
-                  </span>
-                </div>
+                    {/* Top: Ticket & Status Badge */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-[#0D2453]">
+                        {report.ticketCode}
+                      </span>
+                      {renderStatusBadge(report.status)}
+                    </div>
 
-                <h2 className="text-base sm:text-lg font-bold text-slate-800 mt-2">
-                  {report.title}
-                </h2>
+                    {/* Middle: Thumb & Content */}
+                    <div className="flex items-start gap-4">
+                      <div className="w-[104px] h-[90px] rounded-[12px] overflow-hidden shrink-0 bg-slate-100">
+                        <img
+                          src={report.thumbImg}
+                          alt={report.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                        <h3 className="text-[17px] font-semibold text-[#0D2453] leading-[1.4] line-clamp-1">
+                          {report.title}
+                        </h3>
+                        <p className="text-[13px] font-normal text-[#64748B] leading-[1.6] line-clamp-2">
+                          {report.summary}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
-                  <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    <strong>{report.village.name}</strong>, {report.village.regency}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    Dilaporkan {formatDateIndo(report.created_at)}
-                  </span>
-                </div>
+                    {/* Bottom: Location & Date */}
+                    <div className="flex items-center justify-between text-xs text-[#64748B] pt-0.5 font-normal">
+                      <span>{report.locationShort}</span>
+                      <span>{report.date}</span>
+                    </div>
+
+                    {/* Active Indicator Arrow */}
+                    {isActive && (
+                      <div className="text-xs font-semibold text-[#0D2453] pt-0.5">
+                        Detail ditampilkan &rarr;
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between pt-2 pb-1 mt-1 text-[13px] text-[#64748B]">
+              <span>
+                Menampilkan 1–{filteredReports.length} dari {filteredReports.length}
+              </span>
+              <div className="w-9 h-9 rounded-[10px] bg-[#0D2453] text-white flex items-center justify-center font-normal text-[13px] shadow-[0_2px_6px_rgba(13,36,83,0.18)]">
+                1
               </div>
+            </div>
+          </div>
 
-              {/* Share & Quick Actions */}
-              <button
-                onClick={handleShare}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-colors shrink-0"
-              >
-                <Share2 className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Bagikan ke WhatsApp</span>
-              </button>
+          {/* Right Column: Selected Report Detail */}
+          {filteredReports.length > 0 && (
+          <div
+            key={activeReport.id}
+            className="detail-swap w-full lg:flex-1 bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_3px_rgba(13,36,83,0.05),0_10px_20px_-8px_rgba(13,36,83,0.10),0_32px_56px_-24px_rgba(13,36,83,0.16)] flex flex-col gap-6"
+          >
+            {/* 1. Header & Status */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#64748B] tracking-[1px] uppercase">
+                Detail Laporan
+              </span>
+              {renderStatusBadge(activeReport.status)}
             </div>
 
-            {/* 3-Stage Progress Timeline */}
-            <div className="py-6">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
-                Linimasa Penanganan Terverifikasi
+            {/* 2. Identity & Description */}
+            <div className="flex flex-col gap-3">
+              <span className="text-[13px] font-semibold text-[#0D2453]">
+                {activeReport.ticketCode}
+              </span>
+              <h3 className="text-[20px] font-semibold text-[#0D2453] leading-snug">
+                {activeReport.title}
+              </h3>
+              <div className="flex items-center gap-2 text-xs text-[#64748B]">
+                <MapPin className="w-4 h-4 text-[#64748B] shrink-0" />
+                <span>{activeReport.locationFull}</span>
+              </div>
+              <p className="text-xs text-[#64748B] leading-[1.7] font-normal mt-0.5">
+                {activeReport.detailDesc}
+              </p>
+            </div>
+
+            {/* 3. Perjalanan Laporan (Timeline) */}
+            <div className="flex flex-col gap-4">
+              <h4 className="text-[14px] font-semibold text-[#0D2453]">
+                Perjalanan laporan
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Step 1: Diterima */}
-                <div
-                  className={`p-4 rounded-2xl border transition-all ${
-                    report.status === 'SUBMITTED' || report.status === 'IN_PROGRESS' || report.status === 'RESOLVED'
-                      ? 'bg-blue-50/70 border-blue-200 text-blue-900'
-                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                    <span>1. Laporan Masuk</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    Tercatat resmi di radar monitoring &amp; geo-tagging Jateng.
-                  </p>
-                </div>
 
-                {/* Step 2: Dikerjakan */}
-                <div
-                  className={`p-4 rounded-2xl border transition-all ${
-                    report.status === 'IN_PROGRESS' || report.status === 'RESOLVED'
-                      ? 'bg-amber-50/70 border-amber-200 text-amber-900'
-                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs">
-                    <Clock
-                      className={`w-4 h-4 ${
-                        report.status === 'IN_PROGRESS' || report.status === 'RESOLVED'
-                          ? 'text-amber-600'
-                          : 'text-slate-400'
-                      }`}
-                    />
-                    <span>2. Ditindaklanjuti</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    Pokdarwis desa setempat mengalokasikan tenaga &amp; bahan fisik.
-                  </p>
-                </div>
+              <div className="space-y-0">
+                {activeReport.timeline.map((step, idx) => {
+                  const isLast = idx === activeReport.timeline.length - 1;
+                  const isCurrent = isLast && activeReport.status !== 'Selesai';
+                  return (
+                    <div key={idx} className="flex gap-3.5 items-start">
+                      {/* Indicator circle & vertical line */}
+                      <div className="flex flex-col items-center shrink-0 w-7">
+                        {isCurrent ? (
+                          <div className="w-5 h-5 rounded-full border-2 border-[#0D2453] flex items-center justify-center shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D2453]" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-[#E4F6E8] flex items-center justify-center text-[#216B55] shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                        )}
+                        {!isLast && <div className="w-px h-10 bg-[#E6ECF5] my-1" />}
+                      </div>
 
-                {/* Step 3: Selesai */}
-                <div
-                  className={`p-4 rounded-2xl border transition-all ${
-                    report.status === 'RESOLVED'
-                      ? 'bg-emerald-50/70 border-emerald-300 text-emerald-900'
-                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs">
-                    <ShieldCheck
-                      className={`w-4 h-4 ${
-                        report.status === 'RESOLVED' ? 'text-emerald-600' : 'text-slate-400'
-                      }`}
-                    />
-                    <span>3. Selesai (Proof-of-Fix)</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    Dokumentasi foto perbaikan fisik terverifikasi kamera.
-                  </p>
-                </div>
+                      {/* Step info */}
+                      <div className="flex flex-col pb-3 min-w-0">
+                        <span className="text-[14px] font-semibold text-[#0D2453] leading-tight">
+                          {step.title}
+                        </span>
+                        <span className="text-xs text-[#64748B] mt-1 leading-normal">
+                          {step.date}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Description */}
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <h5 className="text-xs font-bold text-[#0D2453] mb-1">Deskripsi Aduan Warga</h5>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                {report.description}
+            {/* 4. Sebelum & Sesudah Photos */}
+            <div className="flex flex-col gap-3.5">
+              <h4 className="text-[14px] font-semibold text-[#0D2453]">
+                Sebelum &amp; sesudah
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Sebelum */}
+                {activeReport.beforePhoto && (
+                  <div className="flex flex-col gap-2">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() =>
+                        setLightboxImg({
+                          url: activeReport.beforePhoto!.url,
+                          label: `${activeReport.title} - ${activeReport.beforePhoto!.label}`,
+                        })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setLightboxImg({
+                            url: activeReport.beforePhoto!.url,
+                            label: `${activeReport.title} - ${activeReport.beforePhoto!.label}`,
+                          });
+                        }
+                      }}
+                      className="h-[176px] rounded-[14px] overflow-hidden bg-slate-100 border border-[#E6ECF5] cursor-pointer group relative transition-colors duration-150 hover:border-[#CBD5E1]"
+                    >
+                      <img
+                        src={activeReport.beforePhoto.url}
+                        alt="Foto kondisi sebelum perbaikan"
+                        className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors duration-150 flex items-center justify-center">
+                        <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-[#64748B] font-normal">
+                      {activeReport.beforePhoto.label}
+                    </span>
+                  </div>
+                )}
+
+                {/* Sesudah */}
+                {activeReport.afterPhoto ? (
+                  <div className="flex flex-col gap-2">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() =>
+                        setLightboxImg({
+                          url: activeReport.afterPhoto!.url,
+                          label: `${activeReport.title} - ${activeReport.afterPhoto!.label}`,
+                        })
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setLightboxImg({
+                            url: activeReport.afterPhoto!.url,
+                            label: `${activeReport.title} - ${activeReport.afterPhoto!.label}`,
+                          });
+                        }
+                      }}
+                      className="h-[176px] rounded-[14px] overflow-hidden bg-slate-100 border border-[#E6ECF5] cursor-pointer group relative transition-colors duration-150 hover:border-[#CBD5E1]"
+                    >
+                      <img
+                        src={activeReport.afterPhoto.url}
+                        alt="Foto kondisi sesudah perbaikan"
+                        className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors duration-150 flex items-center justify-center">
+                        <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-[#64748B] font-normal">
+                      {activeReport.afterPhoto.label}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <div className="h-[176px] rounded-[14px] bg-[#F3F5F8] border border-dashed border-slate-300 flex flex-col items-center justify-center p-4 text-center">
+                      <span className="text-xs text-[#64748B] font-medium">
+                        Dokumentasi penanganan
+                      </span>
+                      <span className="text-[11px] text-slate-400 mt-1">
+                        Menunggu pembaruan lapangan
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#64748B] font-normal">
+                      Sesudah · Dalam proses
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 5. Privacy Notice Banner */}
+            <div className="bg-[#F3F5F8] rounded-[14px] p-4 flex items-start gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-[#0D2453] shrink-0 mt-0.5" />
+              <p className="text-xs text-[#64748B] leading-[1.6] font-normal">
+                Tampilan publik hanya memuat informasi aduan. Identitas dan data pribadi pelapor tidak ditampilkan.
               </p>
             </div>
           </div>
+          )}
 
-          {/* Proof-of-Fix Verification Section */}
-          <div className="bg-white rounded-3xl border border-[#EBEBEB] p-6 sm:p-8 shadow-xs space-y-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold mb-1.5">
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Bukti Nyata Fisik (Proof-of-Fix)</span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-[#0D2453]">
-                  {report.status === 'RESOLVED'
-                    ? 'Komparasi Sebelum & Sesudah Perbaikan'
-                    : 'Dokumentasi Kondisi Lapangan'}
-                </h3>
-              </div>
+          {filteredReports.length === 0 && (
+            <div className="w-full lg:flex-1 min-h-[320px] bg-white rounded-[24px] border border-dashed border-[#CBD5E1] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-2">
+              <Search className="w-6 h-6 text-[#94A3B8]" />
+              <p className="text-[15px] font-semibold text-[#0D2453]">
+                Belum ada laporan yang cocok
+              </p>
+              <p className="text-[13px] text-[#64748B] max-w-sm leading-[1.6]">
+                Coba kode tiket lain, kata kunci yang lebih pendek, atau longgarkan filter status dan kategori.
+              </p>
             </div>
+          )}
+        </div>
+      </section>
 
-            {/* Interactive Before-After Slider if RESOLVED */}
-            {report.status === 'RESOLVED' && report.resolution ? (
-              <div className="space-y-6">
-                <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] max-h-[480px] rounded-3xl overflow-hidden select-none border border-slate-200 shadow-md bg-slate-950">
-                  {/* After Image (Background) */}
-                  <img
-                    src={report.resolution.photo_after_url}
-                    alt="Foto Setelah Perbaikan"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-emerald-600/90 text-white text-xs font-bold shadow-md flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>SETELAH (FIXED)</span>
-                  </div>
+      {/* 5. Bottom CTA Banner */}
+      <section className="w-full bg-[#EDF3FC] rounded-[24px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_10px_20px_-10px_rgba(13,36,83,0.12),0_28px_48px_-24px_rgba(13,36,83,0.14)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-xl">
+          <h3 className="text-[22px] font-semibold text-[#0D2453]">
+            Melihat kendala di desa wisata?
+          </h3>
+          <p className="text-[14px] text-[#64748B] leading-[1.6] font-normal">
+            Sampaikan lokasi, ceritakan kejadiannya, dan sertakan bukti yang relevan.
+          </p>
+        </div>
 
-                  {/* Before Image (Foreground Clipped) */}
-                  <div
-                    className="absolute inset-0 overflow-hidden"
-                    style={{ width: `${sliderPos}%` }}
-                  >
-                    <img
-                      src={report.photo_before_url}
-                      alt="Foto Sebelum Perbaikan"
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{ width: '100%', minWidth: '100%' }}
-                    />
-                    <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-bold shadow-md flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>SEBELUM (RUSAK)</span>
-                    </div>
-                  </div>
+        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+          <Link
+            href="/#buat-laporan"
+            className="flex-1 sm:flex-initial bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors duration-150 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Buat Laporan</span>
+          </Link>
+          <Link
+            href="/edukasi"
+            className="flex-1 sm:flex-initial bg-white border border-[#0D2453] hover:bg-[#F8FAFC] text-[#0D2453] px-[18px] py-[13px] rounded-full text-[13px] font-semibold text-center transition-colors duration-150 cursor-pointer"
+          >
+            Panduan Pelaporan
+          </Link>
+        </div>
+      </section>
 
-                  {/* Slider Control Line & Handle */}
-                  <div
-                    className="absolute top-0 bottom-0 z-20 w-1 bg-white cursor-ew-resize shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-                    style={{ left: `${sliderPos}%` }}
-                  >
-                    <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-white text-[#0D2453] shadow-xl border-2 border-[#0D2453] flex items-center justify-center font-bold text-xs select-none">
-                      ↔
-                    </div>
-                  </div>
-
-                  {/* Range Input for touch/mouse */}
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={sliderPos}
-                    onChange={(e) => setSliderPos(Number(e.target.value))}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
-                  />
-                </div>
-                <p className="text-center text-xs text-slate-500 font-medium">
-                  ← Geser garis tengah untuk melihat perbandingan fisik sebelum dan sesudah perbaikan →
-                </p>
-
-                {/* Resolution Summary Card */}
-                <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                      <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
-                        Rincian Tindakan Penanganan Pokdarwis
-                      </span>
-                    </div>
-                    {report.resolution.exif_timestamp_verified ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 text-[11px] font-bold">
-                        ● Terverifikasi EXIF Kamera (Foto Diambil Pasca Laporan)
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[11px] font-medium">
-                        Verifikasi Manual
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-emerald-950 font-medium leading-relaxed">
-                    {report.resolution.action_summary}
-                  </p>
-
-                  <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between text-xs text-emerald-900/80 flex-wrap gap-2">
-                    <span>
-                      Petugas Pelaksana: <strong>{report.resolution.officer_name}</strong>
-                    </span>
-                    <span>
-                      Diselesaikan: {formatDateIndo(report.resolution.resolved_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* If not resolved yet: show single photo before */
-              <div className="space-y-4">
-                <div className="relative w-full aspect-[16/9] max-h-[400px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
-                  <img
-                    src={report.photo_before_url}
-                    alt="Foto Kerusakan Awal"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-red-600/90 text-white text-xs font-bold shadow-md flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>DOKUMENTASI AWAL WARGA</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold">Menunggu Bukti Fisik Perbaikan</p>
-                    <p className="text-amber-800 mt-0.5">
-                      Tiket aduan ini belum dapat ditutup sebelum pengurus Pokdarwis desa setempat mengunggah foto fisik sarana yang telah selesai diperbaiki beserta data verifikasi waktu kamera.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+      {/* Lightbox Modal */}
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          onClick={() => setLightboxImg(null)}
+        >
+          <div
+            className="w-full max-w-3xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 bg-[#0D2453] text-white flex items-center justify-between">
+              <h4 className="font-bold text-sm sm:text-base">{lightboxImg.label}</h4>
+              <button
+                type="button"
+                onClick={() => setLightboxImg(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 bg-slate-950 flex items-center justify-center max-h-[70vh]">
+              <img
+                src={lightboxImg.url}
+                alt={lightboxImg.label}
+                className="max-h-[65vh] w-auto object-contain rounded-lg shadow-lg"
+              />
+            </div>
+            <div className="p-4 bg-[#F7F9FC] flex justify-between items-center text-xs text-[#767676]">
+              <span>Dokumentasi tindak lanjut aduan</span>
+              <button
+                type="button"
+                onClick={() => setLightboxImg(null)}
+                className="px-4 py-2 rounded-xl bg-[#0D2453] text-white font-bold text-xs hover:bg-[#163574] transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -463,16 +803,11 @@ function TrackReportContent() {
   );
 }
 
+
 export default function LaporPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-5xl mx-auto px-4 py-20 text-center">
-          <p className="text-sm text-slate-500 font-semibold">Memuat data pelacakan aduan...</p>
-        </div>
-      }
-    >
-      <TrackReportContent />
+    <Suspense fallback={<div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-20 text-center text-xs text-[#767676]">Memuat data aduan...</div>}>
+      <LaporContent />
     </Suspense>
   );
 }
