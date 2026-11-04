@@ -133,15 +133,15 @@ npm run build
   - Kartu neraca pagu bantuan, realisasi belanja modal, dan sisa saldo kas anggaran.
   - Tabel penjabaran pos belanja modal hasil ekstraksi dokumen LPJ dengan lencana deviasi Standar Satuan Harga (SSH) Jateng.
   - Tautan unduh salinan dokumen LPJ resmi bertandatangan Kepala Desa (PDF).
-- [ ] **Halaman Telusuri Aduan (`/lapor`)**:
+- [x] **Halaman Telusuri Aduan (`/lapor`)**:
   - Bilah pencarian Kode Pelaporan unik.
   - Linimasa milestone 3 tahap (Diterima, Sedang Dikerjakan, Selesai).
   - Slider interaktif komparasi foto *Before-After* (*Proof-of-Fix*) dan kartu validasi timestamp EXIF.
-- [ ] **Halaman Edukasi & Panduan (`/edukasi`)**:
+- [x] **Halaman Edukasi & Panduan (`/edukasi`)**:
   - Modul literasi hak keterbukaan informasi publik (UU KIP No. 14/2008 & Permendagri No. 20/2018).
   - SOP tangga respon penanganan pengaduan Pokdarwis.
   - Panduan standar K3 sarana buatan dan direktori kontak darurat Jawa Tengah.
-- [ ] **Halaman Pengelola Desa & Disporapar**:
+- [x] **Halaman Pengelola Desa & Disporapar**:
   - Papan kerja Pokdarwis (`/pengelola`) dengan syarat wajib unggah foto *Proof-of-Fix* sebelum tiket ditutup.
   - Portal Balai Desa (`/admin/balai-desa`) untuk unggah berkas dokumen LPJ bantuan (PDF).
   - Peta Kendali Disporapar Pemprov Jateng (`/admin/command-center`) format Widescreen 16:9 Dark Mode dengan pemeringkatan Trust Score matematis.
