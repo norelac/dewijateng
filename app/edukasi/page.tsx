@@ -46,7 +46,7 @@ const GUIDE_CARDS: GuideItem[] = [
     tag: 'PELAPORAN',
     title: 'Melacak Status Laporan',
     description:
-      'Masukkan kode DS-JTG-2026-XXXX di Telusuri Laporan. Buka detail untuk melihat verifikasi desa, proses perbaikan, dan foto penyelesaian.',
+      'Masukkan kode LP-JTG-2026-XXXX di Telusuri Laporan. Buka detail untuk melihat verifikasi desa, proses perbaikan, dan foto penyelesaian.',
     icon: Search,
   },
   {
@@ -315,7 +315,7 @@ export default function EdukasiPage() {
 
               <div className="mt-auto pt-2 flex flex-col gap-1">
                 <span className="text-[15px] font-bold text-white tracking-wide">
-                  DS-JTG-2026-XXXX
+                  LP-JTG-2026-XXXX
                 </span>
                 <span className="text-[11px] text-white/60 font-normal">
                   Format kode laporan · simpan untuk penelusuran

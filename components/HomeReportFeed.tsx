@@ -35,7 +35,7 @@ interface ReportCardItem {
 const REPORT_CARDS: ReportCardItem[] = [
   {
     id: 'rep-1',
-    ticketCode: 'DS-JTG-2026-0891',
+    ticketCode: 'LP-JTG-2026-0891',
     title: 'Akses ke curug buruk',
     status: 'Selesai',
     beforePhoto: '/img/figma/curug-sebelum.png',
@@ -62,7 +62,7 @@ const REPORT_CARDS: ReportCardItem[] = [
   },
   {
     id: 'rep-2',
-    ticketCode: 'DS-JTG-2026-0744',
+    ticketCode: 'LP-JTG-2026-0744',
     title: 'Wastafel dan toilet kotor sekali',
     status: 'Selesai',
     beforePhoto: '/img/figma/toilet-sebelum.png',

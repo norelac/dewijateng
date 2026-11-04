@@ -17,6 +17,9 @@ interface ExpenditureItem {
   title: string;
   sub: string;
   amount: string;
+  sshRef?: string;
+  sshAmount?: string;
+  deviation?: number;
   receiptImg: string;
   photoImg: string;
 }
@@ -28,6 +31,9 @@ const EXPENDITURES: ExpenditureItem[] = [
     title: 'Perbaikan jalur pejalan kaki',
     sub: 'Akses wisata & pagar pengaman',
     amount: '320.000.000',
+    sshRef: '5.02.01.05.002',
+    sshAmount: '300.000.000',
+    deviation: 6.7,
     receiptImg: 'https://images.unsplash.com/photo-1554415707-9e4966a6e483?w=1000&auto=format&fit=crop&q=85',
     photoImg: '/img/figma/curug-sesudah.png',
   },
@@ -37,6 +43,9 @@ const EXPENDITURES: ExpenditureItem[] = [
     title: 'Penataan area parkir wisata',
     sub: 'Permukaan & marka area parkir',
     amount: '240.000.000',
+    sshRef: '5.02.01.06.001',
+    sshAmount: '170.000.000',
+    deviation: 41.2,
     receiptImg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1000&auto=format&fit=crop&q=85',
     photoImg: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=1000&auto=format&fit=crop&q=85',
   },
@@ -46,6 +55,9 @@ const EXPENDITURES: ExpenditureItem[] = [
     title: 'Pengelolaan kebersihan desa',
     sub: 'Tempat sampah & sarana kebersihan',
     amount: '180.000.000',
+    sshRef: '5.02.02.01.003',
+    sshAmount: '175.000.000',
+    deviation: 2.9,
     receiptImg: 'https://images.unsplash.com/photo-1554415707-9e4966a6e483?w=1000&auto=format&fit=crop&q=85',
     photoImg: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1000&auto=format&fit=crop&q=85',
   },
@@ -55,6 +67,9 @@ const EXPENDITURES: ExpenditureItem[] = [
     title: 'Pemeliharaan toilet wisata',
     sub: 'Sanitasi & perbaikan fasilitas',
     amount: '100.000.000',
+    sshRef: '5.02.03.01.002',
+    sshAmount: '95.000.000',
+    deviation: 5.3,
     receiptImg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1000&auto=format&fit=crop&q=85',
     photoImg: '/img/figma/toilet-sesudah.png',
   },
@@ -402,106 +417,146 @@ export default function TransparansiPage() {
           <table className="w-full text-left text-xs sm:text-sm text-[#0D2453]">
             {/* Table Head with Soft Blue Tint as in Figma */}
             <thead>
-              <tr className="bg-[#DCE7F5]/70 text-[#0D2453] text-xs font-semibold">
+              <tr className="bg-[#DCE7F5] text-[#0D2453] text-xs font-semibold">
                 <th scope="col" className="px-5 py-3.5 rounded-l-xl">Tanggal</th>
                 <th scope="col" className="px-5 py-3.5">Nama Kegiatan / Fasilitas</th>
                 <th scope="col" className="px-5 py-3.5">Nominal (Rp)</th>
+                <th scope="col" className="px-5 py-3.5">SSH Jateng</th>
+                <th scope="col" className="px-5 py-3.5">Status Audit</th>
                 <th scope="col" className="px-5 py-3.5 rounded-r-xl">Foto Bukti Nota &amp; Fisik</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-[#E6ECF5]">
-              {EXPENDITURES.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
-                  {/* Tanggal */}
-                  <td className="px-5 py-4 whitespace-nowrap text-xs text-[#0D2453] font-medium align-middle">
-                    {row.date}
-                  </td>
+              {EXPENDITURES.map((row) => {
+                const isOverBudget = row.deviation !== undefined && row.deviation > 40;
+                return (
+                  <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                    {/* Tanggal */}
+                    <td className="px-5 py-4 whitespace-nowrap text-xs text-[#0D2453] font-medium align-middle">
+                      {row.date}
+                    </td>
 
-                  {/* Kegiatan */}
-                  <td className="px-5 py-4 align-middle">
-                    <div className="font-bold text-[#0D2453] text-xs sm:text-sm">{row.title}</div>
-                    <div className="text-[11px] text-[#767676] mt-0.5">{row.sub}</div>
-                  </td>
+                    {/* Kegiatan */}
+                    <td className="px-5 py-4 align-middle">
+                      <div className="font-bold text-[#0D2453] text-xs sm:text-sm">{row.title}</div>
+                      <div className="text-[11px] text-[#767676] mt-0.5">{row.sub}</div>
+                    </td>
 
-                  {/* Nominal */}
-                  <td className="px-5 py-4 whitespace-nowrap font-bold text-[#0D2453] text-xs sm:text-sm align-middle">
-                    {row.amount}
-                  </td>
+                    {/* Nominal */}
+                    <td className="px-5 py-4 whitespace-nowrap font-bold text-[#0D2453] text-xs sm:text-sm align-middle">
+                      Rp {row.amount}
+                    </td>
 
-                  {/* Foto Bukti Nota & Fisik */}
-                  <td className="px-5 py-4 align-middle">
-                    <div className="flex items-center gap-3">
-                      {/* Nota Box */}
-                      <div className="flex flex-col">
-                        <div
-                          onClick={() =>
-                            setActiveModal({
-                              url: row.receiptImg,
-                              title: `${row.title} - Nota Kuitansi`,
-                              type: 'Nota',
-                            })
-                          }
-                          className="w-16 h-11 rounded-lg bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-[9px] font-bold text-[#475569] tracking-tighter text-center px-1 leading-tight select-none cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all"
-                        >
-                          NOTA KUITANSI
+                    {/* SSH Jateng */}
+                    <td className="px-5 py-4 align-middle whitespace-nowrap">
+                      {row.sshRef ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[10px] font-mono text-[#64748B]">{row.sshRef}</span>
+                          <span className="text-xs font-semibold text-[#0D2453]">Rp {row.sshAmount}</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveModal({
-                              url: row.receiptImg,
-                              title: `${row.title} - Nota Kuitansi`,
-                              type: 'Nota',
-                            })
-                          }
-                          className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1 hover:underline cursor-pointer"
-                        >
-                          <span>Nota</span>
-                          <ArrowUpRight className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">—</span>
+                      )}
+                    </td>
 
-                      {/* Foto Fisik Box */}
-                      <div className="flex flex-col">
-                        <div
-                          onClick={() =>
-                            setActiveModal({
-                              url: row.photoImg,
-                              title: `${row.title} - Foto Fisik Fasilitas`,
-                              type: 'Foto Fisik',
-                            })
-                          }
-                          className="w-16 h-11 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all relative group"
-                        >
-                          <img
-                            src={row.photoImg}
-                            alt={row.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
-                            <Maximize2 className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Status Audit / Deviasi */}
+                    <td className="px-5 py-4 align-middle">
+                      {row.deviation !== undefined ? (
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              isOverBudget
+                                ? 'bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]'
+                                : 'bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]'
+                            }`}
+                          >
+                            <span>{isOverBudget ? '⚠️' : '✓'}</span>
+                            <span>+{row.deviation.toFixed(1)}%</span>
+                          </span>
+                          <span className={`text-[9px] font-medium ${isOverBudget ? 'text-[#991B1B]' : 'text-[#065F46]'}`}>
+                            {isOverBudget ? 'Melebihi batas wajar' : 'Sesuai standar SSH'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">Belum diaudit</span>
+                      )}
+                    </td>
+
+                    {/* Foto Bukti Nota & Fisik */}
+                    <td className="px-5 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        {/* Nota Box */}
+                        <div className="flex flex-col">
+                          <div
+                            onClick={() =>
+                              setActiveModal({
+                                url: row.receiptImg,
+                                title: `${row.title} - Nota Kuitansi`,
+                                type: 'Nota',
+                              })
+                            }
+                            className="w-16 h-11 rounded-lg bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-[9px] font-bold text-[#475569] tracking-tighter text-center px-1 leading-tight select-none cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all"
+                          >
+                            NOTA KUITANSI
                           </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveModal({
+                                url: row.receiptImg,
+                                title: `${row.title} - Nota Kuitansi`,
+                                type: 'Nota',
+                              })
+                            }
+                            className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1 hover:underline cursor-pointer"
+                          >
+                            <span>Nota</span>
+                            <ArrowUpRight className="w-2.5 h-2.5" />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveModal({
-                              url: row.photoImg,
-                              title: `${row.title} - Foto Fisik Fasilitas`,
-                              type: 'Foto Fisik',
-                            })
-                          }
-                          className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1 hover:underline cursor-pointer"
-                        >
-                          <span>Foto Fisik</span>
-                          <ArrowUpRight className="w-2.5 h-2.5" />
-                        </button>
+
+                        {/* Foto Fisik Box */}
+                        <div className="flex flex-col">
+                          <div
+                            onClick={() =>
+                              setActiveModal({
+                                url: row.photoImg,
+                                title: `${row.title} - Foto Fisik Fasilitas`,
+                                type: 'Foto Fisik',
+                              })
+                            }
+                            className="w-16 h-11 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all relative group"
+                          >
+                            <img
+                              src={row.photoImg}
+                              alt={row.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
+                              <Maximize2 className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveModal({
+                                url: row.photoImg,
+                                title: `${row.title} - Foto Fisik Fasilitas`,
+                                type: 'Foto Fisik',
+                              })
+                            }
+                            className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1 hover:underline cursor-pointer"
+                          >
+                            <span>Foto Fisik</span>
+                            <ArrowUpRight className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
 
             {/* Table Footer Total Summary */}
@@ -511,9 +566,9 @@ export default function TransparansiPage() {
                   <span className="font-bold text-[#0D2453] text-sm">Total belanja tercatat</span>
                 </td>
                 <td className="px-5 py-4">
-                  <span className="font-bold text-[#0D2453] text-sm">840.000.000</span>
+                  <span className="font-bold text-[#0D2453] text-sm">Rp 840.000.000</span>
                 </td>
-                <td className="px-5 py-4 text-xs text-[#767676] font-normal">
+                <td className="px-5 py-4 text-xs text-[#767676] font-normal" colSpan={3}>
                   Sama dengan dana terpakai · 70%
                 </td>
               </tr>

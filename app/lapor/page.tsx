@@ -634,7 +634,7 @@ function LaporContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Contoh: DS-JTG-2026-0891 atau akses ke curug"
+                placeholder="Contoh: LP-JTG-2026-0891 atau akses ke curug"
                 className="w-full bg-transparent border-0 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#64748B] placeholder:font-normal focus:outline-none"
               />
               {searchQuery && (

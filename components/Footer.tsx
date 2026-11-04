@@ -75,7 +75,7 @@ export default function Footer() {
                   className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
                   <FileText className="w-4 h-4 text-white/60" />
-                  <span>Lapor</span>
+                  <span>Telusuri Laporan</span>
                 </Link>
               </li>
               <li>
