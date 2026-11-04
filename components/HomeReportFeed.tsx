@@ -198,12 +198,12 @@ export default function HomeReportFeed() {
           .filter((item): item is ReportCardItem => item !== null);
         if (mapped.length === 0) return;
 
-        setCards(mapped.slice(0, 2));
+        setCards(mapped.slice(0, 4));
         setSliderModes(
-          Object.fromEntries(mapped.slice(0, 2).map((item) => [item.id, true]))
+          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, true]))
         );
         setSliderPositions(
-          Object.fromEntries(mapped.slice(0, 2).map((item) => [item.id, 50]))
+          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, 50]))
         );
       })
       .catch(() => {
@@ -248,7 +248,7 @@ export default function HomeReportFeed() {
                       {item.title}
                     </h3>
                     <Link
-                      href="/lapor"
+                      href={`/lapor?code=${encodeURIComponent(item.ticketCode)}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#0D2453] hover:underline mt-0.5"
                     >
                       <span>{item.ticketCode}</span>

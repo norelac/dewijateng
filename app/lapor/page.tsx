@@ -20,6 +20,7 @@ import {
 
 import {
   getPublicReportsAction,
+  getReportDetailAction,
 } from '@/app/actions/reportActions';
 import type { IncidentReportDetail } from '@/lib/services/reportService';
 
@@ -663,6 +664,26 @@ function LaporContent() {
       if (idx !== -1) {
         setCurrentPage(Math.floor(idx / ITEMS_PER_PAGE) + 1);
       }
+    } else {
+      // Jika belum termuat di daftar publik, ambil langsung dari basis data
+      getReportDetailAction(code.trim().toUpperCase())
+        .then((res) => {
+          if (res.success && res.data) {
+            const mapped = mapIncidentToReportItem(res.data);
+            setReports((prev) => [
+              mapped,
+              ...prev.filter((p) => p.ticketCode !== mapped.ticketCode),
+            ]);
+            setSelectedKabupaten('Semua Kabupaten');
+            setSelectedDesa('Semua Desa');
+            setStatusFilter('Semua');
+            setSelectedKategori('Semua kategori');
+            setSearchQuery('');
+            setActiveReportId(mapped.id);
+            setCurrentPage(1);
+          }
+        })
+        .catch(() => {});
     }
   }, [reports]);
 
