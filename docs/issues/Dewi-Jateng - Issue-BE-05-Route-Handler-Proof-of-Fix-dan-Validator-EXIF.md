@@ -4,7 +4,7 @@ project_id: "Dewi-Jateng"
 subproject: "ai_dewijateng"
 issue_id: "BE-05"
 title: "Service Proof-of-Fix, Validator EXIF & Server Action Resolusi Tiket"
-status: open
+status: completed
 priority: critical
 created: 2026-11-04
 updated: 2026-11-04
@@ -90,20 +90,11 @@ export async function resolveReportAction(formData: FormData) {
 6. Picu fungsi rekalkulasi Trust Score desa secara real-time.
 
 ## 5. Kriteria Keberterimaan (Acceptance Criteria)
-- [ ] AC-1: Pokdarwis dapat menyelesaikan laporan langsung dari UI Papan Kerja melalui Server Action.
-- [ ] AC-2: Berkas foto hasil perbaikan tersimpan di storage lokal `public/uploads/proof-of-fix/`.
-- [ ] AC-3: Foto dengan tanggal EXIF sebelum tanggal aduan dibuat ditolak dengan error validasi.
-- [ ] AC-4: Foto dengan tanggal EXIF pasca aduan tercatat sebagai `exif_timestamp_verified = true`.
-- [ ] AC-5: Foto tanpa metadata EXIF tetap diterima dengan flag informatif `exif_timestamp_verified = false`.
-- [ ] AC-6: Status laporan di database berhasil berganti dari `IN_PROGRESS` menjadi `RESOLVED`.
-- [ ] AC-7: UI Papan Kerja dan Linimasa Publik terupdate otomatis melalui `revalidatePath()`.
-        photoDate: dateObj,
-        error: 'Foto terdeteksi diambil sebelum laporan aduan dibuat',
-      };
-    }
-    return { verified: true, photoDate: dateObj };
-  } catch {
-    return { verified: false, photoDate: null };
-  }
-}
-```
+- [x] AC-1: Pokdarwis dapat menyelesaikan laporan langsung dari UI Papan Kerja melalui Server Action (`resolveReportAction`).
+- [x] AC-2: Berkas foto hasil perbaikan tersimpan di storage lokal `public/uploads/proof-of-fix/`.
+- [x] AC-3: Foto dengan tanggal EXIF sebelum tanggal aduan dibuat ditolak dengan error validasi indikasi arsip lama.
+- [x] AC-4: Foto dengan tanggal EXIF pasca aduan tercatat sebagai `exif_timestamp_verified = true`.
+- [x] AC-5: Foto tanpa metadata EXIF tetap diterima dengan flag informatif `exif_timestamp_verified = false`.
+- [x] AC-6: Status laporan di database berhasil berganti dari `SUBMITTED` / `IN_PROGRESS` menjadi `RESOLVED`.
+- [x] AC-7: UI Papan Kerja dan Linimasa Publik terupdate otomatis melalui `revalidatePath()`.
+- [x] AC-8: Rekalkulasi matematis Trust Score desa dipicu secara otomatis pasca penyelesaian aduan.

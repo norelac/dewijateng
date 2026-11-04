@@ -19,6 +19,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { formatDateIndo } from '@/lib/utils';
+import { getPublicReportsAction } from '@/app/actions/reportActions';
+import { resolveReportAction } from '@/app/actions/resolutionActions';
 
 interface TicketData {
   id: string;
@@ -60,14 +62,35 @@ export default function PengelolaTicketBoard() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Ambil daftar laporan riil dari database
+  // Ambil daftar laporan riil dari database via Server Action
   const loadReports = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/reports');
-      const json = await res.json();
-      if (json.success && json.data) {
-        setTickets(json.data);
+      const res = await getPublicReportsAction();
+      if (res.success && res.data) {
+        const mapped: TicketData[] = res.data.map((r) => ({
+          id: r.id,
+          report_code: r.reportCode,
+          village_id: r.villageId,
+          village_name: r.village?.name || 'Desa Wisata Jateng',
+          village_regency: r.village?.regency || 'Jawa Tengah',
+          category: r.category,
+          title: r.title,
+          description: r.description,
+          photo_before_url: r.photoBeforeUrl,
+          latitude: r.latitude,
+          longitude: r.longitude,
+          is_anonymous: r.isAnonymous,
+          status: r.status,
+          created_at: typeof r.createdAt === 'string' ? r.createdAt : r.createdAt.toISOString(),
+          resolution_summary: r.resolution?.actionSummary || null,
+          resolution_photo_after: r.resolution?.photoAfterUrl || null,
+          resolution_officer: r.resolution?.officerName || null,
+          exif_timestamp_verified: r.resolution?.exifTimestampVerified ?? null,
+          exif_photo_date: r.resolution?.exifPhotoDate ? String(r.resolution.exifPhotoDate) : null,
+          resolved_at: r.resolution?.resolvedAt ? String(r.resolution.resolvedAt) : null,
+        }));
+        setTickets(mapped);
       }
     } catch (err) {
       console.error('Gagal mengambil laporan aduan:', err);
@@ -113,22 +136,15 @@ export default function PengelolaTicketBoard() {
 
     try {
       const formData = new FormData();
+      formData.append('report_code', activeResolvingTicket.report_code);
       formData.append('action_summary', actionSummary);
       formData.append('officer_name', officerName);
       formData.append('photo_after', photoAfterFile);
 
-      const res = await fetch(
-        `/api/pokdarwis/reports/${activeResolvingTicket.report_code}/resolve`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const res = await resolveReportAction(formData);
 
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        setErrorMessage(json.error || 'Gagal menyelesaikan laporan');
+      if (!res.success || !res.data) {
+        setErrorMessage(res.error || 'Gagal menyelesaikan laporan');
         setSubmitting(false);
         return;
       }
@@ -139,8 +155,8 @@ export default function PengelolaTicketBoard() {
         status: 'RESOLVED',
         resolution_summary: actionSummary,
         resolution_officer: officerName,
-        resolution_photo_after: photoPreview,
-        exif_timestamp_verified: json.data?.exif_verified ?? true,
+        resolution_photo_after: res.data.photoAfterUrl || photoPreview,
+        exif_timestamp_verified: res.data.exifVerified,
       });
 
       setActiveResolvingTicket(null);
