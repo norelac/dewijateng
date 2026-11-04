@@ -99,7 +99,12 @@ function handlePhotoError(e: React.SyntheticEvent<HTMLImageElement>) {
   const img = e.currentTarget;
   if (img.dataset.fallbackApplied === '1') return;
   img.dataset.fallbackApplied = '1';
-  img.src = FALLBACK_AFTER;
+  const alt = (img.getAttribute('alt') || '').toLowerCase();
+  if (alt.includes('sebelum')) {
+    img.src = FALLBACK_BEFORE;
+  } else {
+    img.src = FALLBACK_AFTER;
+  }
 }
 
 function formatTanggal(input?: string | Date | null): string {
@@ -292,7 +297,7 @@ export default function HomeReportFeed() {
                       {/* Sesudah (Full Background Image) */}
                       <img
                         src={item.afterPhoto}
-                        alt={item.afterLabel}
+                        alt="Foto kondisi sesudah perbaikan"
                         onError={handlePhotoError}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -304,7 +309,7 @@ export default function HomeReportFeed() {
                       >
                         <img
                           src={item.beforePhoto}
-                          alt={item.beforeLabel}
+                          alt="Foto kondisi sebelum perbaikan"
                           onError={handlePhotoError}
                           className="absolute inset-0 w-full h-full object-cover max-w-none"
                           style={{ width: '100%', height: '100%' }}

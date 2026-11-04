@@ -260,9 +260,9 @@ INSERT INTO grant_expenses (grant_id, activity_name, category, volume, unit, cla
 -- SEED DATA: Incident Reports (Laporan Aduan Warga Berbasis Foto & Leaflet GPS)
 -- ==============================================================================
 INSERT INTO incident_reports (id, report_code, village_id, category, title, description, photo_before_url, latitude, longitude, is_anonymous, status, created_at) VALUES
-('c0000000-0000-0000-0000-000000000001', 'LP-JTG-2026-0012', 'a0000000-0000-0000-0000-000000000001', 'FASILITAS_RUSAK', 'Pagar Pengaman Bambu Rapuh di Dekat Air Terjun Curug Kembar', 'Pagar pembatas dari bambu di tebing curug patah dan lapuk tergerus air. Bahaya bagi pengunjung terutama anak-anak saat foto di dekat air terjun.', '/images/reports/curug-kembar-broken.jpg', -7.3698200, 110.4285400, false, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '5 days'),
-('c0000000-0000-0000-0000-000000000002', 'LP-JTG-2026-0042', 'a0000000-0000-0000-0000-000000000001', 'KEBERSIHAN', 'Tumpukan Sampah Plastik di Jalur Setapak Pos 2', 'Banyak sampah botol plastik ditinggalkan di sekitar bebatuan pos 2 karena tempat sampah penuh dan tidak diangkut.', '/images/reports/trash-pathway.jpg', -7.3697100, 110.4283100, true, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '2 days'),
-('c0000000-0000-0000-0000-000000000003', 'LP-JTG-2026-0088', 'a0000000-0000-0000-0000-000000000003', 'FASILITAS_RUSAK', 'Kran Air Toilet Umum Mati & Pintu Rusak', 'Fasilitas MCK di pintu masuk tidak mengalirkan air dan slot kunci pintu patah.', '/images/reports/toilet-broken.jpg', -7.2891500, 109.3482500, true, 'SUBMITTED', CURRENT_TIMESTAMP - INTERVAL '1 days');
+('c0000000-0000-0000-0000-000000000001', 'LP-JTG-2026-0012', 'a0000000-0000-0000-0000-000000000001', 'FASILITAS_RUSAK', 'Pagar Pengaman Bambu Rapuh di Dekat Air Terjun Curug Kembar', 'Pagar pembatas dari bambu di tebing curug patah dan lapuk tergerus air. Bahaya bagi pengunjung terutama anak-anak saat foto di dekat air terjun.', '/img/figma/aduan-curug-sebelum.png', -7.3698200, 110.4285400, false, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+('c0000000-0000-0000-0000-000000000002', 'LP-JTG-2026-0042', 'a0000000-0000-0000-0000-000000000001', 'KEBERSIHAN', 'Tumpukan Sampah Plastik di Jalur Setapak Pos 2', 'Banyak sampah botol plastik ditinggalkan di sekitar bebatuan pos 2 karena tempat sampah penuh dan tidak diangkut.', '/img/figma/aduan-sampah.png', -7.3697100, 110.4283100, true, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('c0000000-0000-0000-0000-000000000003', 'LP-JTG-2026-0088', 'a0000000-0000-0000-0000-000000000003', 'FASILITAS_RUSAK', 'Kran Air Toilet Umum Mati & Pintu Rusak', 'Fasilitas MCK di pintu masuk tidak mengalirkan air dan slot kunci pintu patah.', '/img/figma/toilet-sebelum.png', -7.2891500, 109.3482500, true, 'SUBMITTED', CURRENT_TIMESTAMP - INTERVAL '1 days');
 
 UPDATE incident_reports SET updated_at = CURRENT_TIMESTAMP;
 
@@ -274,7 +274,7 @@ INSERT INTO report_resolutions (report_id, action_summary, photo_after_url, offi
 (
     'c0000000-0000-0000-0000-000000000001',
     'Pagar bambu lama telah dibongkar dan diganti dengan 12 meter konstruksi pipa besi galvanis 2 inci baru. Tiang dipasang dengan pondasi cor beton sedalam 40 cm dan dilapisi cat anti-karat.',
-    '/images/reports/curug-kembar-fixed.jpg',
+    '/img/figma/aduan-curug-sesudah.png',
     'Slamet Riyadi (Koordinator Sarpras Pokdarwis Getas Indah)',
     true,
     CURRENT_TIMESTAMP - INTERVAL '2 days',

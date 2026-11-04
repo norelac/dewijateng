@@ -476,14 +476,20 @@ const REPORTS_DATA: ReportItem[] = [
 const STATUS_FILTERS = ['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const;
 const ITEMS_PER_PAGE = 4;
 
-const FALLBACK_PHOTO = '/img/figma/aduan-curug-sebelum.png';
+const FALLBACK_BEFORE = '/img/figma/aduan-curug-sebelum.png';
+const FALLBACK_AFTER = '/img/figma/aduan-curug-sesudah.png';
 
 /** Ganti foto yang gagal dimuat dengan aset contoh agar tidak muncul ikon rusak. */
 function handlePhotoError(e: React.SyntheticEvent<HTMLImageElement>) {
   const img = e.currentTarget;
   if (img.dataset.fallbackApplied === '1') return;
   img.dataset.fallbackApplied = '1';
-  img.src = FALLBACK_PHOTO;
+  const alt = (img.getAttribute('alt') || '').toLowerCase();
+  if (alt.includes('sesudah') || alt.includes('selesai')) {
+    img.src = FALLBACK_AFTER;
+  } else {
+    img.src = FALLBACK_BEFORE;
+  }
 }
 
 // ==== Pemetaan data backend (BE-04) ke bentuk tampilan ====

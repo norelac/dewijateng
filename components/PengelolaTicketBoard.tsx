@@ -315,6 +315,9 @@ export default function PengelolaTicketBoard() {
                       <img
                         src={ticket.photo_before_url}
                         alt={ticket.title}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/img/figma/aduan-curug-sebelum.png';
+                        }}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -374,6 +377,9 @@ export default function PengelolaTicketBoard() {
                             <img
                               src={ticket.resolution_photo_after}
                               alt="Foto After"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/img/figma/aduan-curug-sesudah.png';
+                              }}
                               className="w-full h-full object-cover"
                             />
                           </div>
