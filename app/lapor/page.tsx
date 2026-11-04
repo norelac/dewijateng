@@ -288,7 +288,7 @@ export default function LaporPage() {
 
         <Link
           href="/#buat-laporan"
-          className="bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-[13px] font-semibold flex items-center gap-2 transition-all shadow-xs shrink-0 self-start md:self-center cursor-pointer active:scale-95"
+          className="bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-[13px] font-semibold flex items-center gap-2 transition-colors duration-150 shrink-0 self-start md:self-center cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Buat Laporan</span>
@@ -296,14 +296,14 @@ export default function LaporPage() {
       </div>
 
       {/* 3. Search & Filter Card */}
-      <section className="w-full bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-6">
+      <section className="w-full bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] flex flex-col gap-6">
         {/* Ticket search row */}
         <div className="space-y-2.5">
           <label className="block text-[16px] font-semibold text-[#0D2453]">
             Cari kode tiket atau kata kunci laporan
           </label>
           <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="border border-[#E6ECF5] rounded-[14px] h-[50px] px-4 py-3 flex-1 w-full flex items-center gap-3 focus-within:ring-1 focus-within:ring-[#0D2453]/30">
+            <div className="border border-[#E6ECF5] rounded-[14px] h-[50px] px-4 py-3 flex-1 w-full flex items-center gap-3 transition-colors duration-150 focus-within:border-[#0D2453]/35 focus-within:ring-1 focus-within:ring-[#0D2453]/15">
               <Search className="w-5 h-5 text-[#64748B] shrink-0" />
               <input
                 type="text"
@@ -325,7 +325,7 @@ export default function LaporPage() {
 
             <button
               type="button"
-              className="w-full sm:w-auto bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-5 py-3 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all shadow-xs cursor-pointer shrink-0"
+              className="w-full sm:w-auto bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-5 py-3 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0"
             >
               Cari Laporan
             </button>
@@ -411,10 +411,10 @@ export default function LaporPage() {
                 key={st}
                 type="button"
                 onClick={() => setStatusFilter(st)}
-                className={`px-5 py-3 rounded-full text-[14px] transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-5 py-3 rounded-full text-[14px] transition-colors duration-150 cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? 'bg-[#0D2453] text-white font-semibold shadow-2xs'
-                    : 'bg-white border border-[#E6ECF5] text-[#0D2453] font-normal hover:bg-slate-50'
+                    ? 'bg-[#0D2453] text-white font-semibold'
+                    : 'bg-white border border-[#E6ECF5] text-[#0D2453] font-normal hover:border-[#CBD5E1] hover:bg-[#F8FAFC]'
                 }`}
               >
                 {st}
@@ -438,7 +438,7 @@ export default function LaporPage() {
           {/* Left Column: Report Cards List (560px on desktop) */}
           <div className="w-full lg:w-[560px] shrink-0 flex flex-col gap-4">
             {filteredReports.length === 0 ? (
-              <div className="bg-white rounded-[20px] border border-[#E6ECF5] p-8 text-center text-[#64748B] text-sm">
+              <div className="bg-white rounded-[20px] border border-[#E6ECF5] p-8 text-center text-[#64748B] text-sm shadow-[0_1px_2px_rgba(13,36,83,0.035),0_6px_14px_-8px_rgba(13,36,83,0.10)]">
                 Tidak ada laporan yang sesuai dengan filter pencarian.
               </div>
             ) : (
@@ -447,11 +447,20 @@ export default function LaporPage() {
                 return (
                   <div
                     key={report.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isActive}
                     onClick={() => setActiveReportId(report.id)}
-                    className={`rounded-[20px] p-6 transition-all cursor-pointer flex flex-col gap-3.5 ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveReportId(report.id);
+                      }
+                    }}
+                    className={`rounded-[20px] p-6 cursor-pointer flex flex-col gap-3.5 border outline-offset-2 transition-[background-color,border-color,box-shadow] duration-150 ${
                       isActive
-                        ? 'bg-[#EDF3FC] border border-[#64748B]/40 shadow-xs'
-                        : 'bg-white border border-[#E6ECF5] hover:border-slate-300'
+                        ? 'bg-[#EDF3FC] border-[#0D2453]/20 shadow-[0_1px_2px_rgba(13,36,83,0.05),0_6px_14px_-4px_rgba(13,36,83,0.10),0_18px_32px_-12px_rgba(13,36,83,0.12)]'
+                        : 'bg-white border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.035),0_6px_14px_-8px_rgba(13,36,83,0.10)] hover:border-[#CBD5E1] hover:shadow-[0_1px_2px_rgba(13,36,83,0.04),0_10px_22px_-8px_rgba(13,36,83,0.14)]'
                     }`}
                   >
                     {/* Top: Ticket & Status Badge */}
@@ -499,18 +508,22 @@ export default function LaporPage() {
             )}
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between py-2 text-[13px] text-[#64748B]">
+            <div className="flex items-center justify-between pt-2 pb-1 mt-1 text-[13px] text-[#64748B]">
               <span>
                 Menampilkan 1–{filteredReports.length} dari {filteredReports.length}
               </span>
-              <div className="w-9 h-9 rounded-[10px] bg-[#0D2453] text-white flex items-center justify-center font-normal text-[13px]">
+              <div className="w-9 h-9 rounded-[10px] bg-[#0D2453] text-white flex items-center justify-center font-normal text-[13px] shadow-[0_2px_6px_rgba(13,36,83,0.18)]">
                 1
               </div>
             </div>
           </div>
 
           {/* Right Column: Selected Report Detail */}
-          <div className="w-full lg:flex-1 bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col gap-6">
+          {filteredReports.length > 0 && (
+          <div
+            key={activeReport.id}
+            className="detail-swap w-full lg:flex-1 bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_3px_rgba(13,36,83,0.05),0_10px_20px_-8px_rgba(13,36,83,0.10),0_32px_56px_-24px_rgba(13,36,83,0.16)] flex flex-col gap-6"
+          >
             {/* 1. Header & Status */}
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#64748B] tracking-[1px] uppercase">
@@ -545,13 +558,20 @@ export default function LaporPage() {
               <div className="space-y-0">
                 {activeReport.timeline.map((step, idx) => {
                   const isLast = idx === activeReport.timeline.length - 1;
+                  const isCurrent = isLast && activeReport.status !== 'Selesai';
                   return (
                     <div key={idx} className="flex gap-3.5 items-start">
                       {/* Indicator circle & vertical line */}
                       <div className="flex flex-col items-center shrink-0 w-7">
-                        <div className="w-5 h-5 rounded-full bg-[#E4F6E8] flex items-center justify-center text-[#216B55] shrink-0">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
+                        {isCurrent ? (
+                          <div className="w-5 h-5 rounded-full border-2 border-[#0D2453] flex items-center justify-center shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D2453]" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-[#E4F6E8] flex items-center justify-center text-[#216B55] shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                        )}
                         {!isLast && <div className="w-px h-10 bg-[#E6ECF5] my-1" />}
                       </div>
 
@@ -581,21 +601,32 @@ export default function LaporPage() {
                 {activeReport.beforePhoto && (
                   <div className="flex flex-col gap-2">
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() =>
                         setLightboxImg({
                           url: activeReport.beforePhoto!.url,
                           label: `${activeReport.title} - ${activeReport.beforePhoto!.label}`,
                         })
                       }
-                      className="h-[176px] rounded-[14px] overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer group relative"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setLightboxImg({
+                            url: activeReport.beforePhoto!.url,
+                            label: `${activeReport.title} - ${activeReport.beforePhoto!.label}`,
+                          });
+                        }
+                      }}
+                      className="h-[176px] rounded-[14px] overflow-hidden bg-slate-100 border border-[#E6ECF5] cursor-pointer group relative transition-colors duration-150 hover:border-[#CBD5E1]"
                     >
                       <img
                         src={activeReport.beforePhoto.url}
-                        alt="Foto Sebelum"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        alt="Foto kondisi sebelum perbaikan"
+                        className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]"
                       />
-                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
-                        <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors duration-150 flex items-center justify-center">
+                        <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
                       </div>
                     </div>
                     <span className="text-[11px] text-[#64748B] font-normal">
@@ -608,21 +639,32 @@ export default function LaporPage() {
                 {activeReport.afterPhoto ? (
                   <div className="flex flex-col gap-2">
                     <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() =>
                         setLightboxImg({
                           url: activeReport.afterPhoto!.url,
                           label: `${activeReport.title} - ${activeReport.afterPhoto!.label}`,
                         })
                       }
-                      className="h-[176px] rounded-[14px] overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer group relative"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setLightboxImg({
+                            url: activeReport.afterPhoto!.url,
+                            label: `${activeReport.title} - ${activeReport.afterPhoto!.label}`,
+                          });
+                        }
+                      }}
+                      className="h-[176px] rounded-[14px] overflow-hidden bg-slate-100 border border-[#E6ECF5] cursor-pointer group relative transition-colors duration-150 hover:border-[#CBD5E1]"
                     >
                       <img
                         src={activeReport.afterPhoto.url}
-                        alt="Foto Sesudah"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        alt="Foto kondisi sesudah perbaikan"
+                        className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]"
                       />
-                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
-                        <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors duration-150 flex items-center justify-center">
+                        <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
                       </div>
                     </div>
                     <span className="text-[11px] text-[#64748B] font-normal">
@@ -655,11 +697,24 @@ export default function LaporPage() {
               </p>
             </div>
           </div>
+          )}
+
+          {filteredReports.length === 0 && (
+            <div className="w-full lg:flex-1 min-h-[320px] bg-white rounded-[24px] border border-dashed border-[#CBD5E1] p-6 sm:p-8 flex flex-col items-center justify-center text-center gap-2">
+              <Search className="w-6 h-6 text-[#94A3B8]" />
+              <p className="text-[15px] font-semibold text-[#0D2453]">
+                Belum ada laporan yang cocok
+              </p>
+              <p className="text-[13px] text-[#64748B] max-w-sm leading-[1.6]">
+                Coba kode tiket lain, kata kunci yang lebih pendek, atau longgarkan filter status dan kategori.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
       {/* 5. Bottom CTA Banner */}
-      <section className="w-full bg-[#EDF3FC] rounded-[24px] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <section className="w-full bg-[#EDF3FC] rounded-[24px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_10px_20px_-10px_rgba(13,36,83,0.12),0_28px_48px_-24px_rgba(13,36,83,0.14)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-1.5 max-w-xl">
           <h3 className="text-[22px] font-semibold text-[#0D2453]">
             Melihat kendala di desa wisata?
@@ -672,14 +727,14 @@ export default function LaporPage() {
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
           <Link
             href="/#buat-laporan"
-            className="flex-1 sm:flex-initial bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-95"
+            className="flex-1 sm:flex-initial bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors duration-150 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Buat Laporan</span>
           </Link>
           <Link
             href="/edukasi"
-            className="flex-1 sm:flex-initial bg-white border border-[#0D2453] hover:bg-slate-50 text-[#0D2453] px-[18px] py-[13px] rounded-full text-[13px] font-semibold text-center transition-all shadow-xs cursor-pointer active:scale-95"
+            className="flex-1 sm:flex-initial bg-white border border-[#0D2453] hover:bg-[#F8FAFC] text-[#0D2453] px-[18px] py-[13px] rounded-full text-[13px] font-semibold text-center transition-colors duration-150 cursor-pointer"
           >
             Panduan Pelaporan
           </Link>
