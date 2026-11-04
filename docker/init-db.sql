@@ -220,7 +220,17 @@ INSERT INTO ssh_reference_rates (item_code, item_name, category, unit, standard_
 ('SSH-CAT-001', 'Cat Besi Anti Karat (Zinc Chromate 5 Kg)', 'BAHAN_KIMIA', 'Pail', 285000.00, 'PROVINSI_JATENG', 2026),
 ('SSH-UPH-001', 'Upah Tukang Las Bersertifikat Konstruksi', 'UPAH_TENAGA', 'Orang/Hari', 145000.00, 'PROVINSI_JATENG', 2026),
 ('SSH-UPH-002', 'Upah Pekerja / Pembantu Tukang', 'UPAH_TENAGA', 'Orang/Hari', 105000.00, 'PROVINSI_JATENG', 2026),
-('SSH-K3-001', 'Papan Rambu Peringatan Bahaya Plat Alumunium 60x60cm', 'KESELAMATAN_K3', 'Unit', 240000.00, 'PROVINSI_JATENG', 2026);
+('SSH-K3-001', 'Papan Rambu Peringatan Bahaya Plat Alumunium 60x60cm', 'KESELAMATAN_K3', 'Unit', 240000.00, 'PROVINSI_JATENG', 2026),
+('SSH-CAT-002', 'Cat Tembok Interior Emulsi 5 Kg', 'BAHAN_KIMIA', 'Pail', 95000.00, 'PROVINSI_JATENG', 2026),
+('SSH-MTL-003', 'Kawat Ikat Bendrat BWG 22', 'MATERIAL_LOGAM', 'Kg', 18000.00, 'PROVINSI_JATENG', 2026),
+('SSH-KYU-001', 'Kayu Balok Kamper 8/12 Kelas II', 'MATERIAL_KAYU', 'M3', 5500000.00, 'PROVINSI_JATENG', 2026),
+('SSH-BTU-001', 'Bata Merah Ukuran Standar Press', 'MATERIAL_AGREGAT', 'Buah', 900.00, 'PROVINSI_JATENG', 2026),
+('SSH-GNT-001', 'Genteng Beton Press Flat', 'MATERIAL_AGREGAT', 'Buah', 8500.00, 'PROVINSI_JATENG', 2026),
+('SSH-BSI-001', 'Besi Beton Polos D10mm SNI', 'MATERIAL_LOGAM', 'Batang (12m)', 92000.00, 'PROVINSI_JATENG', 2026),
+('SSH-PLN-001', 'Paku Biasa 2-5 Inci', 'MATERIAL_LOGAM', 'Kg', 20000.00, 'PROVINSI_JATENG', 2026),
+('SSH-PPA-001', 'Pipa PVC AW Dia 4 Inci', 'MATERIAL_PIPA', 'Batang (4m)', 115000.00, 'PROVINSI_JATENG', 2026),
+('SSH-UPH-003', 'Upah Mandor Konstruksi', 'UPAH_TENAGA', 'Orang/Hari', 165000.00, 'PROVINSI_JATENG', 2026),
+('SSH-UPH-004', 'Upah Tukang Batu Bersertifikat', 'UPAH_TENAGA', 'Orang/Hari', 130000.00, 'PROVINSI_JATENG', 2026);
 
 
 -- ==============================================================================
