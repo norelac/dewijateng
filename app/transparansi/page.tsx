@@ -188,7 +188,7 @@ export default function TransparansiPage() {
             {selectedDesa}
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 font-normal">
-            Borobudur, {selectedKabupaten} ┬╖ Tahun anggaran {selectedTahun}
+            Borobudur, {selectedKabupaten} · Tahun anggaran {selectedTahun}
           </p>
         </div>
 
@@ -359,7 +359,7 @@ export default function TransparansiPage() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-[#767676] mb-1 font-medium">
                   <span className="w-2.5 h-2.5 rounded-xs bg-[#0D2453]" />
-                  <span>Dana Terpakai ┬╖ 70%</span>
+                  <span>Dana Terpakai · 70%</span>
                 </div>
                 <div className="text-base sm:text-lg font-bold text-[#0D2453]">
                   Rp 840.000.000
@@ -369,7 +369,7 @@ export default function TransparansiPage() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-[#767676] mb-1 font-medium">
                   <span className="w-2.5 h-2.5 rounded-xs bg-[#DCE7F5]" />
-                  <span>Sisa Saldo Kas ┬╖ 30%</span>
+                  <span>Sisa Saldo Kas · 30%</span>
                 </div>
                 <div className="text-base sm:text-lg font-bold text-[#0D2453]">
                   Rp 360.000.000
@@ -514,7 +514,7 @@ export default function TransparansiPage() {
                   <span className="font-bold text-[#0D2453] text-sm">840.000.000</span>
                 </td>
                 <td className="px-5 py-4 text-xs text-[#767676] font-normal">
-                  Sama dengan dana terpakai ┬╖ 70%
+                  Sama dengan dana terpakai · 70%
                 </td>
               </tr>
             </tfoot>
