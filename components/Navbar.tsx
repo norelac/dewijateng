@@ -7,8 +7,8 @@ import { usePathname } from 'next/navigation';
 const navItems = [
   { href: '/', label: 'Beranda', disabled: false },
   { href: '/transparansi', label: 'Transparansi Dana', disabled: false },
-  { href: '/lapor', label: 'Telusuri Aduan', disabled: false },
-  { href: '/edukasi', label: 'Edukasi & Panduan', disabled: true },
+  { href: '/lapor', label: 'Telusuri Laporan', disabled: false },
+  { href: '/edukasi', label: 'Edukasi & Panduan', disabled: false },
 ];
 
 export default function Navbar() {
