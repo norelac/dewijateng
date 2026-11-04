@@ -1,364 +1,635 @@
-import React from 'react';
-import type { Metadata } from 'next';
+'use client';
+
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   BookOpen,
+  Search,
+  Plus,
+  FilePlus2,
+  BarChart2,
+  Receipt,
   ShieldCheck,
+  Ticket,
+  Minus,
+  Check,
+  X,
+  MessagesSquare,
   Scale,
   AlertTriangle,
-  Clock,
-  Camera,
-  CheckCircle2,
-  FileCheck2,
-  PhoneCall,
-  HardHat,
-  Info,
-  HelpCircle,
-  ArrowRight,
-  ExternalLink,
-  ChevronRight,
-  LifeBuoy
+  Phone,
+  HeartPulse,
 } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'Edukasi & Panduan Warga - DEWI JATENG',
-  description:
-    'Pusat literasi hukum keterbukaan informasi dana desa (UU KIP), SOP penanganan aduan Pokdarwis, standar keselamatan K3 wahana wisata, dan direktori darurat Jawa Tengah.',
-};
+interface GuideItem {
+  id: string;
+  category: 'Pelaporan' | 'Transparansi dana' | 'Privasi';
+  tag: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const GUIDE_CARDS: GuideItem[] = [
+  {
+    id: 'g-1',
+    category: 'Pelaporan',
+    tag: 'PELAPORAN',
+    title: 'Cara Membuat Laporan',
+    description:
+      'Tentukan lokasi dan kategori, jelaskan kejadian, lalu tambahkan foto yang relevan. Periksa pilihan privasi sebelum mengirim dan simpan kode tiketnya.',
+    icon: FilePlus2,
+  },
+  {
+    id: 'g-2',
+    category: 'Pelaporan',
+    tag: 'PELAPORAN',
+    title: 'Melacak Status Laporan',
+    description:
+      'Masukkan kode LP-JTG-2026-XXXX di Telusuri Laporan. Buka detail untuk melihat verifikasi desa, proses perbaikan, dan foto penyelesaian.',
+    icon: Search,
+  },
+  {
+    id: 'g-3',
+    category: 'Transparansi dana',
+    tag: 'TRANSPARANSI DANA',
+    title: 'Memahami Transparansi Dana Desa',
+    description:
+      'Pilih desa dan tahun anggaran. Bandingkan sumber pendanaan, dana terpakai, serta saldo sebelum menelusuri rincian pengeluaran per kegiatan.',
+    icon: BarChart2,
+  },
+  {
+    id: 'g-4',
+    category: 'Transparansi dana',
+    tag: 'TRANSPARANSI DANA',
+    title: 'Membaca Bukti Nota & Foto Fisik',
+    description:
+      'Cocokkan tanggal, kegiatan, dan nominal pada nota dengan baris pengeluaran. Gunakan foto fisik untuk memahami hasil kegiatan, bukan sebagai satu-satunya bukti.',
+    icon: Receipt,
+  },
+  {
+    id: 'g-5',
+    category: 'Privasi',
+    tag: 'PRIVASI',
+    title: 'Privasi Pelapor',
+    description:
+      'Gunakan pilihan Anonim / Privat jika tidak ingin identitas tampil pada laporan publik. Hindari menulis nomor telepon, alamat pribadi, atau data sensitif di uraian dan foto.',
+    icon: ShieldCheck,
+  },
+];
+
+const STEPS = [
+  { step: 1, title: 'Tulis Judul Laporan' },
+  { step: 2, title: 'Pilih lokasi' },
+  { step: 3, title: 'Ceritakan & beri bukti' },
+  { step: 4, title: 'Periksa privasi' },
+  { step: 5, title: 'Kirim & simpan kode laporan' },
+];
+
+interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+const FAQS: FaqItem[] = [
+  {
+    id: 'faq-1',
+    question: 'Apakah saya bisa membuat laporan anonim?',
+    answer:
+      'Gunakan pilihan Laporan Anonim / Privat pada formulir. Jangan cantumkan identitas, nomor telepon, atau data sensitif dalam uraian maupun foto yang mungkin tampil publik.',
+  },
+  {
+    id: 'faq-2',
+    question: 'Bagaimana jika kode laporan saya hilang?',
+    answer:
+      'Periksa tangkapan layar atau catatan yang Anda simpan setelah mengirim. Jika tidak ditemukan, coba telusuri dengan kata kunci, lokasi, dan tanggal kejadian. Penelusuran publik tidak menjamin semua laporan dapat ditemukan.',
+  },
+  {
+    id: 'faq-3',
+    question: 'Bukti apa yang perlu saya sertakan?',
+    answer:
+      'Gunakan foto kondisi fasilitas, titik lokasi yang jelas, dan waktu kejadian. Untuk persoalan tarif, sertakan papan harga atau bukti pembayaran jika ada. Ambil bukti dengan aman dan hindari data pribadi orang lain.',
+  },
+  {
+    id: 'faq-4',
+    question: 'Apa arti status pada laporan?',
+    answer:
+      'Masuk: laporan terkirim. Diverifikasi: desa telah memeriksa laporan. Diproses: penanganan lapangan berlangsung. Selesai: penanganan ditutup dengan dokumentasi perbaikan. Lihat detail untuk tanggal dan catatan tiap tahap.',
+  },
+  {
+    id: 'faq-5',
+    question: 'Mengapa data dana atau bukti belum tersedia?',
+    answer:
+      'Data untuk desa atau tahun yang dipilih mungkin belum dipublikasikan atau belum dilengkapi. Periksa kembali pilihan wilayah dan tahun. Jangan mengartikan kolom kosong sebagai nilai nol atau bukti penyimpangan.',
+  },
+];
+
+const CATEGORIES = ['Semua panduan', 'Pelaporan', 'Transparansi dana', 'Privasi'] as const;
 
 export default function EdukasiPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<(typeof CATEGORIES)[number]>('Semua panduan');
+  const [openFaqIds, setOpenFaqIds] = useState<Record<string, boolean>>({
+    'faq-1': true,
+    'faq-2': true,
+    'faq-3': true,
+    'faq-4': true,
+    'faq-5': true,
+  });
+
+  const toggleFaq = (id: string) => {
+    setOpenFaqIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  // Filter guides based on category and query
+  const filteredGuides = useMemo(() => {
+    return GUIDE_CARDS.filter((item) => {
+      if (activeCategory !== 'Semua panduan' && item.category !== activeCategory) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = item.title.toLowerCase().includes(q);
+        const matchDesc = item.description.toLowerCase().includes(q);
+        const matchTag = item.tag.toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc && !matchTag) return false;
+      }
+      return true;
+    });
+  }, [activeCategory, searchQuery]);
+
+  // Filter FAQs based on query
+  const filteredFaqs = useMemo(() => {
+    if (!searchQuery.trim()) return FAQS;
+    const q = searchQuery.toLowerCase();
+    return FAQS.filter(
+      (f) => f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
   return (
-    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 space-y-12 py-8 pb-16">
-      {/* Header Banner */}
-      <section className="bg-gradient-to-b from-slate-900 via-[#0D2453] to-slate-900 text-white py-14 rounded-3xl border border-slate-800 shadow-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-15 pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-950/80 border border-blue-500/30 text-blue-300 text-xs font-semibold mb-4">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Pusat Literasi Hukum &amp; Pedoman Teknis K3</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
-            Edukasi, Hak Warga &amp; Standar Keselamatan
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
+      {/* 1. Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="text-xs text-[#767676] font-medium">
+        <ol className="flex items-center gap-1.5">
+          <li>
+            <Link href="/" className="hover:text-[#0D2453] transition-colors">
+              Beranda
+            </Link>
+          </li>
+          <li aria-hidden="true" className="text-slate-400">/</li>
+          <li className="text-[#0D2453] font-semibold" aria-current="page">
+            Edukasi &amp; Panduan
+          </li>
+        </ol>
+      </nav>
+
+      {/* 2. Header Section */}
+      <div className="w-full flex flex-col gap-2">
+        <div className="flex items-center gap-2.5 text-[#0D2453]">
+          <BookOpen className="w-6 h-6 text-[#0D2453] stroke-[2.5]" />
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#0D2453]">
+            Edukasi &amp; Panduan
           </h1>
-          <p className="text-slate-300 text-xs sm:text-sm md:text-base mt-4 max-w-2xl mx-auto leading-relaxed">
-            Panduan lengkap mengenai hak keterbukaan informasi dana desa (UU KIP), SOP respon perbaikan Pokdarwis, checklist pencegahan bahaya K3 fasilitas wisata, serta kontak bantuan cepat Jawa Tengah.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
-            <a
-              href="#hak-warga"
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold transition-colors"
-            >
-              1. Hak Informasi (UU KIP)
-            </a>
-            <a
-              href="#sop-pokdarwis"
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold transition-colors"
-            >
-              2. SOP Respon Pokdarwis
-            </a>
-            <a
-              href="#standar-k3"
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold transition-colors"
-            >
-              3. Standar K3 Wisata
-            </a>
-            <a
-              href="#kontak-darurat"
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold transition-colors"
-            >
-              4. Kontak Bantuan Cepat
-            </a>
-          </div>
         </div>
-      </section>
+        <p className="text-xs sm:text-[15px] text-[#767676] font-normal leading-[1.7] max-w-3xl">
+          Panduan untuk wisatawan dan warga. Pelajari cara melapor, pantau perbaikan, dan baca penggunaan dana desa dengan lebih mudah.
+        </p>
+      </div>
 
-      {/* MODUL 1: HAK KETERBUKAAN INFORMASI PUBLIK (UU KIP) */}
-      <section id="hak-warga" className="bg-white rounded-3xl border border-[#E6ECF5] p-6 sm:p-10 shadow-xs space-y-6">
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
-          <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0D2453] flex items-center justify-center shrink-0 border border-blue-100">
-            <Scale className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#0D2453]">Modul Literasi 01</span>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
-              Hak Warga &amp; Keterbukaan Informasi Dana Desa
-            </h2>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-5 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] space-y-2.5">
-            <div className="text-xs font-bold text-[#0D2453] uppercase tracking-wide">
-              Landasan Yuridis
-            </div>
-            <h3 className="text-sm font-bold text-slate-900">
-              UU No. 14 Tahun 2008
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Tentang Keterbukaan Informasi Publik (KIP). Setiap warga negara berhak memperoleh informasi publik secara cepat, tepat waktu, dan biaya ringan, termasuk pengelolaan anggaran pemerintah desa.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] space-y-2.5">
-            <div className="text-xs font-bold text-[#0D2453] uppercase tracking-wide">
-              Regulasi Desa
-            </div>
-            <h3 className="text-sm font-bold text-slate-900">
-              Permendagri No. 20 Tahun 2018
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Tentang Pengelolaan Keuangan Desa. Pemerintah Desa wajib menginformasikan APBDes dan realisasi anggaran kepada masyarakat melalui media informasi yang mudah diakses.
-            </p>
+      {/* 3. Search & Filter Card */}
+      <section className="w-full bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] flex flex-col gap-5">
+        {/* Search Row */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="bg-[#F3F5F8] border border-transparent rounded-[14px] h-[50px] px-4 py-3 flex-1 w-full flex items-center gap-3 transition-colors duration-150 focus-within:border-[#0D2453]/25 focus-within:ring-1 focus-within:ring-[#0D2453]/15">
+            <Search className="w-5 h-5 text-[#64748B] shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari panduan, misalnya: kode tiket, bukti nota, atau privasi"
+              className="w-full bg-transparent border-0 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#64748B] placeholder:font-normal focus:outline-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB] space-y-2.5">
-            <div className="text-xs font-bold text-[#0D2453] uppercase tracking-wide">
-              Pergub Jateng
-            </div>
-            <h3 className="text-sm font-bold text-slate-900">
-              Bantuan Keuangan Sarpras
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Bantuan Khusus Pengembangan Desa Wisata wajib dipertanggungjawabkan melalui Laporan Pertanggungjawaban (LPJ) fisik dan keuangan yang transparan serta bebas dari penggelembungan harga (markup).
-            </p>
-          </div>
-        </div>
-
-        {/* Highlight Banner Hak Warga */}
-        <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="text-xs leading-relaxed">
-              <strong>Prinsip Kedaulatan Warga:</strong> Dana bantuan pemerintah dan dana desa adalah uang rakyat. Warga berhak mengetahui rincian belanja sarpras, mengunduh salinan LPJ resmi, dan melaporkan fasilitas yang tidak sesuai spesifikasi tanpa rasa takut.
-            </div>
-          </div>
-          <Link
-            href="/transparansi"
-            className="px-4 py-2 rounded-xl bg-[#0D2453] text-white text-xs font-bold shrink-0 hover:bg-[#132d66] transition-colors"
+          <button
+            type="button"
+            className="w-full sm:w-auto bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-6 py-3 rounded-full text-xs sm:text-[13px] font-bold whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0 shadow-xs active:scale-95"
           >
-            Lihat Transparansi LPJ
-          </Link>
+            Cari Panduan
+          </button>
+        </div>
+
+        {/* Categories row */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-[13px] transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'bg-[#0D2453] text-white font-bold shadow-xs'
+                    : 'bg-[#F3F5F8] text-[#0D2453] font-semibold hover:bg-[#E6ECF5]'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {/* MODUL 2: SOP PENANGANAN KELUHAN POKDARWIS */}
-      <section id="sop-pokdarwis" className="bg-white rounded-3xl border border-[#E6ECF5] p-6 sm:p-10 shadow-xs space-y-6">
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
-          <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Modul Operasional 02</span>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
-              SOP Penanganan Keluhan &amp; Tangga Respons Pokdarwis
-            </h2>
-          </div>
-        </div>
-
-        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
-          Setiap aduan yang masuk melalui DEWI JATENG mengikat pengelola desa wisata (Pokdarwis) untuk melakukan tindak lanjut terukur dalam 4 tahap berstandar:
-        </p>
-
-        {/* 4 Step Process Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Step 1 */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 relative">
-            <span className="w-6 h-6 rounded-full bg-[#0D2453] text-white text-xs font-bold flex items-center justify-center">
-              1
-            </span>
-            <h3 className="text-sm font-bold text-[#0D2453]">Verifikasi Lapangan</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Pengurus Pokdarwis wajib memeriksa kondisi fisik lokasi aduan dalam waktu maksimal <strong>1x24 jam</strong> sejak laporan diterbitkan.
-            </p>
-            <span className="inline-block text-[10px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-              Maks. 24 Jam
-            </span>
-          </div>
-
-          {/* Step 2 */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 relative">
-            <span className="w-6 h-6 rounded-full bg-[#0D2453] text-white text-xs font-bold flex items-center justify-center">
-              2
-            </span>
-            <h3 className="text-sm font-bold text-[#0D2453]">Isolasi &amp; Rambu K3</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Jika aduan menyangkut bahaya fisik (pagar ambruk, jembatan retak), segera pasang tanda bahaya darurat atau barikade sementara.
-            </p>
-            <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-              Mitigasi Darurat
-            </span>
-          </div>
-
-          {/* Step 3 */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 relative">
-            <span className="w-6 h-6 rounded-full bg-[#0D2453] text-white text-xs font-bold flex items-center justify-center">
-              3
-            </span>
-            <h3 className="text-sm font-bold text-[#0D2453]">Eksekusi Perbaikan</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Perbaikan sarana dilaksanakan memakai pos kas pemeliharaan sarpras desa dengan material berstandar mutu dan tukang setempat.
-            </p>
-            <span className="inline-block text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-              Pekerjaan Fisik
-            </span>
-          </div>
-
-          {/* Step 4 */}
-          <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3 relative">
-            <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
-              4
-            </span>
-            <h3 className="text-sm font-bold text-emerald-950">Proof-of-Fix &amp; EXIF</h3>
-            <p className="text-xs text-emerald-800 leading-relaxed">
-              Ambil foto fisik kondisi sesudah perbaikan. Sistem memverifikasi timestamp kamera digital untuk memastikan perbaikan sah.
-            </p>
-            <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
-              Tiket Tuntas
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* MODUL 3: STANDAR KESELAMATAN K3 WAHANA WISATA */}
-      <section id="standar-k3" className="bg-white rounded-3xl border border-[#E6ECF5] p-6 sm:p-10 shadow-xs space-y-6">
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
-          <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-700 flex items-center justify-center shrink-0 border border-rose-200">
-            <HardHat className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700">Modul Keselamatan 03</span>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
-              Standar Kelaikan Sarana &amp; Mitigasi Risiko Bahaya K3
-            </h2>
-          </div>
-        </div>
-
-        {/* Case Study Box */}
-        <div className="p-5 rounded-2xl bg-rose-50/50 border border-rose-200 text-rose-950 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-rose-800 uppercase tracking-wide">
-            <AlertTriangle className="w-4 h-4 text-rose-600" />
-            <span>Pelajaran Kasus K3 Wisata Buatan</span>
-          </div>
-          <p className="text-xs leading-relaxed text-slate-700">
-            Tragedi pecahnya jembatan kaca The Geong di Limpakuwus Banyumas (Oktober 2023) menjadi pengingat kritis bahwa wahana buatan di desa wisata <strong>wajib menjalani uji kelaikan teknis struktural</strong>, tidak boleh dibangun secara amatir tanpa perhitungan beban dan izin uji kelayakan.
+      {/* 4. Panduan Dasar Section */}
+      <section className="w-full flex flex-col gap-6">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
+            Panduan Dasar
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B] font-normal">
+            Lima panduan dasar untuk menggunakan DEWI JATENG
           </p>
         </div>
 
-        {/* Checklist K3 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="text-xs font-bold text-slate-900">Uji Beban &amp; Struktur Berkala</h3>
-              <p className="text-xs text-slate-600">
-                Jembatan gantung, dek pandang ketinggian, dan wahana flying fox wajib memiliki sertifikat uji beban berkala setiap 6 bulan sekali.
+        {/* 6 Cards Grid: 5 standard cards + 1 navy ticket reminder card */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          {filteredGuides.map((guide) => {
+            const IconComponent = guide.icon;
+            return (
+              <div
+                key={guide.id}
+                className="bg-white rounded-[24px] border border-[#E6ECF5] p-7 flex flex-col gap-4 shadow-[0_1px_2px_rgba(13,36,83,0.035),0_8px_16px_-6px_rgba(13,36,83,0.08),0_20px_32px_-12px_rgba(13,36,83,0.08)] hover:border-[#CBD5E1] hover:shadow-[0_1px_2px_rgba(13,36,83,0.04),0_12px_24px_-8px_rgba(13,36,83,0.12)] transition-[border-color,box-shadow] duration-200"
+              >
+                {/* Header Tag & Icon */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-[12px] bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] shrink-0">
+                    <IconComponent className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-[0.8px] text-[#64748B] uppercase">
+                    {guide.tag}
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="flex flex-col gap-2 mt-1">
+                  <h3 className="text-lg font-bold text-[#0D2453] leading-snug">
+                    {guide.title}
+                  </h3>
+                  <p className="text-[13px] text-[#64748B] leading-[1.7] font-normal">
+                    {guide.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Ticket Code Highlight Card (Card #6) */}
+          {(activeCategory === 'Semua panduan' || activeCategory === 'Pelaporan') && (
+            <div className="bg-[#0D2453] rounded-[24px] p-7 flex flex-col gap-3.5 text-white shadow-[0_1px_2px_rgba(13,36,83,0.06),0_10px_20px_-8px_rgba(13,36,83,0.20),0_28px_44px_-16px_rgba(13,36,83,0.30)]">
+              <div className="size-7 shrink-0 text-white flex items-center justify-center">
+                <Ticket className="w-6 h-6 stroke-[2]" />
+              </div>
+
+              <h3 className="text-xl font-bold text-white leading-snug">
+                Satu kode, jejak perbaikan.
+              </h3>
+
+              <p className="text-[13px] text-white/70 leading-[1.7] font-normal">
+                Setelah mengirim aduan, salin atau tangkap layar kode tiket di halaman konfirmasi agar mudah ditemukan kembali.
               </p>
+
+              <div className="mt-auto pt-2 flex flex-col gap-1">
+                <span className="text-[15px] font-bold text-white tracking-wide">
+                  LP-JTG-2026-XXXX
+                </span>
+                <span className="text-[11px] text-white/60 font-normal">
+                  Format kode laporan · simpan untuk penelusuran
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 5. Langkah-langkah Melapor Section */}
+      <section className="w-full flex flex-col gap-6">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
+            Langkah-langkah Melapor
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B] font-normal">
+            Lima langkah sebelum mengirim aduan fasilitas atau pengalaman wisata.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] flex flex-col divide-y divide-[#F1F5F9]">
+          {STEPS.map((s) => (
+            <div key={s.step} className="flex items-baseline gap-5 py-3.5 first:pt-0 last:pb-0">
+              <span className="text-xs font-bold text-[#0D2453] tabular-nums w-4 shrink-0 select-none">
+                {s.step}
+              </span>
+              <span className="text-sm text-[#0D2453] font-normal leading-snug">
+                {s.title}
+              </span>
+            </div>
+          ))}
+          <p className="pt-4 text-xs text-[#64748B] leading-relaxed">
+            Simpan kode tiket setelah mengirim — salin atau tangkap layar halaman konfirmasi untuk penelusuran di <Link href="/lapor" className="text-[#0D2453] font-medium hover:underline underline-offset-2">Telusuri Laporan</Link>.
+          </p>
+        </div>
+      </section>
+
+      {/* 6. Modul Literasi Hukum & Standar K3 Section */}
+      <section className="w-full flex flex-col gap-8">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
+            Literasi Hukum & Standar K3 Wisata
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B] font-normal max-w-2xl">
+            Hak warga atas informasi anggaran, prosedur penanganan aduan, dan syarat kelaikan fasilitas wisata.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-6">
+
+          {/* ── Modul 1: UU KIP — dua kolom horizontal ── */}
+          <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px]">
+              {/* Kiri: narasi */}
+              <div className="p-7 flex flex-col gap-4 border-b lg:border-b-0 lg:border-r border-[#E6ECF5]">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-[10px] bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] shrink-0">
+                    <Scale className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-base font-bold text-[#0D2453]">
+                    Hak warga atas informasi anggaran desa
+                  </h3>
+                </div>
+                <p className="text-sm text-[#475569] leading-relaxed">
+                  UU No. 14 Tahun 2008 tentang Keterbukaan Informasi Publik memberi setiap warga hak memperoleh informasi tentang perencanaan, pelaksanaan, dan pertanggungjawaban anggaran desa — termasuk bantuan keuangan dari Pemprov dan APBDes.
+                </p>
+                <div className="pt-1 border-t border-[#F1F5F9]">
+                  <p className="text-[11px] text-[#64748B]">
+                    <span className="font-semibold text-[#0D2453]">Rujukan:</span>{' '}
+                    UU No. 14/2008 Ps. 4, 7, 9 · PP No. 61/2010 · Permendagri No. 20/2020
+                  </p>
+                </div>
+              </div>
+              {/* Kanan: tiga hak ringkas */}
+              <div className="p-7 bg-[#F7F9FC] flex flex-col gap-3">
+                <span className="text-xs font-semibold text-[#64748B]">Tiga hak utama warga</span>
+                {[
+                  { label: 'Minta LPJ', desc: 'BPMD wajib mempublikasikan LPJ bantuan sarana prasarana ≥ Rp 100 juta per desa.' },
+                  { label: 'Ajukan keberatan', desc: 'Jika dokumen ditolak tanpa alasan sah, warga dapat melapor ke Komisi Informasi Provinsi.' },
+                  { label: 'Sanksi pelanggaran', desc: 'Pelanggaran KIP dapat berujung sanksi administratif hingga pencabutan izin usaha wisata.' },
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-[#0D2453] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-[#0D2453] block">{item.label}</span>
+                      <span className="text-[11px] text-[#64748B] leading-relaxed">{item.desc}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="text-xs font-bold text-slate-900">Material Tahan Cuaca Ekstrem</h3>
-              <p className="text-xs text-slate-600">
-                Di area lembap seperti bibir air terjun (curug), pagar pengaman wajib menggunakan pipa besi galvanis anti-karat berpondasi cor beton, bukan bambu lapuk.
-              </p>
+          {/* ── Modul 2: SOP 4-Tahap — horizontal stepper ── */}
+          <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] p-7 flex flex-col gap-5">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-[10px] bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0D2453] leading-snug">
+                  SOP penanganan aduan Pokdarwis
+                </h3>
+                <p className="text-xs text-[#64748B] mt-0.5">Dari laporan masuk hingga bukti fisik perbaikan terunggah.</p>
+              </div>
+            </div>
+
+            {/* Stepper horisontal */}
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-0">
+              {/* connector line — desktop only */}
+              <div className="hidden sm:block absolute top-5 left-[2.75rem] right-[2.75rem] h-px bg-[#E6ECF5]" />
+              {[
+                { n: 1, title: 'Verifikasi', sub: '< 24 jam setelah laporan masuk' },
+                { n: 2, title: 'Pengadaan SSH', sub: 'Acuan Standar Satuan Harga Pemprov' },
+                { n: 3, title: 'Pengerjaan fisik', sub: 'Dokumentasi progres lapangan' },
+                { n: 4, title: 'Proof-of-Fix', sub: 'Foto sesudah + verifikasi EXIF' },
+              ].map((s) => (
+                <div key={s.n} className="relative z-10 flex flex-row sm:flex-col items-center sm:items-center gap-3 sm:gap-2 flex-1">
+                  <span className="w-10 h-10 rounded-full bg-[#0D2453] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                    {s.n}
+                  </span>
+                  <div className="sm:text-center">
+                    <span className="text-xs font-bold text-[#0D2453] block">{s.title}</span>
+                    <span className="text-[11px] text-[#64748B] leading-relaxed block max-w-[120px] sm:mx-auto">{s.sub}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="text-xs font-bold text-slate-900">Rambu Kedalaman &amp; Jalur Evakuasi</h3>
-              <p className="text-xs text-slate-600">
-                Pemasangan rambu kedalaman air di kolam alami, penanda zona bahaya arus deras, serta petunjuk jalur evakuasi bencana alam yang jelas.
+          {/* ── Modul 3: Standar K3 Wisata Buatan ── */}
+          <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] p-7 flex flex-col gap-5">
+            <div>
+              <h3 className="text-base font-bold text-[#0D2453]">
+                Standar K3 Fasilitas Wisata Buatan
+              </h3>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Evaluasi kelaikan teknis sarana prasarana wisata pasca-insiden The Geong Banyumas (2023)
               </p>
+            </div>
+
+            <p className="text-sm text-[#475569] leading-relaxed">
+              Hasil investigasi Puslabfor atas runtuhnya jembatan kaca Limpakuwus mengungkap pemasangan kaca non-laminated setebal 12 mm tanpa pengujian beban berkala. Pemerintah Provinsi Jawa Tengah menetapkan batas minimum kelaikan teknis untuk wahana buatan:
+            </p>
+
+            {/* Tabel Spesifikasi Teknis */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border border-[#E6ECF5] rounded-xl overflow-hidden">
+                <thead>
+                  <tr className="bg-[#F7F9FC] text-[#0D2453] border-b border-[#E6ECF5]">
+                    <th scope="col" className="px-4 py-2.5 font-semibold">Komponen / Wahana</th>
+                    <th scope="col" className="px-4 py-2.5 font-semibold">Ambang Batas Minimum</th>
+                    <th scope="col" className="px-4 py-2.5 font-semibold hidden sm:table-cell">Dasar Regulasi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F1F5F9] text-[#475569]">
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Lantai kaca pijakan</td>
+                    <td className="px-4 py-2.5">Laminated tempered ≥ 25 mm</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">SNI 03-4432-1997</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Railing &amp; pengaman</td>
+                    <td className="px-4 py-2.5">Pipa galvanis tahan beban 100 kg/m</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">Permen PU No. 29/2006</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Wisata air &amp; curug</td>
+                    <td className="px-4 py-2.5">Rompi pelampung standar SNI wajib tersedia</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">Permenpar No. 17/2015</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Audit struktur berkala</td>
+                    <td className="px-4 py-2.5">Inspeksi teknis uji beban tiap 6 bulan</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">PP No. 50/2012 (K3)</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Perlindungan pengunjung</td>
+                    <td className="px-4 py-2.5">Klaim asuransi minimal Rp 50 juta/orang</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">UU Kepariwisataan No. 10/2009</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="text-xs font-bold text-slate-900">Kesiapan Alat Penolong &amp; P3K</h3>
-              <p className="text-xs text-slate-600">
-                Ketersediaan pelampung (life jacket), ring buoy penolong air, kotak P3K lengkap obat darurat, serta petugas jaga bersertifikasi water rescue.
-              </p>
+          {/* ── Modul 4: Direktori Kontak Darurat Terpadu ── */}
+          <div className="bg-[#F7F9FC] rounded-[20px] border border-[#E6ECF5] p-6 sm:p-7 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div>
+                <h3 className="text-base font-bold text-[#0D2453]">
+                  Direktori Darurat Wisata Jawa Tengah
+                </h3>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Layanan evakuasi SAR, ambulans medis, dan pusat pengaduan terpadu.
+                </p>
+              </div>
+              <span className="text-[11px] text-[#64748B] font-medium hidden sm:inline">
+                Panggilan darurat langsung via ponsel
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              {[
+                { name: 'Basarnas Jateng', num: '(024) 760-7777', role: 'Evakuasi & Pertolongan SAR' },
+                { name: 'PMI Jawa Tengah', num: '(024) 354-3500', role: 'Ambulans & Pertolongan Medis' },
+                { name: 'Layanan Darurat', num: '112', role: 'Bebas Pulsa · Siaga 24 Jam' },
+                { name: 'Disporapar Jateng', num: '(024) 354-6681', role: 'Pusat Koordinasi Pengaduan' },
+              ].map((c) => (
+                <a
+                  key={c.num}
+                  href={`tel:${c.num.replace(/[^0-9+]/g, '')}`}
+                  className="bg-white rounded-[14px] border border-[#E6ECF5] p-4 flex flex-col justify-between hover:border-[#0D2453] hover:shadow-xs transition-all group focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-[#0D2453] block">{c.name}</span>
+                    <span className="text-[11px] text-[#64748B] mt-0.5 block">{c.role}</span>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-[#F1F5F9] flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-[#0D2453] font-mono tracking-tight group-hover:text-[#132d66]">
+                      {c.num}
+                    </span>
+                    <Phone className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#0D2453] transition-colors" />
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* MODUL 4: DIREKTORI CEPAT BANTUAN DARURAT JAWA TENGAH */}
-      <section id="kontak-darurat" className="bg-white rounded-3xl border border-[#E6ECF5] p-6 sm:p-10 shadow-xs space-y-6">
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
-            <PhoneCall className="w-5 h-5" />
+      {/* 7. FAQ Section */}
+      <section className="w-full flex flex-col lg:flex-row items-start justify-between gap-8">
+        {/* Left Col Intro */}
+        <div className="w-full lg:w-[300px] shrink-0 flex flex-col gap-4">
+          <div className="size-12 rounded-[14px] bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] shrink-0">
+            <MessagesSquare className="w-6 h-6 stroke-[2.2]" />
           </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Modul Kesiapsiagaan 04</span>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#0D2453]">
-              Direktori Cepat Bantuan Darurat Jawa Tengah
-            </h2>
-          </div>
+          <h2 className="text-2xl sm:text-[26px] font-bold text-[#0D2453] leading-snug">
+            Pertanyaan yang sering ditanyakan
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B] leading-[1.7] font-normal">
+            Jawaban singkat sebelum Anda melapor atau membaca data desa.
+          </p>
         </div>
 
-        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-          Simpan dan hubungi nomor darurat terpadu berikut saat terjadi kecelakaan wisatawan, insiden kegagalan wahana, atau kondisi darurat bencana alam di lokasi desa wisata:
-        </p>
+        {/* Right Col List */}
+        <div className="w-full lg:flex-1 bg-white rounded-[24px] border border-[#E6ECF5] px-6 sm:px-7 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] divide-y divide-[#E6ECF5]">
+          {filteredFaqs.length === 0 ? (
+            <div className="py-8 text-center text-[#64748B] text-sm font-medium">
+              Tidak ada pertanyaan yang sesuai dengan kata kunci pencarian.
+            </div>
+          ) : (
+            filteredFaqs.map((faq) => {
+              const isOpen = openFaqIds[faq.id] ?? false;
+              return (
+                <div key={faq.id} className="py-5 sm:py-6 flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleFaq(faq.id)}
+                    className="w-full flex items-center justify-between gap-4 text-left cursor-pointer group"
+                  >
+                    <span className="text-sm sm:text-base font-bold text-[#0D2453] group-hover:text-blue-900 transition-colors">
+                      {faq.question}
+                    </span>
+                    <div className="size-5 rounded-full bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] shrink-0 transition-transform duration-150">
+                      {isOpen ? (
+                        <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      ) : (
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      )}
+                    </div>
+                  </button>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Basarnas */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="text-[11px] font-bold text-[#0D2453] uppercase tracking-wider">
-              Basarnas Jawa Tengah
-            </div>
-            <div className="text-lg font-extrabold text-slate-900 font-mono">
-              115 / (024) 7629192
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Penyelamatan kecelakaan air, tebing, dan pencarian korban hilang di alam liar.
-            </p>
-          </div>
+                  {isOpen && (
+                    <p className="text-xs sm:text-[13px] text-[#64748B] leading-[1.8] font-normal pr-4 animate-in fade-in duration-200">
+                      {faq.answer}
+                    </p>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
 
-          {/* PMI */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
-              PMI Jawa Tengah
-            </div>
-            <div className="text-lg font-extrabold text-slate-900 font-mono">
-              (024) 8313411
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Layanan ambulans gawat darurat dan pertolongan pertama korban cedera fisik.
-            </p>
-          </div>
+      {/* 7. Bottom CTA Banner */}
+      <section className="w-full bg-[#EDF3FC] rounded-[24px] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_10px_20px_-10px_rgba(13,36,83,0.12),0_28px_48px_-24px_rgba(13,36,83,0.14)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-xl">
+          <h3 className="text-xl sm:text-[22px] font-bold text-[#0D2453]">
+            Sudah siap ikut menjaga desa wisata?
+          </h3>
+          <p className="text-xs sm:text-[14px] text-[#64748B] leading-[1.6] font-normal">
+            Mulai dari laporan yang jelas, lalu pantau perkembangannya dengan kode tiket.
+          </p>
+        </div>
 
-          {/* Kepolisian */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">
-              Call Center Polri
-            </div>
-            <div className="text-lg font-extrabold text-slate-900 font-mono">
-              110
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Bebas pulsa 24 jam untuk laporan gangguan keamanan, pungli, atau tindak kriminal.
-            </p>
-          </div>
-
-          {/* Disporapar Jateng */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-            <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">
-              Disporapar Pemprov Jateng
-            </div>
-            <div className="text-lg font-extrabold text-slate-900 font-mono">
-              (024) 3546048
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Posko Pengawasan &amp; Kemitraan Desa Wisata Dinas Kepemudaan, Olahraga dan Pariwisata.
-            </p>
-          </div>
+        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+          <Link
+            href="/#buat-laporan"
+            className="flex-1 sm:flex-initial bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-[18px] py-[13px] rounded-full text-xs sm:text-[13px] font-bold flex items-center justify-center gap-2 transition-colors duration-150 cursor-pointer shadow-xs active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Buat Laporan</span>
+          </Link>
+          <Link
+            href="/lapor"
+            className="flex-1 sm:flex-initial bg-white border border-[#0D2453] hover:bg-[#F8FAFC] text-[#0D2453] px-[18px] py-[13px] rounded-full text-xs sm:text-[13px] font-bold text-center transition-colors duration-150 cursor-pointer shadow-xs active:scale-95"
+          >
+            Telusuri Laporan
+          </Link>
         </div>
       </section>
     </div>

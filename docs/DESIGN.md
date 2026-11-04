@@ -93,7 +93,7 @@
    - Peta visual Jateng dengan pin interaktif (Desa Candirejo, Limpakuwus, Getas, Berjo, Dieng Kulon).
    - Dropzone unggah foto/video bukti dengan chips nama file.
    - Checkbox laporan anonim / privat.
-   - Modal konfirmasi dengan nomor tiket unik otomatis (`DS-JTG-2026-XXXX`).
+   - Modal konfirmasi dengan nomor tiket unik otomatis (`LP-JTG-2026-XXXX`).
 4. **Feed Laporan & Catatan Desa (`HomeReportFeed.tsx` - `'use client'`):**
    - Filter pills kategori (Semua, Akses & Jalan, Fasilitas & Sanitasi).
    - Mode ganda: Tampilan berdampingan (*Side-by-side*) atau slider geser (*Before/After drag slider*).

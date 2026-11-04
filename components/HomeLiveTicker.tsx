@@ -9,7 +9,7 @@ const TICKER_ITEMS = [
   {
     id: 1,
     tag: 'Selesai Ditangani',
-    ticket: 'DS-JTG-2026-0891',
+    ticket: 'LP-JTG-2026-0891',
     text: 'Akses ke curug di Desa Wisata Candirejo telah selesai dirabat beton oleh Pokdarwis.',
     time: '15 menit lalu',
     link: '/lapor',
@@ -25,7 +25,7 @@ const TICKER_ITEMS = [
   {
     id: 3,
     tag: 'Tindak Lanjut',
-    ticket: 'DS-JTG-2026-0744',
+    ticket: 'LP-JTG-2026-0744',
     text: 'Perbaikan sanitasi wastafel & toilet Desa Candirejo telah terverifikasi Proof-of-Fix.',
     time: '2 jam lalu',
     link: '/lapor',
