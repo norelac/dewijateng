@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 const navItems = [
   { href: '/', label: 'Beranda', disabled: false },
   { href: '/transparansi', label: 'Transparansi Dana', disabled: false },
-  { href: '/lapor', label: 'Lapor', disabled: false },
+  { href: '/lapor', label: 'Telusuri Aduan', disabled: false },
   { href: '/edukasi', label: 'Edukasi & Panduan', disabled: true },
 ];
 
