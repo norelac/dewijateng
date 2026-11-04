@@ -6,11 +6,13 @@ import {
   Home,
   Compass,
   FileText,
-  Coins,
+  BarChart2,
+  BookOpen,
   Search,
   PlusCircle,
-  BarChart2,
-  Map,
+  Activity,
+  Info,
+  Layout,
   Instagram,
   Youtube,
   Twitter,
@@ -19,42 +21,42 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0D2453] text-white mt-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          {/* Col 1: Brand & Contact */}
-          <div className="space-y-4">
-            <h3 className="text-xl sm:text-[22px] font-heading font-bold tracking-tight text-white">
+    <footer className="bg-[#0D2453] text-white mt-24 w-full">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-[56px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 items-start justify-between">
+          {/* Col 1: Brand & Contact (300px in Figma) */}
+          <div className="lg:col-span-4 space-y-5">
+            <h3 className="text-[22px] font-heading font-bold tracking-tight text-white">
               DEWI JATENG
             </h3>
-            <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
+            <p className="text-sm text-white/60 leading-[1.7] max-w-sm font-normal">
               Platform digital transparansi dana desa dan pelaporan fasilitas wisata di Jawa Tengah.
             </p>
-            <div className="space-y-2.5 pt-2 text-xs text-slate-300">
-              <div className="flex items-center gap-2.5">
-                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="space-y-2 pt-2 text-[13px] text-white/60">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-white/60 shrink-0" />
                 <span>Jawa Tengah, Indonesia</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-white/60 shrink-0" />
                 <span>[Email resmi pengelola]</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-white/60 shrink-0" />
                 <span>(024) [Nomor Kontak Resmi]</span>
               </div>
             </div>
           </div>
 
           {/* Col 2: Navigasi */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              NAVIGASI
+          <div className="lg:col-span-3 lg:pl-6 space-y-4">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white">
+              Navigasi
             </h4>
-            <ul className="space-y-3 text-xs text-slate-300">
+            <ul className="space-y-3.5 text-sm text-white/60">
               <li>
                 <Link href="/" className="flex items-center gap-2.5 hover:text-white transition-colors">
-                  <Home className="w-4 h-4 text-slate-400" />
+                  <Home className="w-4 h-4 text-white/60" />
                   <span>Beranda</span>
                 </Link>
               </li>
@@ -63,16 +65,16 @@ export default function Footer() {
                   href="/transparansi"
                   className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
-                  <Compass className="w-4 h-4 text-slate-400" />
+                  <Compass className="w-4 h-4 text-white/60" />
                   <span>Jelajah Desa Wisata</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/#buat-laporan"
+                  href="/lapor"
                   className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
-                  <FileText className="w-4 h-4 text-slate-400" />
+                  <FileText className="w-4 h-4 text-white/60" />
                   <span>Lapor</span>
                 </Link>
               </li>
@@ -81,61 +83,58 @@ export default function Footer() {
                   href="/transparansi"
                   className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
-                  <Coins className="w-4 h-4 text-slate-400" />
+                  <BarChart2 className="w-4 h-4 text-white/60" />
                   <span>Transparansi Dana</span>
                 </Link>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="flex items-center gap-2.5 hover:text-white transition-colors cursor-pointer"
+                <Link
+                  href="/edukasi"
+                  className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
-                  <FileText className="w-4 h-4 text-slate-400" />
+                  <BookOpen className="w-4 h-4 text-white/60" />
                   <span>Edukasi &amp; Panduan</span>
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Col 3: Layanan */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              LAYANAN
+          <div className="lg:col-span-3 space-y-4">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white">
+              Layanan
             </h4>
-            <ul className="space-y-3 text-xs text-slate-300">
+            <ul className="space-y-3.5 text-sm text-white/60">
               <li>
-                <Link
-                  href="/#buat-laporan"
-                  className="flex items-center gap-2.5 hover:text-white transition-colors"
-                >
-                  <Search className="w-4 h-4 text-slate-400" />
+                <Link href="/lapor" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                  <Search className="w-4 h-4 text-white/60" />
                   <span>Telusur Aduan</span>
                 </Link>
               </li>
               <li>
-                <Link
+                <a
                   href="/#buat-laporan"
-                  className="flex items-center gap-2.5 hover:text-white transition-colors"
+                  className="flex items-center gap-2.5 hover:text-white transition-colors cursor-pointer"
                 >
-                  <PlusCircle className="w-4 h-4 text-slate-400" />
+                  <PlusCircle className="w-4 h-4 text-white/60" />
                   <span>Buat Laporan</span>
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  href="/transparansi"
-                  className="flex items-center gap-2.5 hover:text-white transition-colors"
-                >
-                  <BarChart2 className="w-4 h-4 text-slate-400" />
+                <Link href="/transparansi" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                  <Activity className="w-4 h-4 text-white/60" />
                   <span>Statistik</span>
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/transparansi"
-                  className="flex items-center gap-2.5 hover:text-white transition-colors"
-                >
-                  <Map className="w-4 h-4 text-slate-400" />
+                <Link href="/" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                  <Info className="w-4 h-4 text-white/60" />
+                  <span>Tentang Platform</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                  <Layout className="w-4 h-4 text-white/60" />
                   <span>Peta Situs</span>
                 </Link>
               </li>
@@ -143,50 +142,75 @@ export default function Footer() {
           </div>
 
           {/* Col 4: Ikuti Kami */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              IKUTI KAMI
+          <div className="lg:col-span-2 space-y-4">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-white">
+              Ikuti Kami
             </h4>
-            <ul className="space-y-3 text-xs text-slate-300">
-              <li>
-                <a href="#" className="flex items-center gap-2.5 hover:text-white transition-colors">
-                  <Instagram className="w-4 h-4 text-slate-400" />
-                  <span>Instagram</span>
-                </a>
-              </li>
-              <li>
-                <a href="#" className="flex items-center gap-2.5 hover:text-white transition-colors">
-                  <Youtube className="w-4 h-4 text-slate-400" />
-                  <span>YouTube</span>
-                </a>
-              </li>
-              <li>
-                <a href="#" className="flex items-center gap-2.5 hover:text-white transition-colors">
-                  <Twitter className="w-4 h-4 text-slate-400" />
-                  <span>Twitter / X</span>
-                </a>
-              </li>
-              <li>
-                <a href="#" className="flex items-center gap-2.5 hover:text-white transition-colors">
-                  <Facebook className="w-4 h-4 text-slate-400" />
-                  <span>Facebook</span>
-                </a>
-              </li>
-            </ul>
+            <div className="space-y-3.5 text-sm text-white/60">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 hover:text-white transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
+                  <Instagram className="w-4 h-4 text-white" />
+                </div>
+                <span>Instagram</span>
+              </a>
+
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 hover:text-white transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
+                  <Youtube className="w-4 h-4 text-white" />
+                </div>
+                <span>YouTube</span>
+              </a>
+
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 hover:text-white transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
+                  <Twitter className="w-4 h-4 text-white" />
+                </div>
+                <span>Twitter / X</span>
+              </a>
+
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 hover:text-white transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
+                  <Facebook className="w-4 h-4 text-white" />
+                </div>
+                <span>Facebook</span>
+              </a>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Copyright & Legal Links */}
-        <div className="border-t border-slate-700/60 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>&copy; 2024 &ndash; 2026 Pemerintah Provinsi Jawa Tengah. Hak Cipta Dilindungi.</p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-white transition-colors">
+      {/* Bottom Bar */}
+      <div className="border-t border-white/10">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between text-[13px] text-white/40 gap-3">
+          <p>© 2024 – 2026 Pemerintah Provinsi Jawa Tengah. Hak Cipta Dilindungi.</p>
+          <div className="flex items-center gap-5">
+            <a href="#" className="hover:text-white/70 transition-colors">
               Kebijakan Privasi
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="hover:text-white/70 transition-colors">
               Syarat Penggunaan
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="hover:text-white/70 transition-colors">
               Aksesibilitas
             </a>
           </div>

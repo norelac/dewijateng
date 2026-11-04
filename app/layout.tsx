@@ -43,7 +43,7 @@ export default function RootLayout({
       className={`scroll-smooth ${plusJakartaSans.variable} ${montserrat.variable} ${monteCarlo.variable}`}
     >
       <body className="bg-[#F7F9FC] text-[#0D2453] font-sans antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-[#0D2453]">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 pt-6">
           <Navbar />
         </div>
 

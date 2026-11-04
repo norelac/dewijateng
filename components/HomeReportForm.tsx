@@ -74,7 +74,7 @@ const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
 
 export default function HomeReportForm() {
   const [selectedTitle, setSelectedTitle] = useState('');
-  const [address, setAddress] = useState('Jl. Pamularsih Raya, Semarang Barat');
+  const [address, setAddress] = useState('Nama Desa, Kecamatan, Kabupaten');
   const [description, setDescription] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(true);
@@ -103,10 +103,9 @@ export default function HomeReportForm() {
       if (!isMounted || !mapContainerRef.current) return;
       if (mapInstanceRef.current) return;
 
-      // Create Leaflet Map centered on Pamularsih / Jateng
       const map = L.map(mapContainerRef.current, {
         center: [coords.lat, coords.lng],
-        zoom: 15,
+        zoom: 14,
         zoomControl: true,
         scrollWheelZoom: false,
       });
@@ -116,21 +115,20 @@ export default function HomeReportForm() {
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
 
-      // Custom Red Pin Marker
       const pinIcon = L.divIcon({
         className: 'custom-pin-marker',
         html: `
           <div style="transform: translate(-50%, -100%);">
-            <div style="background-color: #EA4335; width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 3px solid #FFFFFF;">
-              <svg style="width: 18px; height: 18px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <div style="background-color: #EA4335; width: 32px; height: 32px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 3px solid #FFFFFF;">
+              <svg style="width: 16px; height: 16px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
           </div>
         `,
-        iconSize: [34, 34],
-        iconAnchor: [17, 34],
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
       });
 
       const marker = L.marker([coords.lat, coords.lng], {
@@ -163,12 +161,9 @@ export default function HomeReportForm() {
     };
   }, []);
 
-  // Update map position and marker when coords change
   const moveMapTo = (lat: number, lng: number, zoomLevel = 15) => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([lat, lng], zoomLevel, {
-        duration: 1.2,
-      });
+      mapInstanceRef.current.flyTo([lat, lng], zoomLevel, { duration: 1.2 });
     }
     if (markerRef.current) {
       markerRef.current.setLatLng([lat, lng]);
@@ -176,24 +171,21 @@ export default function HomeReportForm() {
     setCoords({ lat, lng });
   };
 
-  // Dynamic geocoding when user types an address
   const handleGeocode = async (queryText: string) => {
     const clean = queryText.trim().toLowerCase();
-    if (!clean) return;
+    if (!clean || clean === 'nama desa, kecamatan, kabupaten') return;
 
     setIsSearchingMap(true);
 
-    // 1. Instant check in local dictionary (e.g. pamularsih, candirejo, limpakuwus)
     for (const [key, val] of Object.entries(KNOWN_LOCATIONS)) {
       if (clean.includes(key)) {
-        moveMapTo(val.lat, val.lng, 16);
+        moveMapTo(val.lat, val.lng, 15);
         setLocationLabel(val.displayName);
         setIsSearchingMap(false);
         return;
       }
     }
 
-    // 2. Fallback to OpenStreetMap Nominatim API for general addresses
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
@@ -207,35 +199,19 @@ export default function HomeReportForm() {
         const newLng = parseFloat(item.lon);
         moveMapTo(newLat, newLng, 15);
         setLocationLabel(item.display_name.split(',').slice(0, 3).join(', '));
-      } else {
-        const fallbackRes = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
-            queryText
-          )}`
-        );
-        const fallbackData = await fallbackRes.json();
-        if (fallbackData && fallbackData.length > 0) {
-          const item = fallbackData[0];
-          const newLat = parseFloat(item.lat);
-          const newLng = parseFloat(item.lon);
-          moveMapTo(newLat, newLng, 15);
-          setLocationLabel(item.display_name.split(',').slice(0, 3).join(', '));
-        }
       }
     } catch {
-      // Keep existing map position if offline or network error
+      // Keep map as is on network issue
     } finally {
       setIsSearchingMap(false);
     }
   };
 
-  // Debounced input search
   useEffect(() => {
-    if (!address.trim()) return;
+    if (!address.trim() || address === 'Nama Desa, Kecamatan, Kabupaten') return;
     const timer = setTimeout(() => {
       handleGeocode(address);
     }, 450);
-
     return () => clearTimeout(timer);
   }, [address]);
 
@@ -257,49 +233,36 @@ export default function HomeReportForm() {
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Left Column */}
-        <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column (579px in Figma) */}
+        <div className="lg:col-span-6 space-y-4">
           {/* Judul Laporan */}
           <div>
-            <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
+            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
               Judul Laporan
             </label>
-            <div className="relative">
-              <select
-                value={selectedTitle}
-                onChange={(e) => setSelectedTitle(e.target.value)}
-                required
-                className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none appearance-none cursor-pointer font-medium"
-              >
-                <option value="" disabled>Contoh: Pohon tumbang</option>
-                <option value="Akses ke curug buruk">Akses ke curug buruk &amp; pagar pengaman lapuk</option>
-                <option value="Wastafel dan toilet kotor sekali">Wastafel dan toilet kotor sekali / kran mati</option>
-                <option value="Pungli parkir liar">Pungutan liar parkir tanpa karcis resmi BUMDes</option>
-                <option value="Jembatan goyang">Jembatan titian kayu goyang dan berbahaya</option>
-                <option value="Tumpukan sampah">Tumpukan sampah plastik di area gardu pandang</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            <input
+              type="text"
+              required
+              value={selectedTitle}
+              onChange={(e) => setSelectedTitle(e.target.value)}
+              placeholder="Contoh: Pohon tumbang"
+              className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none font-medium"
+            />
           </div>
 
-          {/* Alamat Lokasi (Interactive Address Input) */}
+          {/* Alamat Lokasi */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-[#0D2453]">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm sm:text-[17px] text-black font-normal">
                 Alamat Lokasi
               </label>
               {isSearchingMap ? (
                 <span className="text-[11px] text-blue-700 font-medium flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin" />
-                  Mencari di peta...
+                  Mencari...
                 </span>
-              ) : (
-                <span className="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  Peta terhubung
-                </span>
-              )}
+              ) : null}
             </div>
 
             <div className="relative">
@@ -307,28 +270,28 @@ export default function HomeReportForm() {
                 type="text"
                 required
                 value={address}
+                onFocus={() => {
+                  if (address === 'Nama Desa, Kecamatan, Kabupaten') setAddress('');
+                }}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="Ketik alamat (contoh: pamularsih, candirejo, dll)"
-                className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 pr-10 text-xs sm:text-sm text-[#0D2453] font-medium placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none"
+                placeholder="Nama Desa, Kecamatan, Kabupaten"
+                className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 pr-10 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none font-medium"
               />
-              <Search className="w-4 h-4 text-[#0D2453] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Tandai di Peta: Live Leaflet / OpenStreetMap Pin Map */}
+          {/* Tandai di Peta */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-[#0D2453]">
-                Tandai di Peta (Geser atau klik lokasi pada peta)
-              </label>
-            </div>
+            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
+              Tandai di Peta
+            </label>
 
-            {/* Interactive Leaflet Map Container */}
-            <div className="relative w-full h-[260px] rounded-2xl overflow-hidden border border-[#EBEBEB] bg-[#E8ECEF] shadow-inner">
+            <div className="relative w-full h-[244px] rounded-[17px] overflow-hidden border border-[#EBEBEB] bg-[#E8ECEF] shadow-2xs">
               <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-              {/* Map Floating Status Pill */}
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-xl px-3 py-2 border border-slate-200/80 shadow-md flex items-center justify-between gap-2 text-xs">
+              {/* Status Pill */}
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-xl px-3 py-1.5 border border-slate-200/80 shadow-md flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0" />
                   <span className="text-[#0D2453] font-semibold truncate text-[11px]">
@@ -343,11 +306,16 @@ export default function HomeReportForm() {
           </div>
         </div>
 
-        {/* Right Column (No awkward stretched empty gaps) */}
-        <div className="space-y-4">
+        {/* Vertical Divider in Figma */}
+        <div className="hidden lg:block lg:col-span-1 self-stretch flex justify-center">
+          <div className="w-px h-full bg-[#EBEBEB] mx-auto" />
+        </div>
+
+        {/* Right Column (572px in Figma) */}
+        <div className="lg:col-span-5 space-y-4">
           {/* Deskripsi */}
           <div>
-            <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
+            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
               Deskripsi
             </label>
             <textarea
@@ -356,16 +324,16 @@ export default function HomeReportForm() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tuliskan deskripsi aduan"
-              className="w-full bg-[#F5F5F5] border-0 rounded-xl px-4 py-3 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-2 focus:ring-[#0D2453]/20 focus:outline-none resize-none font-medium"
+              className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 h-[101px] text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none resize-none font-medium"
             />
           </div>
 
-          {/* Foto / Video Bukti Dropzone */}
+          {/* Foto / Video Bukti */}
           <div>
-            <label className="block text-xs font-bold text-[#0D2453] mb-1.5">
+            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
               Foto / Video Bukti
             </label>
-            <label className="border-2 border-dashed border-[#C1C1C1] hover:border-[#0D2453] rounded-2xl p-5 text-center bg-white cursor-pointer transition-colors flex flex-col items-center justify-center block">
+            <label className="border border-dashed border-[#0D2453] rounded-[9px] h-[175px] p-4 text-center bg-white cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center block">
               <input
                 type="file"
                 multiple
@@ -373,16 +341,15 @@ export default function HomeReportForm() {
                 onChange={handleFileDrop}
                 className="hidden"
               />
-              <UploadCloud className="w-7 h-7 text-[#0D2453]" />
-              <span className="text-xs font-bold text-[#0D2453] mt-1.5 block">
+              <UploadCloud className="w-8 h-8 text-[#0D2453]" />
+              <span className="text-[15px] font-semibold text-[#0D2453] mt-2 block">
                 Unggah Foto / Video
               </span>
-              <span className="text-[11px] text-[#767676] mt-0.5 block">
-                JPG, PNG, WEBP, MP4, MOV (maks 5 MB per file, maksimal 3 file)
+              <span className="text-[13px] text-[#767676] mt-0.5 block leading-tight">
+                JPG, PNG, WEBP, MP4, MOV (maks 5 MB per file,<br />maksimal 3 file)
               </span>
             </label>
 
-            {/* Uploaded File Previews */}
             {uploadedFiles.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {uploadedFiles.map((name, i) => (
@@ -398,16 +365,16 @@ export default function HomeReportForm() {
             )}
           </div>
 
-          {/* Checkbox Laporan Anonim / Privat */}
-          <div className="flex items-center gap-2 pt-0.5">
+          {/* Checkbox Anonim / Privat */}
+          <div className="flex items-center gap-3 pt-1">
             <input
               id="anon-check"
               type="checkbox"
               checked={isAnonymous}
               onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="w-4 h-4 rounded text-[#0D2453] accent-[#0D2453] focus:ring-0 cursor-pointer"
+              className="w-5 h-5 rounded bg-[#2D68FE] text-[#2D68FE] accent-[#2D68FE] cursor-pointer"
             />
-            <label htmlFor="anon-check" className="text-xs font-bold text-[#0D2453] cursor-pointer">
+            <label htmlFor="anon-check" className="text-sm sm:text-[16px] text-[#181818] font-normal cursor-pointer select-none">
               Laporan Anonim / Privat
             </label>
           </div>
@@ -416,7 +383,7 @@ export default function HomeReportForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs sm:text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 mt-2"
+            className="w-full py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] text-white font-semibold text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 mt-4"
           >
             {isSubmitting ? (
               <>
@@ -430,7 +397,7 @@ export default function HomeReportForm() {
         </div>
       </form>
 
-      {/* Submission Success Dialog */}
+      {/* Success Modal */}
       <AnimatePresence>
         {successTicket && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
@@ -438,39 +405,36 @@ export default function HomeReportForm() {
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
-              className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 text-center space-y-4"
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-4 border border-slate-100"
             >
-              <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-[#0D2453]">Laporan Berhasil Diterbitkan!</h3>
-                <p className="text-xs text-[#767676] mt-1">
-                  Aduan Anda telah tercatat pada sistem monitoring Pemprov Jateng dan diteruskan ke pengelola desa terkait.
+                <h3 className="text-xl font-bold text-[#0D2453]">
+                  Laporan Berhasil Diterbitkan!
+                </h3>
+                <p className="text-xs sm:text-sm text-[#767676] mt-1.5 leading-relaxed">
+                  Laporan Anda telah tercatat di buku register desa wisata dan diteruskan ke perangkat desa pengelola.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#F7F9FC] border border-[#EBEBEB]">
-                <span className="text-[11px] font-bold text-[#767676] uppercase tracking-wider block">
-                  Nomor Tiket Aduan Publik
+              <div className="p-3.5 bg-[#F7F9FC] rounded-2xl border border-slate-200">
+                <span className="text-[11px] text-slate-500 font-medium block">
+                  KODE RESMI DISPOSISI:
                 </span>
-                <span className="font-mono text-xl font-extrabold text-[#0D2453] block mt-1">
+                <span className="text-base font-extrabold text-[#0D2453] tracking-wider font-mono">
                   {successTicket}
                 </span>
               </div>
 
               <button
                 type="button"
-                onClick={() => {
-                  setSuccessTicket(null);
-                  setSelectedTitle('');
-                  setDescription('');
-                  setUploadedFiles([]);
-                }}
-                className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs transition-colors"
+                onClick={() => setSuccessTicket(null)}
+                className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs sm:text-sm transition-all"
               >
-                Selesai &amp; Tutup
+                Selesai &amp; Pantau Tiket
               </button>
             </motion.div>
           </div>
