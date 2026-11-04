@@ -11,8 +11,10 @@ import {
   FileCheck2,
   Loader2,
   Search,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
+import { submitReportAction } from '@/app/actions/reportActions';
 
 interface LocationCoord {
   lat: number;
@@ -81,6 +83,7 @@ export default function HomeReportForm() {
   const [rawFiles, setRawFiles] = useState<File[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
 
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
@@ -227,6 +230,7 @@ export default function HomeReportForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsSubmitting(true);
 
     try {
@@ -235,11 +239,11 @@ export default function HomeReportForm() {
 
       // Kategori otomatis berdasarkan judul
       let category = 'FASILITAS_RUSAK';
-      if (selectedTitle.includes('kotor') || selectedTitle.includes('sampah')) {
+      if (selectedTitle.toLowerCase().includes('kotor') || selectedTitle.toLowerCase().includes('sampah')) {
         category = 'KEBERSIHAN';
-      } else if (selectedTitle.includes('Pungli')) {
+      } else if (selectedTitle.toLowerCase().includes('pungli')) {
         category = 'PUNGLI';
-      } else if (selectedTitle.includes('goyang') || selectedTitle.includes('bahaya')) {
+      } else if (selectedTitle.toLowerCase().includes('goyang') || selectedTitle.toLowerCase().includes('bahaya')) {
         category = 'BAHAYA_K3';
       }
 
@@ -253,19 +257,20 @@ export default function HomeReportForm() {
         formData.append('photo', rawFiles[0]);
       }
 
-      const res = await fetch('/api/reports', {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await submitReportAction(formData);
 
-      const json = await res.json();
-      if (json.success && json.data) {
-        setSuccessTicket(json.data.report_code);
+      if (res.success && res.data) {
+        setSuccessTicket(res.data.reportCode);
+        setSelectedTitle('');
+        setDescription('');
+        setUploadedFiles([]);
+        setRawFiles([]);
+        setErrorMessage(null);
       } else {
-        setSuccessTicket(`LP-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+        setErrorMessage(res.error || 'Gagal mengirimkan laporan aduan. Silakan coba lagi.');
       }
-    } catch {
-      setSuccessTicket(`LP-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Terjadi kesalahan sistem saat memproses laporan aduan.');
     } finally {
       setIsSubmitting(false);
     }
@@ -418,6 +423,14 @@ export default function HomeReportForm() {
               Laporan Anonim / Privat
             </label>
           </div>
+
+          {/* Error Message Alert */}
+          {errorMessage && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button

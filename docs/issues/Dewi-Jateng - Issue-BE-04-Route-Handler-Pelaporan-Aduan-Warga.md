@@ -4,7 +4,7 @@ project_id: "Dewi-Jateng"
 subproject: "be_dewijateng"
 issue_id: "BE-04"
 title: "Service Pelaporan Aduan Warga, Server Action Form Lapor & Public REST API"
-status: open
+status: completed
 priority: critical
 created: 2026-11-04
 updated: 2026-11-04
@@ -94,13 +94,13 @@ export async function submitReportAction(formData: FormData) {
   ```
 
 ## 5. Kriteria Keberterimaan (Acceptance Criteria)
-- [ ] AC-1: Komponen Beranda (`HomeReportForm.tsx`) dapat mengirim aduan melalui Server Action tanpa perlu membuat fetch request manual.
-- [ ] AC-2: Berkas foto awal tersimpan di storage lokal `public/uploads/report-photos-before/`.
-- [ ] AC-3: Generator kode menjamin keunikan kode tiket format `LP-JTG-2026-XXXX`.
-- [ ] AC-4: Jika `is_anonymous = true`, nomor telepon pelapor di-hash SHA-256 dan nomor mentah tidak disimpan.
-- [ ] AC-5: Halaman Beranda dan Pelacakan ter-refresh otomatis secara reaktif melalui `revalidatePath()`.
-- [ ] AC-6: Public REST API `GET /api/reports` dan `POST /api/reports` tetap berfungsi penuh untuk integrasi sistem luar (*Open Data*).
-- [ ] AC-7: Validasi input mengembalikan pesan error yang jelas jika data wajib (foto, koordinat, desa) tidak lengkap.
+- [x] AC-1: Komponen Beranda (`HomeReportForm.tsx`) dapat mengirim aduan melalui Server Action tanpa perlu membuat fetch request manual.
+- [x] AC-2: Berkas foto awal tersimpan di storage lokal `public/uploads/report-photos-before/`.
+- [x] AC-3: Generator kode menjamin keunikan kode tiket format `LP-JTG-2026-XXXX`.
+- [x] AC-4: Jika `is_anonymous = true`, nomor telepon pelapor di-hash SHA-256 dan nomor mentah tidak disimpan.
+- [x] AC-5: Halaman Beranda dan Pelacakan ter-refresh otomatis secara reaktif melalui `revalidatePath()`.
+- [x] AC-6: Public REST API `GET /api/reports` dan `POST /api/reports` tetap berfungsi penuh untuk integrasi sistem luar (*Open Data*).
+- [x] AC-7: Validasi input mengembalikan pesan error yang jelas jika data wajib (foto, koordinat, desa) tidak lengkap.
 ```typescript
 export async function generateReportCode(): Promise<string> {
   const year = new Date().getFullYear();

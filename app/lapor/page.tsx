@@ -12,7 +12,14 @@ import {
   ShieldCheck,
   X,
   Maximize2,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
+import {
+  getPublicReportsAction,
+  getReportDetailAction,
+} from '@/app/actions/reportActions';
+import type { IncidentReportDetail } from '@/lib/services/reportService';
 
 interface TimelineStep {
   title: string;
@@ -190,15 +197,89 @@ const REPORTS_DATA: ReportItem[] = [
   },
 ];
 
+function mapIncidentToReportItem(inc: IncidentReportDetail): ReportItem {
+  let status: ReportItem['status'] = 'Masuk';
+  if (inc.status === 'RESOLVED') status = 'Selesai';
+  else if (inc.status === 'IN_PROGRESS') status = 'Diproses';
+  else if (inc.status === 'VERIFIED') status = 'Diverifikasi';
+
+  const createdDate = new Date(inc.createdAt);
+  const formattedDate = createdDate.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  const timeline: TimelineStep[] = [
+    {
+      title: 'Laporan terkirim',
+      date: `${formattedDate} · ${createdDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`,
+      done: true,
+    },
+  ];
+
+  if (inc.status === 'IN_PROGRESS' || inc.status === 'RESOLVED') {
+    timeline.push({
+      title: 'Diverifikasi & proses perbaikan',
+      date: 'Dalam penanganan Pokdarwis desa',
+      done: true,
+    });
+  }
+
+  if (inc.status === 'RESOLVED' && inc.resolution) {
+    const resDate = inc.resolution.resolvedAt ? new Date(inc.resolution.resolvedAt) : new Date();
+    timeline.push({
+      title: 'Selesai dengan bukti fisik',
+      date: `${resDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} · ${inc.resolution.officerName || 'Petugas'}`,
+      done: true,
+    });
+  }
+
+  let catLabel = 'Fasilitas & Sanitasi';
+  if (inc.category === 'PUNGLI') catLabel = 'Pungutan Liar';
+  else if (inc.category === 'BAHAYA_K3') catLabel = 'Bahaya K3';
+  else if (inc.category === 'KEBERSIHAN') catLabel = 'Kebersihan';
+  else if (inc.category === 'FASILITAS_RUSAK') catLabel = 'Akses & Jalan';
+
+  return {
+    id: inc.id,
+    ticketCode: inc.reportCode,
+    status,
+    title: inc.title,
+    summary: inc.description.length > 100 ? inc.description.slice(0, 100) + '...' : inc.description,
+    detailDesc: inc.description,
+    locationShort: `${inc.village?.name || 'Desa Wisata'}, ${inc.village?.regency || 'Jawa Tengah'}`,
+    locationFull: `${inc.village?.name || 'Desa Wisata'}, ${inc.village?.district || ''}, ${inc.village?.regency || 'Jawa Tengah'}`,
+    date: formattedDate,
+    category: catLabel,
+    kabupaten: inc.village?.regency || 'Kabupaten Magelang',
+    desa: inc.village?.name || 'Desa Candirejo',
+    thumbImg: inc.photoBeforeUrl || '/img/figma/aduan-curug-sebelum.png',
+    beforePhoto: {
+      url: inc.photoBeforeUrl || '/img/figma/aduan-curug-sebelum.png',
+      label: `Sebelum · ${formattedDate}`,
+    },
+    afterPhoto: inc.resolution?.photoAfterUrl
+      ? {
+          url: inc.resolution.photoAfterUrl,
+          label: `Sesudah · ${inc.resolution.actionSummary || 'Perbaikan Selesai'}`,
+        }
+      : undefined,
+    timeline,
+  };
+}
+
 const STATUS_FILTERS = ['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const;
 
 function LaporContent() {
   const searchParams = useSearchParams();
   const codeParam = searchParams.get('code') || '';
 
+  const [dbReports, setDbReports] = useState<ReportItem[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [searchQuery, setSearchQuery] = useState(codeParam);
-  const [selectedKabupaten, setSelectedKabupaten] = useState('Kabupaten Magelang');
-  const [selectedDesa, setSelectedDesa] = useState('Desa Candirejo');
+  const [selectedKabupaten, setSelectedKabupaten] = useState('Semua kabupaten');
+  const [selectedDesa, setSelectedDesa] = useState('Semua desa');
   const [selectedKategori, setSelectedKategori] = useState('Semua kategori');
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>('Semua');
 
@@ -210,17 +291,82 @@ function LaporContent() {
     return REPORTS_DATA[0].id;
   });
 
-  useEffect(() => {
-    if (codeParam) {
-      setSearchQuery(codeParam);
-      const match = REPORTS_DATA.find((r) => r.ticketCode.toLowerCase() === codeParam.toLowerCase());
-      if (match) setActiveReportId(match.id);
+  // Gabungkan laporan dari PostgreSQL dengan sampel data awal (tanpa duplikasi ticketCode)
+  const allReports = useMemo(() => {
+    const codes = new Set<string>();
+    const combined: ReportItem[] = [];
+
+    // Prioritaskan data riil database
+    for (const item of dbReports) {
+      const key = item.ticketCode.toLowerCase();
+      if (!codes.has(key)) {
+        codes.add(key);
+        combined.push(item);
+      }
     }
-  }, [codeParam]);
+
+    // Tambahkan sampel mockup jika belum ada
+    for (const item of REPORTS_DATA) {
+      const key = item.ticketCode.toLowerCase();
+      if (!codes.has(key)) {
+        codes.add(key);
+        combined.push(item);
+      }
+    }
+
+    return combined;
+  }, [dbReports]);
+
+  // Muat data riil aduan dari database saat pertama kali halaman dibuka
+  useEffect(() => {
+    async function loadInitialReports() {
+      setIsLoadingReports(true);
+      try {
+        const res = await getPublicReportsAction({ limit: 50 });
+        if (res.success && res.data && res.data.length > 0) {
+          const mapped = res.data.map(mapIncidentToReportItem);
+          setDbReports(mapped);
+        }
+      } catch (err) {
+        console.error('Gagal memuat aduan database:', err);
+      } finally {
+        setIsLoadingReports(false);
+      }
+    }
+    loadInitialReports();
+  }, []);
+
+  // Tangani parameter query ?code=LP-JTG-2026-XXXX dari form lapor
+  useEffect(() => {
+    if (!codeParam) return;
+    setSearchQuery(codeParam);
+
+    async function findTicket() {
+      // 1. Cek pada daftar yang sudah ter-cache
+      const match = allReports.find(
+        (r) => r.ticketCode.toLowerCase() === codeParam.toLowerCase()
+      );
+      if (match) {
+        setActiveReportId(match.id);
+        return;
+      }
+
+      // 2. Jika belum ada di memori, panggil Server Action untuk ambil detail
+      const res = await getReportDetailAction(codeParam);
+      if (res.success && res.data) {
+        const mapped = mapIncidentToReportItem(res.data);
+        setDbReports((prev) => [mapped, ...prev]);
+        setActiveReportId(mapped.id);
+      }
+    }
+
+    findTicket();
+  }, [codeParam, allReports]);
+
   const [lightboxImg, setLightboxImg] = useState<{ url: string; label: string } | null>(null);
 
   const filteredReports = useMemo(() => {
-    return REPORTS_DATA.filter((item) => {
+    return allReports.filter((item) => {
       if (statusFilter !== 'Semua' && item.status !== statusFilter) {
         return false;
       }
@@ -234,14 +380,43 @@ function LaporContent() {
       if (selectedKategori !== 'Semua kategori' && item.category !== selectedKategori) {
         return false;
       }
+      if (selectedKabupaten !== 'Semua kabupaten' && item.kabupaten !== selectedKabupaten) {
+        return false;
+      }
+      if (selectedDesa !== 'Semua desa' && item.desa !== selectedDesa) {
+        return false;
+      }
       return true;
     });
-  }, [statusFilter, searchQuery, selectedKategori]);
+  }, [allReports, statusFilter, searchQuery, selectedKategori, selectedKabupaten, selectedDesa]);
 
   const activeReport = useMemo(() => {
-    const found = REPORTS_DATA.find((r) => r.id === activeReportId);
-    return found || filteredReports[0] || REPORTS_DATA[0];
-  }, [activeReportId, filteredReports]);
+    const found = allReports.find((r) => r.id === activeReportId);
+    return found || filteredReports[0] || allReports[0] || REPORTS_DATA[0];
+  }, [allReports, activeReportId, filteredReports]);
+
+  // Fungsi pencarian manual saat tombol "Cari Laporan" ditekan
+  const handleManualSearch = async () => {
+    if (!searchQuery.trim()) return;
+    const cleanQ = searchQuery.trim().toUpperCase();
+
+    // Jika format menyerupai kode tiket LP-JTG-XXXX atau DS-JTG-XXXX
+    if (cleanQ.includes('JTG-')) {
+      const existing = allReports.find((r) => r.ticketCode.toUpperCase() === cleanQ);
+      if (existing) {
+        setActiveReportId(existing.id);
+        return;
+      }
+
+      // Cari ke server
+      const res = await getReportDetailAction(cleanQ);
+      if (res.success && res.data) {
+        const mapped = mapIncidentToReportItem(res.data);
+        setDbReports((prev) => [mapped, ...prev]);
+        setActiveReportId(mapped.id);
+      }
+    }
+  };
 
   const renderStatusBadge = (status: ReportItem['status']) => {
     switch (status) {
@@ -327,7 +502,13 @@ function LaporContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Contoh: DS-JTG-2026-0891 atau akses ke curug"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleManualSearch();
+                  }
+                }}
+                placeholder="Contoh: LP-JTG-2026-0012 atau akses ke curug"
                 className="w-full bg-transparent border-0 text-[14px] text-[#0D2453] placeholder:text-[#64748B] focus:outline-none"
               />
               {searchQuery && (
@@ -343,6 +524,7 @@ function LaporContent() {
 
             <button
               type="button"
+              onClick={handleManualSearch}
               className="w-full sm:w-auto bg-[#0D2453] border border-[#0D2453] hover:bg-[#132d66] text-white px-5 py-3 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer shrink-0"
             >
               Cari Laporan
@@ -363,11 +545,15 @@ function LaporContent() {
                 onChange={(e) => setSelectedKabupaten(e.target.value)}
                 className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-[13px] text-[#0D2453] font-normal focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
               >
+                <option value="Semua kabupaten">Semua kabupaten</option>
+                <option value="Kabupaten Semarang">Kabupaten Semarang</option>
                 <option value="Kabupaten Magelang">Kabupaten Magelang</option>
                 <option value="Kabupaten Banyumas">Kabupaten Banyumas</option>
                 <option value="Kabupaten Kendal">Kabupaten Kendal</option>
                 <option value="Kabupaten Karanganyar">Kabupaten Karanganyar</option>
                 <option value="Kabupaten Banjarnegara">Kabupaten Banjarnegara</option>
+                <option value="Kabupaten Purbalingga">Kabupaten Purbalingga</option>
+                <option value="Kabupaten Boyolali">Kabupaten Boyolali</option>
                 <option value="Kabupaten Wonosobo">Kabupaten Wonosobo</option>
               </select>
               <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -385,11 +571,16 @@ function LaporContent() {
                 onChange={(e) => setSelectedDesa(e.target.value)}
                 className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-[13px] text-[#0D2453] font-normal focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
               >
+                <option value="Semua desa">Semua desa</option>
                 <option value="Desa Candirejo">Desa Candirejo</option>
                 <option value="Desa Limpakuwus">Desa Limpakuwus</option>
                 <option value="Desa Dieng Kulon">Desa Dieng Kulon</option>
                 <option value="Desa Berjo">Desa Berjo</option>
-                <option value="Desa Getas (Tubing Genting)">Desa Getas (Tubing Genting)</option>
+                <option value="Desa Getas (Curug Kembar)">Desa Getas (Curug Kembar)</option>
+                <option value="Desa Limbasari">Desa Limbasari</option>
+                <option value="Desa Karangbanjar">Desa Karangbanjar</option>
+                <option value="Desa Samiran (Selo)">Desa Samiran (Selo)</option>
+                <option value="Desa Lerep">Desa Lerep</option>
               </select>
               <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -444,7 +635,7 @@ function LaporContent() {
         {/* Section Header Meta */}
         <div className="flex items-center justify-between">
           <h2 className="text-[20px] font-semibold text-[#0D2453]">
-            Laporan di {selectedDesa}
+            {selectedDesa === 'Semua desa' ? 'Daftar Laporan Terkini' : `Laporan di ${selectedDesa}`}
           </h2>
           <span className="text-[13px] font-normal text-[#64748B]">
             Urutan: relevansi pencarian ↓

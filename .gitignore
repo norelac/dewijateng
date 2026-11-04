@@ -17,3 +17,7 @@ Thumbs.db
 .playwright-mcp/
 *.tsbuildinfo
 CLAUDE.md
+
+# Uploads
+public/uploads/*
+!public/uploads/**/.gitkeep
