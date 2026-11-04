@@ -190,6 +190,140 @@ export const DEFAULT_LPJ_EXPENSE_SAMPLE: ExtractedLpjExpenseItem[] = [
 ];
 
 /**
+ * Memanggil AI LLM Gateway (OpenAI-compatible) untuk ekstraksi dokumen LPJ multimodal/teks
+ */
+export async function extractLpjWithLlm(
+  documentText: string,
+  context?: {
+    villageId?: string;
+    fiscalYear?: number;
+    fundingSource?: string;
+    totalAllocated?: number;
+  }
+): Promise<{
+  fundingSource?: string;
+  totalAllocated?: number;
+  totalRealized?: number;
+  remainingBalance?: number;
+  items: ExtractedLpjExpenseItem[];
+} | null> {
+  const baseUrl = process.env.LLM_BASE_URL;
+  const apiKey = process.env.LLM_API_KEY;
+  const model = process.env.LLM_MODEL || 'ag/gemini-3.8-flash';
+
+  if (!baseUrl || !apiKey || !documentText || documentText.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    const promptSystem = `Anda adalah AI Auditor Keuangan Dokumen Laporan Pertanggungjawaban (LPJ) Desa Wisata Jawa Tengah.
+Tugas Anda adalah menganalisis dokumen laporan anggaran dan mengekstrak rincian pos belanja modal dan operasional ke format JSON murni.
+
+Struktur output JSON yang WAJIB dipatuhi:
+{
+  "funding_source": "Nama sumber dana (misal: Bantuan Keuangan Khusus Sarpras Pemprov Jateng TA 2026)",
+  "total_allocated": 100000000,
+  "total_realized": 92500000,
+  "remaining_balance": 7500000,
+  "items": [
+    {
+      "activity_name": "Nama pos belanja atau spesifikasi material",
+      "category": "MATERIAL_FISIK" | "UPAH_TENAGA" | "KESELAMATAN_K3" | "OPERASIONAL",
+      "volume": 10,
+      "unit": "sak/batang/m3/HOK/unit",
+      "claimed_unit_price": 50000,
+      "amount_realized": 500000
+    }
+  ]
+}
+
+Aturan:
+1. Konversi seluruh angka nominal Rupiah menjadi integer bulat tanpa titik atau desimal.
+2. Pastikan kategori setiap pos belanja adalah salah satu dari: MATERIAL_FISIK, UPAH_TENAGA, KESELAMATAN_K3, OPERASIONAL.
+3. Hasilkan JSON murni tanpa pembungkus teks tambahan.`;
+
+    const promptUser = `Berikut adalah isi dokumen LPJ yang perlu diekstrak:
+Tahun Anggaran: ${context?.fiscalYear || 2026}
+Pagu Bantuan: ${context?.totalAllocated || 100000000}
+
+Isi Teks / Tabel Dokumen:
+${documentText.slice(0, 15000)}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
+    const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: promptSystem },
+          { role: 'user', content: promptUser },
+        ],
+        response_format: { type: 'json_object' },
+        stream: false,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      console.warn(`[AI Document Extractor]: Gateway HTTP ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const rawContent = data.choices?.[0]?.message?.content;
+    if (!rawContent) return null;
+
+    const cleaned = rawContent.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.items || !Array.isArray(parsed.items) || parsed.items.length === 0) {
+      return null;
+    }
+
+    const items: ExtractedLpjExpenseItem[] = parsed.items.map((item: any) => {
+      const name = (item.activity_name || item.name || 'Pos Belanja').trim();
+      const volume = Number(item.volume) > 0 ? Number(item.volume) : 1;
+      const unit = (item.unit || 'unit').trim();
+      const claimed_unit_price = parseRupiahNumber(item.claimed_unit_price || item.unit_price || item.price);
+      const amount_realized =
+        parseRupiahNumber(item.amount_realized || item.total_price) ||
+        Math.round(volume * claimed_unit_price);
+      const category = (['MATERIAL_FISIK', 'UPAH_TENAGA', 'KESELAMATAN_K3', 'OPERASIONAL'].includes(item.category)
+        ? item.category
+        : classifyExpenseCategory(name)) as ExpenseCategory;
+
+      return {
+        activity_name: name,
+        category,
+        volume,
+        unit,
+        claimed_unit_price,
+        amount_realized,
+      };
+    });
+
+    return {
+      fundingSource: parsed.funding_source,
+      totalAllocated: parseRupiahNumber(parsed.total_allocated) || context?.totalAllocated,
+      totalRealized: parseRupiahNumber(parsed.total_realized),
+      remainingBalance: parseRupiahNumber(parsed.remaining_balance),
+      items,
+    };
+  } catch (err: any) {
+    console.warn('[AI Document Extractor]: LLM extraction error, fallback to deterministic parser:', err.message);
+    return null;
+  }
+}
+
+/**
  * Mesin Ekstraksi Utama: Memproses Buffer PDF LPJ dan menghasilkan struktur JSON terstandarisasi
  */
 export async function extractLpjFromPdf(
@@ -219,39 +353,61 @@ export async function extractLpjFromPdf(
   if (metadata.itemsOverride && Array.isArray(metadata.itemsOverride) && metadata.itemsOverride.length > 0) {
     rawItems = metadata.itemsOverride;
   } else {
-    // 3. Ekstraksi cerdas berbasis analisis konten dokumen PDF
-    const textPreview = buffer.toString('utf-8', 0, Math.min(buffer.length, 32000));
-    const extractedRows: ExtractedLpjExpenseItem[] = [];
+    // 3. Ekstraksi cerdas: coba lewat AI LLM Gateway terlebih dahulu jika terkonfigurasi
+    const textPreview = metadata.rawText || buffer.toString('utf-8', 0, Math.min(buffer.length, 32000));
+    let llmResult: {
+      fundingSource?: string;
+      totalAllocated?: number;
+      totalRealized?: number;
+      remainingBalance?: number;
+      items: ExtractedLpjExpenseItem[];
+    } | null = null;
 
-    // Coba parsing pola baris tabel jika ada text layer pada PDF
-    const lines = textPreview.split(/\r?\n/);
-    for (const line of lines) {
-      // Pola: Nama Item | Volume | Satuan | Harga | Total
-      const match = line.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s+([a-zA-Z0-9/]+)\s+Rp?\s*([\d\.,]+)\s+Rp?\s*([\d\.,]+)$/i);
-      if (match) {
-        const activity_name = match[1].trim();
-        const volume = parseFloat(match[2]);
-        const unit = match[3].trim();
-        const claimed_unit_price = parseRupiahNumber(match[4]);
-        const amount_realized = parseRupiahNumber(match[5]) || Math.round(volume * claimed_unit_price);
-        const category = classifyExpenseCategory(activity_name);
-
-        extractedRows.push({
-          activity_name,
-          category,
-          volume,
-          unit,
-          claimed_unit_price,
-          amount_realized,
-        });
-      }
+    if (process.env.LLM_BASE_URL && process.env.LLM_API_KEY) {
+      llmResult = await extractLpjWithLlm(textPreview, {
+        villageId,
+        fiscalYear,
+        fundingSource,
+        totalAllocated,
+      });
     }
 
-    if (extractedRows.length >= 3) {
-      rawItems = extractedRows;
+    if (llmResult && llmResult.items && llmResult.items.length > 0) {
+      rawItems = llmResult.items;
+      if (llmResult.fundingSource) metadata.fundingSource = llmResult.fundingSource;
+      if (llmResult.totalAllocated) metadata.totalAllocated = llmResult.totalAllocated;
     } else {
-      // Gunakan default structured dataset yang merefleksikan standar pelaporan Pemprov Jateng
-      rawItems = DEFAULT_LPJ_EXPENSE_SAMPLE;
+      // 4. Fallback ke parser lokal deterministik berbasis regex dan pola baris dokumen
+      const extractedRows: ExtractedLpjExpenseItem[] = [];
+      const lines = textPreview.split(/\r?\n/);
+      for (const line of lines) {
+        // Pola: Nama Item | Volume | Satuan | Harga | Total
+        const match = line.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s+([a-zA-Z0-9/]+)\s+Rp?\s*([\d\.,]+)\s+Rp?\s*([\d\.,]+)$/i);
+        if (match) {
+          const activity_name = match[1].trim();
+          const volume = parseFloat(match[2]);
+          const unit = match[3].trim();
+          const claimed_unit_price = parseRupiahNumber(match[4]);
+          const amount_realized = parseRupiahNumber(match[5]) || Math.round(volume * claimed_unit_price);
+          const category = classifyExpenseCategory(activity_name);
+
+          extractedRows.push({
+            activity_name,
+            category,
+            volume,
+            unit,
+            claimed_unit_price,
+            amount_realized,
+          });
+        }
+      }
+
+      if (extractedRows.length >= 3) {
+        rawItems = extractedRows;
+      } else {
+        // Gunakan default structured dataset yang merefleksikan standar pelaporan Pemprov Jateng
+        rawItems = DEFAULT_LPJ_EXPENSE_SAMPLE;
+      }
     }
   }
 
