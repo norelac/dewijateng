@@ -9,6 +9,7 @@ import {
   createIncidentReport,
   getReportByCode,
   listPublicReports,
+  markReportInProgress,
   type CreateReportDTO,
   type IncidentReportDetail,
 } from '@/lib/services/reportService';
@@ -131,3 +132,44 @@ export async function getPublicReportsAction(filters?: {
     };
   }
 }
+
+/**
+ * Server Action: Menandai tiket aduan sedang dikerjakan (IN_PROGRESS) oleh Pokdarwis
+ */
+export async function markReportInProgressAction(
+  reportCode: string
+): Promise<ActionResponse<{ success: boolean; reportCode: string }>> {
+  try {
+    if (!reportCode || !reportCode.trim()) {
+      return { success: false, error: 'Kode tiket tidak boleh kosong' };
+    }
+    const cleanCode = reportCode.toUpperCase().trim();
+    const updated = await markReportInProgress(cleanCode);
+    if (!updated) {
+      return {
+        success: false,
+        error: `Laporan ${cleanCode} tidak dapat diubah ke IN_PROGRESS (laporan tidak ditemukan atau status bukan SUBMITTED)`,
+      };
+    }
+
+    try {
+      revalidatePath('/pengelola');
+      revalidatePath('/lapor');
+      revalidatePath('/');
+    } catch {
+      // Abaikan di luar context request Next.js
+    }
+
+    return {
+      success: true,
+      data: { success: true, reportCode: cleanCode },
+    };
+  } catch (error: any) {
+    console.error('[markReportInProgressAction Error]:', error);
+    return {
+      success: false,
+      error: error.message || 'Gagal memperbarui status laporan menjadi IN_PROGRESS',
+    };
+  }
+}
+

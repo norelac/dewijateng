@@ -324,6 +324,25 @@ ${documentText.slice(0, 15000)}`;
 }
 
 /**
+ * Ekstraksi teks bersih dari buffer biner PDF menggunakan pdf-parse stream decoder.
+ * Menghindari konversi biner mentah buffer.toString('utf-8') yang menghasilkan karakter FlateDecode sampah.
+ */
+export async function extractPdfText(buffer: Buffer): Promise<string> {
+  try {
+    const { PDFParse } = await import('pdf-parse');
+    const parser = new PDFParse({ data: buffer });
+    const textRes = await parser.getText();
+    await parser.destroy();
+    if (textRes && textRes.text && textRes.text.trim().length > 0) {
+      return textRes.text;
+    }
+  } catch (err: any) {
+    console.warn('[PDF Parser Warning]: Gagal membaca stream PDF via pdf-parse, fallback ke karakter ASCII/UTF-8:', err.message);
+  }
+  return buffer.toString('utf-8', 0, Math.min(buffer.length, 32000));
+}
+
+/**
  * Mesin Ekstraksi Utama: Memproses Buffer PDF LPJ dan menghasilkan struktur JSON terstandarisasi
  */
 export async function extractLpjFromPdf(
@@ -353,8 +372,8 @@ export async function extractLpjFromPdf(
   if (metadata.itemsOverride && Array.isArray(metadata.itemsOverride) && metadata.itemsOverride.length > 0) {
     rawItems = metadata.itemsOverride;
   } else {
-    // 3. Ekstraksi cerdas: coba lewat AI LLM Gateway terlebih dahulu jika terkonfigurasi
-    const textPreview = metadata.rawText || buffer.toString('utf-8', 0, Math.min(buffer.length, 32000));
+    // 3. Ekstraksi cerdas: ekstrak teks dokumen menggunakan PDF stream decoder (pdf-parse)
+    const textPreview = metadata.rawText || (await extractPdfText(buffer));
     let llmResult: {
       fundingSource?: string;
       totalAllocated?: number;

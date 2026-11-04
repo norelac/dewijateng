@@ -177,10 +177,12 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
 
   const newReport = insertRes.rows[0];
 
-  // 7. Picu rekalkulasi Trust Score desa wisata secara asynchronous
-  calculateVillageTrustScore(villageId).catch((err) =>
-    console.error(`[TrustScore Recalc Warning for village ${villageId}]:`, err)
-  );
+  // 7. Picu rekalkulasi Trust Score desa wisata secara terjamin (await dengan catch safe guard)
+  try {
+    await calculateVillageTrustScore(villageId);
+  } catch (err) {
+    console.warn(`[TrustScore Recalc Warning for village ${villageId}]:`, err);
+  }
 
   return {
     id: newReport.id,
@@ -374,4 +376,28 @@ export async function listPublicReports(
         }
       : null,
   }));
+}
+
+/**
+ * Memperbarui status aduan dari SUBMITTED ke IN_PROGRESS saat Pokdarwis mulai menangani tiket
+ */
+export async function markReportInProgress(reportCode: string): Promise<boolean> {
+  const cleanCode = reportCode.toUpperCase().trim();
+  const res = await query<{ id: string; village_id: string }>(
+    `UPDATE incident_reports
+     SET status = 'IN_PROGRESS', updated_at = NOW()
+     WHERE UPPER(report_code) = $1 AND status = 'SUBMITTED'
+     RETURNING id, village_id`,
+    [cleanCode]
+  );
+
+  if (res.rows.length > 0) {
+    try {
+      await calculateVillageTrustScore(res.rows[0].village_id);
+    } catch (err) {
+      console.warn(`[TrustScore Recalc Warning for village ${res.rows[0].village_id}]:`, err);
+    }
+    return true;
+  }
+  return false;
 }
