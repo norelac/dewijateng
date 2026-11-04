@@ -10,7 +10,7 @@ import HomeReportFeed from '@/components/HomeReportFeed';
 
 export default function HomePage() {
   return (
-    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
       {/* 1. Dynamic Hero Banner with Slideshow & Entrance Animations */}
       <HomeHeroBanner />
 
