@@ -1201,36 +1201,34 @@ function LaporContent() {
                 )}
               </div>
 
-              {/* 5. EXIF Metadata Validation Card (Proof-of-Fix Integrity) */}
+              {/* 5. EXIF Metadata Validation (Proof-of-Fix Integrity) */}
               {activeReport.afterPhoto && (
-                <div className="bg-[#E6FFFA] rounded-[16px] border border-[#99F6E4] p-4 flex flex-col gap-2.5 text-[#0F766E]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[#0D9488]" />
-                      <span className="text-xs font-bold text-[#115E59]">
-                        Metadata Kamera EXIF Terverifikasi Otomatis
-                      </span>
+                <div className="bg-[#F8FAFC] rounded-[14px] border border-[#E2E8F0] p-4 flex flex-col gap-2.5 text-[#0D2453]">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 font-semibold text-[#0D2453]">
+                      <ShieldCheck className="w-4 h-4 text-[#0D2453]" />
+                      <span>Validasi Data Foto Lapangan</span>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#CCFBF1] text-[#0F766E] font-bold">
-                      SHA-256 VALID
+                    <span className="text-[11px] font-mono text-[#475569] bg-white px-2 py-0.5 rounded border border-[#E2E8F0]">
+                      EXIF terverifikasi
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-[#134E4A] pt-1 border-t border-[#99F6E4]/70">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#475569] pt-2 border-t border-[#E2E8F0]/80">
                     <div>
-                      <span className="text-[#0D9488] font-medium block">Waktu Selesai Fisik:</span>
-                      <span className="font-semibold">
+                      <span className="text-[11px] text-[#64748B] block">Waktu dokumentasi:</span>
+                      <span className="font-medium text-[#0D2453]">
                         {activeReport.afterPhoto.label.replace('Sesudah · ', '')} · 11.30 WIB
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#0D9488] font-medium block">Perangkat Lapangan:</span>
-                      <span className="font-semibold">Kamera Lapangan Pokdarwis (Geotagged)</span>
+                      <span className="text-[11px] text-[#64748B] block">Perangkat &amp; lokasi:</span>
+                      <span className="font-medium text-[#0D2453]">Kamera Pokdarwis · Geotagged</span>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-[#0F766E] leading-relaxed">
-                    Sistem mengonfirmasi timestamp pemotretan sesudah laporan diterbitkan (T<sub>foto</sub> &gt; T<sub>lapor</sub>) dan titik koordinat berada di area desa wisata terkait.
+                  <p className="text-[11px] text-[#64748B] leading-relaxed pt-1">
+                    Foto perbaikan telah melalui verifikasi timestamp pemotretan dan kesesuaian koordinat GPS lokasi aduan.
                   </p>
                 </div>
               )}

@@ -130,7 +130,6 @@ const CATEGORIES = ['Semua panduan', 'Pelaporan', 'Transparansi dana', 'Privasi'
 export default function EdukasiPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<(typeof CATEGORIES)[number]>('Semua panduan');
-  const [isSavedCodeChecked, setIsSavedCodeChecked] = useState(false);
   const [openFaqIds, setOpenFaqIds] = useState<Record<string, boolean>>({
     'faq-1': true,
     'faq-2': true,
@@ -334,76 +333,24 @@ export default function EdukasiPage() {
             Langkah-langkah Melapor
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B] font-normal">
-            Ikuti lima langkah ini sebelum mengirim aduan tentang fasilitas atau pengalaman wisata Anda.
+            Lima langkah sebelum mengirim aduan fasilitas atau pengalaman wisata.
           </p>
         </div>
 
-        <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] flex flex-col gap-7">
-          {/* 5 Steps horizontal flow */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 sm:gap-6">
-            {STEPS.map((s) => (
-              <div key={s.step} className="flex flex-col items-center text-center gap-3">
-                <div className="size-9 rounded-full bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] font-bold text-sm shrink-0">
-                  {s.step}
-                </div>
-                <span className="text-sm sm:text-base font-bold text-[#0D2453] leading-snug">
-                  {s.title}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-[#E6ECF5] w-full" />
-
-          {/* Reminder row */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex-1 space-y-1.5">
-              <h4 className="text-base font-bold text-[#0D2453]">
-                Jangan tutup halaman sebelum menyimpan kode
-              </h4>
-              <p className="text-xs sm:text-[13px] text-[#64748B] leading-[1.7] font-normal max-w-xl">
-                Kode Laporan adalah pengenal laporan, bukan data identitas pelapor. Gunakan kode ini saat membuka Telusuri Laporan.
-              </p>
-            </div>
-
-            {/* Interactive simulated reminder card */}
-            <div className="w-full md:w-[393px] shrink-0 flex flex-col gap-2">
-              <span className="text-[11px] text-[#64748B] font-medium">
-                Contoh pengingat setelah mengirim
+        <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.08),0_24px_40px_-12px_rgba(13,36,83,0.10)] flex flex-col divide-y divide-[#F1F5F9]">
+          {STEPS.map((s) => (
+            <div key={s.step} className="flex items-baseline gap-5 py-3.5 first:pt-0 last:pb-0">
+              <span className="text-xs font-bold text-[#0D2453] tabular-nums w-4 shrink-0 select-none">
+                {s.step}
               </span>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setIsSavedCodeChecked(!isSavedCodeChecked)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setIsSavedCodeChecked(!isSavedCodeChecked);
-                  }
-                }}
-                className="p-5 rounded-[16px] border border-[#E6ECF5] bg-[#F8FAFC] flex items-start gap-4 cursor-pointer hover:border-[#CBD5E1] transition-colors"
-              >
-                <div
-                  className={`size-6 rounded-[5px] border flex items-center justify-center shrink-0 transition-colors ${
-                    isSavedCodeChecked
-                      ? 'bg-[#0D2453] border-[#0D2453] text-white'
-                      : 'bg-white border-[#B9B9B9]'
-                  }`}
-                >
-                  {isSavedCodeChecked && <Check className="w-4 h-4 stroke-[3]" />}
-                </div>
-                <div className="flex flex-col gap-1 leading-snug">
-                  <span className="text-sm sm:text-base font-bold text-[#0D2453]">
-                    Simpan kode laporan
-                  </span>
-                  <span className="text-xs text-[#64748B] leading-relaxed font-normal">
-                    Salin kode atau simpan tangkapan layar konfirmasi.
-                  </span>
-                </div>
-              </div>
+              <span className="text-sm text-[#0D2453] font-normal leading-snug">
+                {s.title}
+              </span>
             </div>
-          </div>
+          ))}
+          <p className="pt-4 text-xs text-[#64748B] leading-relaxed">
+            Simpan kode tiket setelah mengirim — salin atau tangkap layar halaman konfirmasi untuk penelusuran di <Link href="/lapor" className="text-[#0D2453] font-medium hover:underline underline-offset-2">Telusuri Laporan</Link>.
+          </p>
         </div>
       </section>
 
@@ -502,98 +449,102 @@ export default function EdukasiPage() {
             </div>
           </div>
 
-          {/* ── Modul 3 & 4 — dua kolom bawah ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* Modul 3: K3 — pull-quote + tabel standar */}
-            <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] p-7 flex flex-col gap-5">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-[10px] bg-[#FEF2F2] flex items-center justify-center text-[#B91C1C] shrink-0">
-                  <AlertTriangle className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-[#0D2453]">Standar K3 wisata buatan</h3>
-                  <p className="text-xs text-[#64748B] mt-0.5">The Geong, Limpakuwus — insiden 2023</p>
-                </div>
-              </div>
-
-              {/* Pull-quote */}
-              <blockquote className="border-l-2 border-[#B91C1C] pl-4 py-1">
-                <p className="text-sm text-[#0D2453] leading-relaxed">
-                  Jembatan kaca di The Geong runtuh karena kaca tempered tidak memenuhi standar ketebalan. Investigasi menemukan pemasangan struktural tidak sesuai spesifikasi SNI.
-                </p>
-              </blockquote>
-
-              {/* Tabel standar minimum */}
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-[#F7F9FC] text-[#0D2453]">
-                    <th className="px-3 py-2 rounded-l-lg font-semibold">Komponen</th>
-                    <th className="px-3 py-2 rounded-r-lg font-semibold">Standar minimum</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#F1F5F9]">
-                  {[
-                    ['Kaca lantai vertikal', 'Laminated tempered ≥ 25 mm'],
-                    ['Railing', 'Galvanis, tahan 100 kg/m'],
-                    ['Pelampung', 'SNI — wajib di curug & kolam'],
-                    ['Inspeksi berkala', 'Tiap 6 bulan oleh ahli teknik'],
-                    ['Asuransi', 'Min. Rp 50 juta / kejadian'],
-                  ].map(([k, v], i) => (
-                    <tr key={i}>
-                      <td className="px-3 py-2 text-[#475569]">{k}</td>
-                      <td className="px-3 py-2 font-medium text-[#0D2453]">{v}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <p className="text-[11px] text-[#64748B]">
-                Dasar hukum: PP No. 50/2012, Permenpar No. 17/2015, SNI 03-4432-1997
+          {/* ── Modul 3: Standar K3 Wisata Buatan ── */}
+          <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] p-7 flex flex-col gap-5">
+            <div>
+              <h3 className="text-base font-bold text-[#0D2453]">
+                Standar K3 Fasilitas Wisata Buatan
+              </h3>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Evaluasi kelaikan teknis sarana prasarana wisata pasca-insiden The Geong Banyumas (2023)
               </p>
             </div>
 
-            {/* Modul 4: Direktori Darurat — nomor besar, baris penuh */}
-            <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] p-7 flex flex-col gap-5">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-[10px] bg-[#F0FDF4] flex items-center justify-center text-[#15803D] shrink-0">
-                  <HeartPulse className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-[#0D2453]">Kontak darurat Jawa Tengah</h3>
-                  <p className="text-xs text-[#64748B] mt-0.5">Ketuk nomor untuk memanggil langsung.</p>
-                </div>
-              </div>
+            <p className="text-sm text-[#475569] leading-relaxed">
+              Hasil investigasi Puslabfor atas runtuhnya jembatan kaca Limpakuwus mengungkap pemasangan kaca non-laminated setebal 12 mm tanpa pengujian beban berkala. Pemerintah Provinsi Jawa Tengah menetapkan batas minimum kelaikan teknis untuk wahana buatan:
+            </p>
 
-              <div className="flex flex-col divide-y divide-[#F1F5F9]">
-                {[
-                  { name: 'Basarnas Jateng', num: '(024) 760-7777', desc: 'Pencarian & pertolongan' },
-                  { name: 'PMI Jawa Tengah', num: '(024) 354-3500', desc: 'Donor darah & ambulans' },
-                  { name: 'Call Center Darurat', num: '112', desc: 'Gratis, terpadu, 24 jam' },
-                  { name: 'Disporapar Jateng', num: '(024) 354-6681', desc: 'Pengaduan wisata' },
-                ].map((c) => (
-                  <a
-                    key={c.num}
-                    href={`tel:${c.num.replace(/[^0-9+]/g, '')}`}
-                    className="flex items-center justify-between py-3.5 group focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2 rounded"
-                  >
-                    <div>
-                      <span className="text-xs font-bold text-[#0D2453] block">{c.name}</span>
-                      <span className="text-[11px] text-[#64748B]">{c.desc}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-base font-extrabold text-[#0D2453] font-mono tracking-tight">
-                        {c.num}
-                      </span>
-                      <Phone className="w-4 h-4 text-[#15803D] group-hover:scale-110 transition-transform" />
-                    </div>
-                  </a>
-                ))}
-              </div>
+            {/* Tabel Spesifikasi Teknis */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border border-[#E6ECF5] rounded-xl overflow-hidden">
+                <thead>
+                  <tr className="bg-[#F7F9FC] text-[#0D2453] border-b border-[#E6ECF5]">
+                    <th scope="col" className="px-4 py-2.5 font-semibold">Komponen / Wahana</th>
+                    <th scope="col" className="px-4 py-2.5 font-semibold">Ambang Batas Minimum</th>
+                    <th scope="col" className="px-4 py-2.5 font-semibold hidden sm:table-cell">Dasar Regulasi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F1F5F9] text-[#475569]">
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Lantai kaca pijakan</td>
+                    <td className="px-4 py-2.5">Laminated tempered ≥ 25 mm</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">SNI 03-4432-1997</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Railing &amp; pengaman</td>
+                    <td className="px-4 py-2.5">Pipa galvanis tahan beban 100 kg/m</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">Permen PU No. 29/2006</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Wisata air &amp; curug</td>
+                    <td className="px-4 py-2.5">Rompi pelampung standar SNI wajib tersedia</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">Permenpar No. 17/2015</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Audit struktur berkala</td>
+                    <td className="px-4 py-2.5">Inspeksi teknis uji beban tiap 6 bulan</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">PP No. 50/2012 (K3)</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-medium text-[#0D2453]">Perlindungan pengunjung</td>
+                    <td className="px-4 py-2.5">Klaim asuransi minimal Rp 50 juta/orang</td>
+                    <td className="px-4 py-2.5 text-[11px] text-[#64748B] hidden sm:table-cell">UU Kepariwisataan No. 10/2009</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-              <p className="text-[11px] text-[#64748B] text-center bg-[#F7F9FC] rounded-lg py-2">
-                Nomor di atas terhubung langsung via ponsel Anda.
-              </p>
+          {/* ── Modul 4: Direktori Kontak Darurat Terpadu ── */}
+          <div className="bg-[#F7F9FC] rounded-[20px] border border-[#E6ECF5] p-6 sm:p-7 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div>
+                <h3 className="text-base font-bold text-[#0D2453]">
+                  Direktori Darurat Wisata Jawa Tengah
+                </h3>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Layanan evakuasi SAR, ambulans medis, dan pusat pengaduan terpadu.
+                </p>
+              </div>
+              <span className="text-[11px] text-[#64748B] font-medium hidden sm:inline">
+                Panggilan darurat langsung via ponsel
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              {[
+                { name: 'Basarnas Jateng', num: '(024) 760-7777', role: 'Evakuasi & Pertolongan SAR' },
+                { name: 'PMI Jawa Tengah', num: '(024) 354-3500', role: 'Ambulans & Pertolongan Medis' },
+                { name: 'Layanan Darurat', num: '112', role: 'Bebas Pulsa · Siaga 24 Jam' },
+                { name: 'Disporapar Jateng', num: '(024) 354-6681', role: 'Pusat Koordinasi Pengaduan' },
+              ].map((c) => (
+                <a
+                  key={c.num}
+                  href={`tel:${c.num.replace(/[^0-9+]/g, '')}`}
+                  className="bg-white rounded-[14px] border border-[#E6ECF5] p-4 flex flex-col justify-between hover:border-[#0D2453] hover:shadow-xs transition-all group focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-[#0D2453] block">{c.name}</span>
+                    <span className="text-[11px] text-[#64748B] mt-0.5 block">{c.role}</span>
+                  </div>
+                  <div className="mt-3 pt-2.5 border-t border-[#F1F5F9] flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-[#0D2453] font-mono tracking-tight group-hover:text-[#132d66]">
+                      {c.num}
+                    </span>
+                    <Phone className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#0D2453] transition-colors" />
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         </div>
