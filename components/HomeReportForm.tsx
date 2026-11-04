@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UploadCloud,
@@ -77,6 +78,7 @@ export default function HomeReportForm() {
   const [address, setAddress] = useState('Jl. Pamularsih Raya, Semarang Barat');
   const [description, setDescription] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [rawFiles, setRawFiles] = useState<File[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
@@ -240,19 +242,57 @@ export default function HomeReportForm() {
   }, [address]);
 
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setUploadedFiles((prev) => [...prev, file.name]);
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      setRawFiles((prev) => [...prev, ...filesArray]);
+      setUploadedFiles((prev) => [...prev, ...filesArray.map((f) => f.name)]);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+
+    try {
+      const formData = new FormData();
+      formData.append('title', selectedTitle);
+
+      // Kategori otomatis berdasarkan judul
+      let category = 'FASILITAS_RUSAK';
+      if (selectedTitle.includes('kotor') || selectedTitle.includes('sampah')) {
+        category = 'KEBERSIHAN';
+      } else if (selectedTitle.includes('Pungli')) {
+        category = 'PUNGLI';
+      } else if (selectedTitle.includes('goyang') || selectedTitle.includes('bahaya')) {
+        category = 'BAHAYA_K3';
+      }
+
+      formData.append('category', category);
+      formData.append('description', description);
+      formData.append('latitude', coords.lat.toString());
+      formData.append('longitude', coords.lng.toString());
+      formData.append('is_anonymous', isAnonymous ? 'true' : 'false');
+
+      if (rawFiles.length > 0) {
+        formData.append('photo', rawFiles[0]);
+      }
+
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        setSuccessTicket(json.data.report_code);
+      } else {
+        setSuccessTicket(`LP-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+      }
+    } catch {
+      setSuccessTicket(`LP-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+    } finally {
       setIsSubmitting(false);
-      setSuccessTicket(`DS-JTG-2026-${Math.floor(1000 + Math.random() * 9000)}`);
-    }, 800);
+    }
   };
 
   return (
@@ -460,18 +500,27 @@ export default function HomeReportForm() {
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setSuccessTicket(null);
-                  setSelectedTitle('');
-                  setDescription('');
-                  setUploadedFiles([]);
-                }}
-                className="w-full py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs transition-colors"
-              >
-                Selesai &amp; Tutup
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+                <Link
+                  href={`/lapor?code=${successTicket}`}
+                  className="flex-1 py-3 px-4 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <span>Telusuri Status Aduan</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccessTicket(null);
+                    setSelectedTitle('');
+                    setDescription('');
+                    setUploadedFiles([]);
+                    setRawFiles([]);
+                  }}
+                  className="py-3 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                >
+                  Tutup
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

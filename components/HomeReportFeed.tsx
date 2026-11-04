@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,6 +11,7 @@ import {
   X,
   Columns
 } from 'lucide-react';
+import { formatDateIndo } from '@/lib/utils';
 
 interface ReportItem {
   id: string;
@@ -39,80 +40,81 @@ interface ReportItem {
   }>;
 }
 
-const REPORT_DATA: ReportItem[] = [
+const INITIAL_REPORTS: ReportItem[] = [
   {
     id: 'rep-1',
-    ticketCode: 'DS-JTG-2026-0891',
-    category: 'Akses & Jalan',
-    title: 'Akses ke curug buruk',
-    location: 'Desa Candirejo, Magelang - 12 Okt 2026 - 11.30 WIB',
+    ticketCode: 'LP-JTG-2026-0012',
+    category: 'Fasilitas & Akses',
+    title: 'Pagar Pengaman Bambu Rapuh di Dekat Air Terjun Curug Kembar',
+    location: 'Desa Wisata Getas, Kab. Semarang - 30 Okt 2026',
     status: 'Selesai',
     before: {
       title: 'Sebelum Perbaikan',
-      label: 'Sebelum • 1 Ags 2026',
+      label: 'Sebelum • 30 Okt 2026',
       photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=1000&auto=format&fit=crop&q=80',
-      caption: 'Akses jalan setapak curug berlumpur dan pagar pengaman lapuk',
+      caption: 'Pagar bambu lapuk membahayakan pengunjung di bibir tebing air terjun',
     },
     after: {
       title: 'Sesudah Perbaikan',
-      label: 'Sesudah • 12 Okt 2026',
+      label: 'Sesudah • 31 Okt 2026',
       photo: 'https://images.unsplash.com/photo-1470246973918-29a93221c455?w=1000&auto=format&fit=crop&q=80',
-      caption: 'Jalan setapak telah dirabat beton dan dipasang pagar pengaman besi',
+      caption: 'Pagar besi galvanis 2 inci telah terpasang kokoh dengan pondasi cor beton',
     },
     timeline: [
       {
-        date: '20 OKT 2026 • 09.15 WIB',
-        title: 'Dukungan pembangunan dipublikasikan',
-        desc: 'Bantuan Provinsi Rp 300.000.000 masuk dalam sumber dana tahun 2026.',
-        villageLink: 'Desa Wisata Candirejo - Magelang',
+        date: '31 OKT 2026 • 16.30 WIB',
+        title: 'Pemasangan Pagar Pipa Galvanis Tuntas',
+        desc: 'Pengadaan material pipa galvanis dan upah tukang direalisasikan dari bantuan sarpras.',
+        villageLink: 'Desa Wisata Getas - Kab. Semarang',
       },
       {
-        date: '16 OKT 2026 • 16.00 WIB',
-        title: 'Pemeliharaan ruas jalan tercatat',
-        desc: 'Realisasi Rp 100.000.000 dilengkapi contoh nota dan dokumentasi fisik.',
-        villageLink: 'Desa Wisata Candirejo - Magelang',
+        date: '30 OKT 2026 • 09.15 WIB',
+        title: 'Aduan Kerusakan Diterima Pokdarwis',
+        desc: 'Laporan masyarakat terkait pagar pengaman rapuh diverifikasi dan ditindaklanjuti.',
+        villageLink: 'Desa Wisata Getas - Kab. Semarang',
       },
     ],
   },
   {
     id: 'rep-2',
-    ticketCode: 'DS-JTG-2026-0744',
+    ticketCode: 'LP-JTG-2026-0042',
     category: 'Fasilitas & Sanitasi',
-    title: 'Wastafel dan toilet kotor sekali',
-    location: 'Desa Candirejo, Magelang - 9 Okt 2026 - 11.30 WIB',
+    title: 'Kran Air Toilet Umum Mati & Sanitasi Tersumbat',
+    location: 'Desa Wisata Candirejo, Magelang - 28 Okt 2026',
     status: 'Selesai',
     before: {
       title: 'Sebelum Perbaikan',
-      label: 'Sebelum • 6 Okt 2026',
+      label: 'Sebelum • 28 Okt 2026',
       photo: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1000&auto=format&fit=crop&q=80',
-      caption: 'Wastafel mampet berlumut dan kran air toilet tidak mengalir',
+      caption: 'Kran air patah dan saluran air kotor mampet menimbulkan bau tidak sedap',
     },
     after: {
       title: 'Sesudah Perbaikan',
-      label: 'Sesudah • 9 Okt 2026',
+      label: 'Sesudah • 29 Okt 2026',
       photo: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=1000&auto=format&fit=crop&q=80',
-      caption: 'Sanitasi dan kran air diganti baru, higienis dan wangi',
+      caption: 'Kran stainless baru telah terpasang dan saluran sanitasi telah dibersihkan menyeluruh',
     },
     timeline: [
       {
-        date: '20 OKT 2026 • 09.15 WIB',
-        title: 'Dukungan pembangunan dipublikasikan',
-        desc: 'Bantuan Provinsi Rp 300.000.000 masuk dalam sumber dana tahun 2026.',
+        date: '29 OKT 2026 • 14.00 WIB',
+        title: 'Penanganan Sanitasi & Penggantian Kran Tuntas',
+        desc: 'Pengurus Pokdarwis menyelesaikan pembetulan saluran dan peremajaan instalasi toilet.',
         villageLink: 'Desa Wisata Candirejo - Magelang',
       },
       {
-        date: '16 OKT 2026 • 16.00 WIB',
-        title: 'Pemeliharaan ruas jalan tercatat',
-        desc: 'Realisasi Rp 100.000.000 dilengkapi contoh nota dan dokumentasi fisik.',
+        date: '28 OKT 2026 • 11.20 WIB',
+        title: 'Laporan Kerusakan Diterima Pengelola',
+        desc: 'Aduan wisatawan via form beranda langsung diteruskan ke tim pemeliharaan.',
         villageLink: 'Desa Wisata Candirejo - Magelang',
       },
     ],
   },
 ];
 
-const CATEGORIES = ['Semua', 'Akses & Jalan', 'Fasilitas & Sanitasi'];
+const CATEGORIES = ['Semua', 'Fasilitas & Akses', 'Fasilitas & Sanitasi'];
 
 export default function HomeReportFeed() {
+  const [reports, setReports] = useState<ReportItem[]>(INITIAL_REPORTS);
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [sliderModes, setSliderModes] = useState<Record<string, boolean>>({});
   const [sliderPos, setSliderPos] = useState<Record<string, number>>({
@@ -121,10 +123,67 @@ export default function HomeReportFeed() {
   });
   const [lightboxImg, setLightboxImg] = useState<{ url: string; title: string; subtitle: string } | null>(null);
 
+  // Ambil data laporan tuntas (RESOLVED) dari database
+  useEffect(() => {
+    async function fetchResolvedReports() {
+      try {
+        const res = await fetch('/api/reports?status=RESOLVED');
+        const json = await res.json();
+        if (json.success && json.data && json.data.length > 0) {
+          const apiReports: ReportItem[] = json.data.map((r: any) => {
+            const hasResolution = !!r.resolution_photo_after;
+            return {
+              id: r.id,
+              ticketCode: r.report_code,
+              category: r.category === 'FASILITAS_RUSAK' ? 'Fasilitas & Akses' : 'Fasilitas & Sanitasi',
+              title: r.title,
+              location: `${r.village_name || 'Desa Wisata'}, ${r.village_regency || 'Jateng'} - ${formatDateIndo(r.created_at)}`,
+              status: 'Selesai',
+              before: {
+                title: 'Sebelum Perbaikan',
+                label: `Sebelum • ${formatDateIndo(r.created_at)}`,
+                photo: r.photo_before_url,
+                caption: r.description,
+              },
+              after: {
+                title: 'Sesudah Perbaikan',
+                label: `Sesudah • ${formatDateIndo(r.resolved_at || r.created_at)}`,
+                photo: r.resolution_photo_after || 'https://images.unsplash.com/photo-1470246973918-29a93221c455?w=1000&auto=format&fit=crop&q=80',
+                caption: r.resolution_summary || 'Telah dituntaskan oleh pengelola dengan dokumentasi fisik (Proof-of-Fix).',
+              },
+              timeline: [
+                {
+                  date: `${formatDateIndo(r.resolved_at || r.created_at).toUpperCase()}`,
+                  title: 'Perbaikan Fisik Dilaporkan Selesai (Proof-of-Fix)',
+                  desc: r.resolution_summary || 'Penanganan teknis lapangan telah tuntas diverifikasi metadata kamera.',
+                  villageLink: `${r.village_name || 'Desa Wisata'} - ${r.village_regency || 'Jawa Tengah'}`,
+                },
+                {
+                  date: `${formatDateIndo(r.created_at).toUpperCase()}`,
+                  title: 'Aduan Masuk Melalui Portal Publik',
+                  desc: r.description,
+                  villageLink: `${r.village_name || 'Desa Wisata'} - ${r.village_regency || 'Jawa Tengah'}`,
+                },
+              ],
+            };
+          });
+
+          // Gabungkan laporan dari API dengan initial mock jika unik
+          const existingCodes = new Set(apiReports.map((item) => item.ticketCode));
+          const uniqueInitials = INITIAL_REPORTS.filter((item) => !existingCodes.has(item.ticketCode));
+          setReports([...apiReports, ...uniqueInitials]);
+        }
+      } catch (err) {
+        console.error('Gagal mengambil laporan tuntas untuk feed:', err);
+      }
+    }
+    fetchResolvedReports();
+  }, []);
+
   const filteredReports =
     activeCategory === 'Semua'
-      ? REPORT_DATA
-      : REPORT_DATA.filter((r) => r.category === activeCategory);
+      ? reports
+      : reports.filter((r) => r.category === activeCategory);
 
   const toggleSliderMode = (id: string) => {
     setSliderModes((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -146,7 +205,7 @@ export default function HomeReportFeed() {
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all ${
+              className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#0D2453] text-white shadow-xs'
                   : 'bg-white border border-[#EBEBEB] text-[#767676] hover:text-[#0D2453] hover:border-slate-300'
@@ -181,7 +240,7 @@ export default function HomeReportFeed() {
                           {item.title}
                         </h3>
                         <Link
-                          href="/#buat-laporan"
+                          href={`/lapor?code=${item.ticketCode}`}
                           className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline group"
                         >
                           <span>{item.ticketCode}</span>
@@ -194,7 +253,7 @@ export default function HomeReportFeed() {
                         <button
                           type="button"
                           onClick={() => toggleSliderMode(item.id)}
-                          className="px-3 py-1.5 rounded-xl bg-[#F7F9FC] hover:bg-slate-200 border border-[#EBEBEB] text-[#0D2453] text-xs font-bold transition-colors flex items-center gap-1.5"
+                          className="px-3 py-1.5 rounded-xl bg-[#F7F9FC] hover:bg-slate-200 border border-[#EBEBEB] text-[#0D2453] text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
                           {isSlider ? <Columns className="w-3.5 h-3.5" /> : <SlidersHorizontal className="w-3.5 h-3.5" />}
                           <span>{isSlider ? 'Berdampingan' : 'Slider'}</span>
@@ -359,7 +418,7 @@ export default function HomeReportFeed() {
                           </p>
                           <Link
                             href="/transparansi"
-                            className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#0D2453] mt-1 hover:underline cursor-pointer"
                           >
                             <span>{entry.villageLink}</span>
                             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -406,7 +465,7 @@ export default function HomeReportFeed() {
                 <button
                   type="button"
                   onClick={() => setLightboxImg(null)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#0D2453] flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#0D2453] flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -425,7 +484,7 @@ export default function HomeReportFeed() {
                 <button
                   type="button"
                   onClick={() => setLightboxImg(null)}
-                  className="px-4 py-2 rounded-xl bg-[#0D2453] text-white font-bold text-xs"
+                  className="px-4 py-2 rounded-xl bg-[#0D2453] text-white font-bold text-xs cursor-pointer"
                 >
                   Tutup
                 </button>

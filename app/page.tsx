@@ -93,10 +93,10 @@ export default function HomePage() {
         {/* Lihat Lainnya CTA Button */}
         <div className="flex justify-end pt-2 pb-8">
           <Link
-            href="/#buat-laporan"
+            href="/lapor"
             className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white border border-[#EBEBEB] text-[#0D2453] hover:bg-slate-50 text-xs font-bold shadow-xs transition-colors"
           >
-            <span>Lihat Lainnya</span>
+            <span>Telusuri Semua Aduan</span>
             <ChevronRight className="w-4 h-4 text-slate-400" />
           </Link>
         </div>
