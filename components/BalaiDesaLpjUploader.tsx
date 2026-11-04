@@ -13,6 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
+import { processLpjUploadAction } from '@/app/actions/lpjActions';
 
 interface VillageItem {
   id: string;
@@ -93,17 +94,12 @@ export default function BalaiDesaLpjUploader() {
       formData.append('total_allocated', totalAllocated);
       formData.append('file', file);
 
-      const res = await fetch('/api/balai-desa/lpj/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await processLpjUploadAction(formData);
 
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
+      if (!res.success || !res.data) {
         setStatusMessage({
           type: 'error',
-          text: json.error || 'Gagal mengunggah dokumen LPJ.',
+          text: res.error || 'Gagal mengunggah dokumen LPJ.',
         });
         setUploading(false);
         return;
@@ -112,7 +108,7 @@ export default function BalaiDesaLpjUploader() {
       setStatusMessage({
         type: 'success',
         text: `Dokumen LPJ resmi berhasil diunggah dan terverifikasi di sistem! Pos belanja modal telah dicocokkan otomatis dengan Katalog Standar Satuan Harga (SSH) Pemprov Jateng.`,
-        details: json.data,
+        details: res.data,
       });
 
       setFile(null);
@@ -278,6 +274,92 @@ export default function BalaiDesaLpjUploader() {
           </button>
         </div>
       </form>
+
+      {/* Extracted Expenses Audit Breakdown Table */}
+      {statusMessage?.type === 'success' && statusMessage.details?.expenses && (
+        <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div>
+              <span className="text-xs font-bold text-slate-800 block">
+                Hasil Ekstraksi Pos Belanja Modal ({statusMessage.details.expenses.length} Pos)
+              </span>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Pagu: {formatRupiah(statusMessage.details.total_allocated)} • Realisasi:{' '}
+                {formatRupiah(statusMessage.details.total_realized)} • Sisa Kas:{' '}
+                {formatRupiah(statusMessage.details.remaining_balance)}
+              </p>
+            </div>
+            {statusMessage.details.lpj_document_url && (
+              <a
+                href={statusMessage.details.lpj_document_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-[#0D2453] hover:bg-slate-50 shrink-0 self-start sm:self-auto shadow-2xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh Salinan PDF LPJ</span>
+              </a>
+            )}
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl border border-slate-200">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                <tr>
+                  <th className="px-4 py-3">Nama Kegiatan / Bahan</th>
+                  <th className="px-4 py-3">Kategori</th>
+                  <th className="px-4 py-3 text-right">Volume</th>
+                  <th className="px-4 py-3 text-right">Harga Klaim</th>
+                  <th className="px-4 py-3 text-right">Total Realisasi</th>
+                  <th className="px-4 py-3 text-center">Status Audit SSH</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {statusMessage.details.expenses.map((exp: any, idx: number) => (
+                  <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-slate-900">
+                      {exp.activity_name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-700">
+                        {exp.category}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-700 font-mono">
+                      {exp.volume} {exp.unit}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-slate-800">
+                      {formatRupiah(exp.claimed_unit_price)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-bold text-slate-900">
+                      {formatRupiah(exp.amount_realized)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {exp.ai_anomaly_flag ? (
+                        <span
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200"
+                          title={exp.anomaly_note}
+                        >
+                          <AlertTriangle className="w-3 h-3 text-rose-600" />
+                          <span>Anomali SSH</span>
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200"
+                          title={exp.anomaly_note}
+                        >
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Sesuai Batas SSH</span>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -69,7 +69,8 @@ CREATE TABLE village_grants (
     lpj_document_url VARCHAR(255) NULL, -- Tautan berkas asli LPJ (PDF)
     lpj_status VARCHAR(20) CHECK (lpj_status IN ('PENDING_UPLOAD', 'SUBMITTED', 'VERIFIED')) DEFAULT 'PENDING_UPLOAD',
     uploaded_at TIMESTAMP WITH TIME ZONE NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_village_grants_village_year UNIQUE (village_id, fiscal_year)
 );
 
 CREATE INDEX idx_grants_village ON village_grants(village_id);

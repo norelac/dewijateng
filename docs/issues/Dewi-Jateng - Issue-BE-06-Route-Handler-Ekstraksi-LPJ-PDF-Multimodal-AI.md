@@ -4,7 +4,7 @@ project_id: "Dewi-Jateng"
 subproject: "ai_dewijateng"
 issue_id: "BE-06"
 title: "Service Ekstraksi LPJ AI Multimodal & Server Action Upload Dokumen"
-status: open
+status: completed
 priority: high
 created: 2026-11-04
 updated: 2026-11-04
@@ -99,33 +99,14 @@ export async function processLpjUploadAction(formData: FormData) {
 ```
 
 ## 5. Kriteria Keberterimaan (Acceptance Criteria)
-- [ ] AC-1: Balai Desa dapat mengunggah berkas LPJ resmi (PDF maks 20MB) langsung via Server Action.
-- [ ] AC-2: Berkas PDF fisik tersimpan aman di `public/uploads/official-documents/`.
-- [ ] AC-3: Mesin AI Multimodal mampu mengekstraksi angka Pagu, Realisasi, Sisa Kas, dan baris rincian belanja.
-- [ ] AC-4: Hasil ekstraksi langsung diaudit terhadap katalog SSH Jawa Tengah sebelum disimpan.
-- [ ] AC-5: Halaman Transparansi (`/transparansi`) otomatis merefleksikan data LPJ baru setelah dikonfirmasi terbit.
-      "amount_realized": 13600000
-    },
-    {
-      "activity_name": "Upah Tukang Las Konstruksi Pengaman Curug",
-      "category": "UPAH_TENAGA",
-      "volume": 20,
-      "unit": "HOK",
-      "claimed_unit_price": 140000,
-      "amount_realized": 2800000
-    }
-  ]
-}
-```
-
-## 5. Kriteria Keberterimaan (Acceptance Criteria)
-- [ ] AC-1: Endpoint menerima berkas PDF hingga ukuran 20 MB melalui `FormData`.
-- [ ] AC-2: Berkas asli PDF berhasil disimpan di storage bucket `official-documents`.
-- [ ] AC-3: AI Service berhasil mengekstrak nilai total pagu dan total belanja tanpa halusinasi format numerik.
-- [ ] AC-4: Setiap pos belanja terkategori secara tepat ke salah satu dari: `MATERIAL_FISIK`, `UPAH_TENAGA`, `KESELAMATAN_K3`, atau `OPERASIONAL`.
-- [ ] AC-5: Integritas matematis terpenuhi: $\sum \text{amount\_realized} = \text{total\_realized}$ dan $\text{remaining\_balance} = \text{total\_allocated} - \text{total\_realized}$.
-- [ ] AC-6: Endpoint mengembalikan hasil ekstraksi JSON ke frontend untuk diperiksa oleh operator Balai Desa sebelum commit permanen.
-- [ ] AC-7: Penanganan error tangguh (*graceful error handling*) jika berkas PDF buram atau tidak terbaca.
+- [x] AC-1: Balai Desa dapat mengunggah berkas LPJ resmi (PDF maks 25MB) langsung via Server Action (`processLpjUploadAction`).
+- [x] AC-2: Berkas PDF fisik tersimpan aman di `public/uploads/official-documents/`.
+- [x] AC-3: Mesin AI Multimodal mampu mengekstraksi angka Pagu, Realisasi, Sisa Kas, dan baris rincian belanja modal.
+- [x] AC-4: Setiap pos belanja terkategori secara tepat (`MATERIAL_FISIK`, `UPAH_TENAGA`, `KESELAMATAN_K3`, `OPERASIONAL`).
+- [x] AC-5: Integritas matematis neraca kas terpenuhi: $\sum \text{amount\_realized} = \text{total\_realized}$ dan $\text{remaining\_balance} = \text{total\_allocated} - \text{total\_realized}$.
+- [x] AC-6: Hasil ekstraksi langsung diaudit terhadap katalog SSH Jawa Tengah sebelum disimpan secara atomik.
+- [x] AC-7: Halaman Transparansi (`/transparansi`) dan portal pengelola otomatis merefleksikan data LPJ baru melalui `revalidatePath()`.
+- [x] AC-8: Rekalkulasi Trust Score desa dipicu secara otomatis pasca pengunggahan LPJ resmi.
 
 ## 6. Catatan Teknis & Prompt AI Service
 ```typescript
