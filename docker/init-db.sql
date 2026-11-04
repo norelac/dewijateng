@@ -141,6 +141,9 @@ CREATE INDEX idx_reports_village ON incident_reports(village_id);
 CREATE INDEX idx_reports_status ON incident_reports(status);
 CREATE INDEX idx_reports_geom ON incident_reports USING GIST(geom);
 
+-- Sequence untuk nomor urut tiket laporan aduan thread-safe per tahun anggaran
+CREATE SEQUENCE IF NOT EXISTS seq_report_code_2026 START 100;
+
 -- ==============================================================================
 -- TABEL 7: report_resolutions (Bukti Fisik Hasil Perbaikan / Proof-of-Fix)
 -- ==============================================================================

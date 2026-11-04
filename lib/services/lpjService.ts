@@ -3,7 +3,7 @@
 // Logika bisnis penyimpanan dokumen LPJ resmi, audit pos belanja, dan rekalkulasi Trust Score
 // ==============================================================================
 
-import { query } from '@/lib/db';
+import { pool, query } from '@/lib/db';
 import { saveFileToStorage } from '@/lib/storage';
 import { matchAndCheckSSH } from '@/lib/services/priceAnomalyChecker';
 import { calculateVillageTrustScore } from '@/lib/services/trustScoreCalculator';
@@ -132,58 +132,72 @@ export async function saveLpjSubmission(input: SaveLpjInput): Promise<SaveLpjRes
 
   const remainingBalance = Math.max(0, totalAllocated - calculatedTotalRealized);
 
-  // 4. Atomic UPSERT ke tabel village_grants
-  const grantRes = await query<{ id: string }>(
-    `INSERT INTO village_grants (
-       village_id, fiscal_year, funding_source, total_allocated,
-       total_realized, remaining_balance, lpj_document_url,
-       lpj_status, uploaded_at
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'SUBMITTED', NOW())
-     ON CONFLICT (village_id, fiscal_year) DO UPDATE SET
-       funding_source = EXCLUDED.funding_source,
-       total_allocated = EXCLUDED.total_allocated,
-       total_realized = EXCLUDED.total_realized,
-       remaining_balance = EXCLUDED.remaining_balance,
-       lpj_document_url = EXCLUDED.lpj_document_url,
-       lpj_status = 'SUBMITTED',
-       uploaded_at = NOW()
-     RETURNING id`,
-    [
-      villageId,
-      fiscalYear,
-      fundingSource,
-      totalAllocated,
-      calculatedTotalRealized,
-      remainingBalance,
-      lpjDocumentUrl,
-    ]
-  );
+  // 4. Atomic UPSERT ke tabel village_grants & grant_expenses dalam transaksi ACID terpadu
+  const client = await pool.connect();
+  let grantId: string;
 
-  const grantId = grantRes.rows[0].id;
+  try {
+    await client.query('BEGIN');
 
-  // 5. Simpan Rincian Pos Belanja ke grant_expenses (Hapus dulu rincian lama jika ada)
-  await query(`DELETE FROM grant_expenses WHERE grant_id = $1`, [grantId]);
-
-  for (const exp of enrichedExpenses) {
-    await query(
-      `INSERT INTO grant_expenses (
-         grant_id, activity_name, category, volume, unit,
-         claimed_unit_price, budget_allocated, amount_realized,
-         remaining_amount, ai_anomaly_flag, anomaly_note
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10)`,
+    const grantRes = await client.query<{ id: string }>(
+      `INSERT INTO village_grants (
+         village_id, fiscal_year, funding_source, total_allocated,
+         total_realized, remaining_balance, lpj_document_url,
+         lpj_status, uploaded_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'SUBMITTED', NOW())
+       ON CONFLICT (village_id, fiscal_year) DO UPDATE SET
+         funding_source = EXCLUDED.funding_source,
+         total_allocated = EXCLUDED.total_allocated,
+         total_realized = EXCLUDED.total_realized,
+         remaining_balance = EXCLUDED.remaining_balance,
+         lpj_document_url = EXCLUDED.lpj_document_url,
+         lpj_status = 'SUBMITTED',
+         uploaded_at = NOW()
+       RETURNING id`,
       [
-        grantId,
-        exp.activity_name,
-        exp.category,
-        exp.volume,
-        exp.unit,
-        exp.claimed_unit_price,
-        exp.amount_realized,
-        exp.amount_realized,
-        exp.ai_anomaly_flag,
-        exp.anomaly_note,
+        villageId,
+        fiscalYear,
+        fundingSource,
+        totalAllocated,
+        calculatedTotalRealized,
+        remainingBalance,
+        lpjDocumentUrl,
       ]
     );
+
+    grantId = grantRes.rows[0].id;
+
+    // 5. Simpan Rincian Pos Belanja ke grant_expenses (Hapus rincian lama dalam transaksi yang sama)
+    await client.query(`DELETE FROM grant_expenses WHERE grant_id = $1`, [grantId]);
+
+    for (const exp of enrichedExpenses) {
+      await client.query(
+        `INSERT INTO grant_expenses (
+           grant_id, activity_name, category, volume, unit,
+           claimed_unit_price, budget_allocated, amount_realized,
+           remaining_amount, ai_anomaly_flag, anomaly_note
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10)`,
+        [
+          grantId,
+          exp.activity_name,
+          exp.category,
+          exp.volume,
+          exp.unit,
+          exp.claimed_unit_price,
+          exp.amount_realized,
+          exp.amount_realized,
+          exp.ai_anomaly_flag,
+          exp.anomaly_note,
+        ]
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
   }
 
   // 6. Picu Rekalkulasi Trust Score Desa Wisata

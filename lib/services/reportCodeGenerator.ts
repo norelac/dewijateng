@@ -1,41 +1,70 @@
-import { db, query } from '@/lib/db';
-import { incidentReports } from '@/lib/db/schema';
-import { sql } from 'drizzle-orm';
+import { query } from '@/lib/db';
 
 /**
- * DEWI JATENG - Generator Kode Pelaporan Unik
+ * DEWI JATENG - Generator Kode Pelaporan Unik (Thread-Safe & Atomic)
  * Menghasilkan kode tiket dengan format: LP-JTG-{TAHUN}-{URUT_4_DIGIT}
  * Contoh: LP-JTG-2026-0001, LP-JTG-2026-0012
+ *
+ * Menggunakan PostgreSQL sequence asli per tahun anggaran untuk mencegah
+ * race condition ketika banyak warga mengirim aduan pada milidetik yang sama.
  */
 export async function generateReportCode(): Promise<string> {
   const currentYear = new Date().getFullYear();
+  const seqName = `seq_report_code_${currentYear}`;
   const prefix = `LP-JTG-${currentYear}-`;
 
   try {
-    // Ambil nomor urut tertinggi untuk tahun berjalan
-    const result = await query<{ max_code: string | null }>(
-      `SELECT MAX(report_code) as max_code
-       FROM incident_reports
-       WHERE report_code LIKE $1`,
-      [`${prefix}%`]
+    // Memastikan sequence untuk tahun berjalan tersedia dan disinkronkan dengan data yang ada
+    await query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE sequencename = '${seqName}') THEN
+          CREATE SEQUENCE ${seqName} START 1;
+          PERFORM setval(
+            '${seqName}',
+            COALESCE((
+              SELECT MAX(SUBSTRING(report_code FROM '(\\d+)$')::bigint)
+              FROM incident_reports
+              WHERE report_code LIKE 'LP-JTG-${currentYear}-%'
+            ), 0) + 1,
+            false
+          );
+        END IF;
+      END $$;
+    `);
+
+    const res = await query<{ nextval: string }>(
+      `SELECT nextval('${seqName}') AS nextval`
     );
 
-    let nextNumber = 1;
-    const maxCode = result.rows[0]?.max_code;
-
-    if (maxCode) {
-      const parts = maxCode.split('-');
-      const lastSeq = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(lastSeq)) {
-        nextNumber = lastSeq + 1;
-      }
-    }
-
-    const paddedSeq = nextNumber.toString().padStart(4, '0');
-    return `${prefix}${paddedSeq}`;
+    const seq = parseInt(res.rows[0].nextval, 10).toString().padStart(4, '0');
+    return `${prefix}${seq}`;
   } catch (error) {
-    // Fallback jika query error
-    const randomFallback = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}${randomFallback}`;
+    console.warn('[ReportCodeGenerator] Sequence warning, fallback to MAX query / random:', error);
+    try {
+      const result = await query<{ max_code: string | null }>(
+        `SELECT MAX(report_code) as max_code
+         FROM incident_reports
+         WHERE report_code LIKE $1`,
+        [`${prefix}%`]
+      );
+
+      let nextNumber = 1;
+      const maxCode = result.rows[0]?.max_code;
+
+      if (maxCode) {
+        const parts = maxCode.split('-');
+        const lastSeq = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(lastSeq)) {
+          nextNumber = lastSeq + 1;
+        }
+      }
+
+      const paddedSeq = nextNumber.toString().padStart(4, '0');
+      return `${prefix}${paddedSeq}`;
+    } catch {
+      const randomFallback = Math.floor(1000 + Math.random() * 9000);
+      return `${prefix}${randomFallback}`;
+    }
   }
 }
