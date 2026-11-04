@@ -76,12 +76,15 @@ const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
 
 export default function HomeReportForm() {
   const [selectedTitle, setSelectedTitle] = useState('');
-  const [address, setAddress] = useState('Nama Desa, Kecamatan, Kabupaten');
+  const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const KATEGORI = ['Jalan & Akses', 'Fasilitas Wisata', 'Kebersihan', 'K3 & Keselamatan', 'Tarif & Retribusi', 'Lainnya'];
 
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
     lat: -6.9928,
@@ -91,6 +94,7 @@ export default function HomeReportForm() {
     'Jl. Pamularsih Raya, Bongsari, Semarang Barat, Kota Semarang'
   );
   const [isSearchingMap, setIsSearchingMap] = useState<boolean>(false);
+  const [isGpsLoading, setIsGpsLoading] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -163,6 +167,44 @@ export default function HomeReportForm() {
     };
   }, []);
 
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=id`
+      );
+      const data = await res.json();
+      if (data?.display_name) {
+        const short = data.display_name.split(',').slice(0, 4).join(',').trim();
+        setAddress(short);
+      }
+    } catch {
+      // keep existing address on network fail
+    }
+  };
+
+  const triggerGps = () => {
+    if (!navigator.geolocation) {
+      alert('Browser tidak mendukung geolokasi');
+      return;
+    }
+    setIsGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        moveMapTo(latitude, longitude, 16);
+        setLocationLabel('Lokasi GPS Anda terdeteksi');
+        await reverseGeocode(latitude, longitude);
+        setIsGpsLoading(false);
+      },
+      (err) => {
+        console.error(err);
+        setIsGpsLoading(false);
+        alert('Gagal mengambil lokasi GPS. Izinkan akses lokasi di browser.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const moveMapTo = (lat: number, lng: number, zoomLevel = 15) => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([lat, lng], zoomLevel, { duration: 1.2 });
@@ -175,7 +217,7 @@ export default function HomeReportForm() {
 
   const handleGeocode = async (queryText: string) => {
     const clean = queryText.trim().toLowerCase();
-    if (!clean || clean === 'nama desa, kecamatan, kabupaten') return;
+    if (!clean) return;
 
     setIsSearchingMap(true);
 
@@ -210,7 +252,7 @@ export default function HomeReportForm() {
   };
 
   useEffect(() => {
-    if (!address.trim() || address === 'Nama Desa, Kecamatan, Kabupaten') return;
+    if (!address.trim()) return;
     const timer = setTimeout(() => {
       handleGeocode(address);
     }, 450);
@@ -235,195 +277,205 @@ export default function HomeReportForm() {
 
   return (
     <div className="relative">
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (579px in Figma) */}
-        <div className="lg:col-span-6 space-y-4">
-          {/* Judul Laporan */}
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6 items-start">
+        {/* ── Kolom Kiri ── */}
+        <div className="flex flex-col gap-5">
+
+          {/* Kategori pill selector */}
           <div>
-            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
-              Judul Laporan
+            <span className="block text-xs text-[#64748B] font-medium mb-2.5">Kategori aduan</span>
+            <div className="flex flex-wrap gap-2">
+              {KATEGORI.map((cat) => {
+                const active = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2 ${
+                      active
+                        ? 'bg-[#0D2453] border-[#0D2453] text-white'
+                        : 'bg-[#F3F5F8] border-[#E6ECF5] text-[#0D2453] hover:bg-[#EDF3FC] hover:border-[#CBD5E1]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Judul Laporan */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="form-judul" className="text-sm font-medium text-[#0D2453]">
+              Judul laporan
             </label>
             <input
+              id="form-judul"
               type="text"
               required
               value={selectedTitle}
               onChange={(e) => setSelectedTitle(e.target.value)}
-              placeholder="Contoh: Pohon tumbang"
-              className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none font-medium"
+              placeholder="Contoh: Pohon tumbang di jalur wisata"
+              className="w-full bg-[#F3F5F8] border border-[#E6ECF5] rounded-[12px] px-4 py-3 text-sm text-[#0D2453] placeholder:text-[#A0AEC0] focus:ring-2 focus:ring-[#0D2453]/20 focus:border-[#0D2453]/40 focus:outline-none font-normal transition-colors"
             />
           </div>
 
-          {/* Alamat Lokasi */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm sm:text-[17px] text-black font-normal">
-                Alamat Lokasi
+          {/* Alamat Lokasi — auto-isi dari GPS */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="form-alamat" className="text-sm font-medium text-[#0D2453]">
+                Alamat lokasi
               </label>
-              {isSearchingMap ? (
-                <span className="text-[11px] text-blue-700 font-medium flex items-center gap-1">
+              {isSearchingMap && (
+                <span className="flex items-center gap-1 text-[11px] text-[#64748B]">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Mencari...
                 </span>
-              ) : null}
+              )}
             </div>
-
             <div className="relative">
               <input
+                id="form-alamat"
                 type="text"
-                required
                 value={address}
-                onFocus={() => {
-                  if (address === 'Nama Desa, Kecamatan, Kabupaten') setAddress('');
-                }}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Nama Desa, Kecamatan, Kabupaten"
-                className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 pr-10 text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none font-medium"
+                className="w-full bg-[#F3F5F8] border border-[#E6ECF5] rounded-[12px] px-4 py-3 pr-10 text-sm text-[#0D2453] placeholder:text-[#A0AEC0] focus:ring-2 focus:ring-[#0D2453]/20 focus:border-[#0D2453]/40 focus:outline-none font-normal transition-colors"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-[#A0AEC0] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
-          {/* Tandai di Peta */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm sm:text-[17px] text-black font-normal">
-                Tandai di Peta
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!navigator.geolocation) {
-                    alert('Browser tidak mendukung geolokasi');
-                    return;
-                  }
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                      const { latitude, longitude } = pos.coords;
-                      moveMapTo(latitude, longitude, 16);
-                      setLocationLabel('Lokasi GPS Anda terdeteksi');
-                    },
-                    (err) => {
-                      console.error(err);
-                      alert('Gagal mengambil lokasi GPS. Izinkan akses lokasi di browser.');
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                  );
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-[11px] font-semibold border border-blue-200 transition-colors cursor-pointer"
-                title="Ambil lokasi GPS saat ini"
-              >
-                <Navigation className="w-3.5 h-3.5" />
-                <span>Gunakan Lokasi Saya</span>
-              </button>
-            </div>
-
-            <div className="relative w-full h-[244px] rounded-[17px] overflow-hidden border border-[#EBEBEB] bg-[#E8ECEF] shadow-2xs">
-              <div ref={mapContainerRef} className="w-full h-full z-0" />
-
-              {/* Status Pill */}
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-xl px-3 py-1.5 border border-slate-200/80 shadow-md flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span className="text-[#0D2453] font-semibold truncate text-[11px]">
-                    {locationLabel}
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-500 font-mono shrink-0 hidden sm:inline">
-                  {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Vertical Divider in Figma */}
-        <div className="hidden lg:block lg:col-span-1 self-stretch flex justify-center">
-          <div className="w-px h-full bg-[#EBEBEB] mx-auto" />
-        </div>
-
-        {/* Right Column (572px in Figma) */}
-        <div className="lg:col-span-5 space-y-4">
           {/* Deskripsi */}
-          <div>
-            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="form-desc" className="text-sm font-medium text-[#0D2453]">
               Deskripsi
             </label>
-            <textarea
-              rows={3}
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tuliskan deskripsi aduan"
-              className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 h-[101px] text-xs sm:text-sm text-[#0D2453] placeholder:text-[#767676] focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none resize-none font-medium"
-            />
+            <div className="relative">
+              <textarea
+                id="form-desc"
+                rows={4}
+                required
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, 300))}
+                placeholder="Tuliskan kondisi, lokasi tepat, dan waktu kejadian"
+                className="w-full bg-[#F3F5F8] border border-[#E6ECF5] rounded-[12px] px-4 py-3 text-sm text-[#0D2453] placeholder:text-[#A0AEC0] focus:ring-2 focus:ring-[#0D2453]/20 focus:border-[#0D2453]/40 focus:outline-none resize-none font-normal transition-colors"
+              />
+              <span className="absolute right-3 bottom-2.5 text-[10px] text-[#A0AEC0] font-mono select-none">
+                {description.length}/300
+              </span>
+            </div>
           </div>
 
-          {/* Foto / Video Bukti */}
-          <div>
-            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
-              Foto / Video Bukti
+          {/* Anonim + Submit */}
+          <div className="flex items-center justify-between pt-1">
+            <label htmlFor="anon-check" className="flex items-center gap-2.5 cursor-pointer select-none group">
+              <input
+                id="anon-check"
+                type="checkbox"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                className="w-4 h-4 rounded accent-[#0D2453] cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2"
+              />
+              <span className="text-sm text-[#64748B] font-normal group-hover:text-[#0D2453] transition-colors">
+                Laporan anonim / privat
+              </span>
             </label>
-            <label className="border border-dashed border-[#0D2453] rounded-[9px] h-[175px] p-4 text-center bg-white cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center block">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-sm transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Mengirim...</span>
+                </>
+              ) : (
+                <span>Kirim Laporan</span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Kolom Kanan: Peta ── */}
+        <div className="flex flex-col gap-3">
+          {/* Label peta — klik untuk trigger GPS */}
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={triggerGps}
+              className="flex items-center gap-1.5 text-sm font-medium text-[#0D2453] hover:text-[#1a3a7a] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2 rounded"
+              title="Ketuk label untuk gunakan GPS"
+            >
+              <MapPin className="w-4 h-4 text-red-500 shrink-0" />
+              Tandai di Peta
+            </button>
+            <button
+              type="button"
+              onClick={triggerGps}
+              disabled={isGpsLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#EDF3FC] hover:bg-[#DCE7F5] text-[#0D2453] text-[11px] font-semibold border border-[#CBD5E1] transition-colors cursor-pointer disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-[#0D2453] focus-visible:outline-offset-2"
+              title="Gunakan lokasi GPS saat ini"
+            >
+              {isGpsLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Navigation className="w-3.5 h-3.5" />
+              )}
+              <span>{isGpsLoading ? 'Mendeteksi...' : 'Gunakan Lokasi Saya'}</span>
+            </button>
+          </div>
+
+          {/* Peta */}
+          <div className="relative w-full h-[260px] rounded-[16px] overflow-hidden border border-[#E6ECF5] bg-[#E8ECEF]">
+            <div ref={mapContainerRef} className="w-full h-full z-0" />
+            <p className="absolute top-2.5 left-2.5 z-10 text-[10px] bg-white/90 backdrop-blur-xs rounded-lg px-2 py-1 text-[#64748B] border border-slate-200/60 select-none">
+              Ketuk peta untuk pindah pin
+            </p>
+            <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 bg-white/95 backdrop-blur-xs rounded-xl px-3 py-1.5 border border-slate-200/80 shadow-sm flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                <span className="text-[11px] text-[#0D2453] font-semibold truncate">{locationLabel}</span>
+              </div>
+              <span className="text-[10px] text-[#64748B] font-mono shrink-0 hidden sm:inline">
+                {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+              </span>
+            </div>
+          </div>
+
+          {/* Upload bukti */}
+          <div className="flex flex-col gap-1.5 mt-1">
+            <span className="text-sm font-medium text-[#0D2453]">Foto / video bukti</span>
+            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[#CBD5E1] hover:border-[#0D2453]/40 rounded-[14px] h-[130px] bg-[#F7F9FC] hover:bg-[#EDF3FC]/40 cursor-pointer transition-colors group focus-within:border-[#0D2453]/50">
               <input
                 type="file"
                 multiple
                 accept="image/*,video/*"
                 onChange={handleFileDrop}
-                className="hidden"
+                className="sr-only"
               />
-              <UploadCloud className="w-8 h-8 text-[#0D2453]" />
-              <span className="text-[15px] font-semibold text-[#0D2453] mt-2 block">
-                Unggah Foto / Video
+              <UploadCloud className="w-7 h-7 text-[#94A3B8] group-hover:text-[#0D2453] transition-colors" />
+              <span className="text-xs text-[#64748B] group-hover:text-[#0D2453] transition-colors font-medium">
+                Unggah foto / video
               </span>
-              <span className="text-[13px] text-[#767676] mt-0.5 block leading-tight">
-                JPG, PNG, WEBP, MP4, MOV (maks 5 MB per file,<br />maksimal 3 file)
-              </span>
+              <span className="text-[10px] text-[#A0AEC0]">JPG, PNG, MP4 — maks 5 MB, 3 file</span>
             </label>
-
             {uploadedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-1.5 mt-1">
                 {uploadedFiles.map((name, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-900 text-xs font-semibold border border-blue-200"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EDF3FC] text-[#0D2453] text-[11px] font-medium border border-[#CBD5E1]"
                   >
-                    <FileCheck2 className="w-3.5 h-3.5" />
-                    <span>{name}</span>
+                    <FileCheck2 className="w-3 h-3" />
+                    {name}
                   </span>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Checkbox Anonim / Privat */}
-          <div className="flex items-center gap-3 pt-1">
-            <input
-              id="anon-check"
-              type="checkbox"
-              checked={isAnonymous}
-              onChange={(e) => setIsAnonymous(e.target.checked)}
-              className="w-5 h-5 rounded bg-[#2D68FE] text-[#2D68FE] accent-[#2D68FE] cursor-pointer"
-            />
-            <label htmlFor="anon-check" className="text-sm sm:text-[16px] text-[#181818] font-normal cursor-pointer select-none">
-              Laporan Anonim / Privat
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] text-white font-semibold text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 mt-4"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Memproses Laporan...</span>
-              </>
-            ) : (
-              <span>Laporkan</span>
-            )}
-          </button>
         </div>
       </form>
 
