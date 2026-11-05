@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,6 +11,8 @@ import {
   X,
   ArrowUpRight,
 } from 'lucide-react';
+import { getPublicReportsAction } from '@/app/actions/reportActions';
+import type { IncidentReportDetail } from '@/lib/services/reportService';
 
 interface ReportCardItem {
   id: string;
@@ -89,7 +91,79 @@ const REPORT_CARDS: ReportCardItem[] = [
   },
 ];
 
+const FALLBACK_BEFORE = '/img/figma/aduan-curug-sebelum.png';
+const FALLBACK_AFTER = '/img/figma/aduan-curug-sesudah.png';
+
+function formatTanggal(input?: string | Date | null): string {
+  if (!input) return '—';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(d);
+}
+
+function formatTanggalJam(input?: string | Date | null): string {
+  if (!input) return '—';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return '—';
+  const jam = new Intl.DateTimeFormat('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+  return `${formatTanggal(d)} · ${jam.replace(':', '.')} WIB`;
+}
+
+/** Hanya aduan yang sudah punya pasangan foto sebelum & sesudah yang bisa ditampilkan. */
+function mapToCard(detail: IncidentReportDetail): ReportCardItem | null {
+  const afterUrl = detail.resolution?.photoAfterUrl;
+  if (!afterUrl) return null;
+
+  const villageName = detail.village?.name || 'Desa Wisata';
+  const regency = detail.village?.regency || 'Jawa Tengah';
+  const resolvedAt = detail.resolution?.resolvedAt;
+  const villageLabel = `${villageName} - ${regency.replace('Kabupaten ', '')} ↗`;
+
+  const notes: ReportCardItem['notes'] = [
+    {
+      time: formatTanggalJam(detail.createdAt).toUpperCase(),
+      title: 'Laporan warga diterima',
+      desc: detail.description,
+      villageLink: villageLabel,
+    },
+  ];
+
+  if (detail.resolution?.actionSummary) {
+    notes.unshift({
+      time: formatTanggalJam(resolvedAt).toUpperCase(),
+      title: 'Perbaikan selesai & terverifikasi',
+      desc: detail.resolution.actionSummary,
+      villageLink: villageLabel,
+    });
+  }
+
+  return {
+    id: detail.id,
+    ticketCode: detail.reportCode,
+    title: detail.title,
+    status: detail.status === 'RESOLVED' ? 'Selesai' : 'Diproses',
+    beforePhoto: detail.photoBeforeUrl || FALLBACK_BEFORE,
+    beforeLabel: `Sebelum · ${formatTanggal(detail.createdAt)}`,
+    beforeCaption: detail.description,
+    afterPhoto: afterUrl,
+    afterLabel: `Sesudah · ${formatTanggal(resolvedAt)}`,
+    afterCaption: detail.resolution?.actionSummary || 'Perbaikan telah diselesaikan pengelola desa.',
+    locationDate: `${villageName}, ${regency} - ${formatTanggal(resolvedAt)} - ${formatTanggalJam(resolvedAt).split('· ')[1] || ''}`,
+    notes,
+  };
+}
+
 export default function HomeReportFeed() {
+  const [cards, setCards] = useState<ReportCardItem[]>(REPORT_CARDS);
+
   const [sliderModes, setSliderModes] = useState<Record<string, boolean>>({
     'rep-1': true,
     'rep-2': true,
@@ -104,6 +178,35 @@ export default function HomeReportFeed() {
     subtitle: string;
   } | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    getPublicReportsAction({ status: 'RESOLVED', limit: 20 })
+      .then((res) => {
+        if (cancelled) return;
+        if (!res.success || !Array.isArray(res.data)) return;
+        const mapped = res.data
+          .map(mapToCard)
+          .filter((item): item is ReportCardItem => item !== null);
+        if (mapped.length === 0) return;
+
+        setCards(mapped.slice(0, 2));
+        setSliderModes(
+          Object.fromEntries(mapped.slice(0, 2).map((item) => [item.id, true]))
+        );
+        setSliderPositions(
+          Object.fromEntries(mapped.slice(0, 2).map((item) => [item.id, 50]))
+        );
+      })
+      .catch(() => {
+        // Basis data belum siap: pertahankan kartu contoh
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const toggleMode = (id: string) => {
     setSliderModes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -114,7 +217,7 @@ export default function HomeReportFeed() {
 
   return (
     <div className="space-y-6 w-full">
-      {REPORT_CARDS.map((item, idx) => {
+      {cards.map((item, idx) => {
         const isSlider = !!sliderModes[item.id];
         const pos = sliderPositions[item.id] ?? 50;
 

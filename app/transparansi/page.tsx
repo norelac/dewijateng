@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Landmark,
@@ -9,7 +9,9 @@ import {
   FileText,
   X,
   Maximize2,
+  AlertTriangle,
 } from 'lucide-react';
+import { formatRupiah } from '@/lib/utils';
 
 interface ExpenditureItem {
   id: string;
@@ -20,8 +22,108 @@ interface ExpenditureItem {
   sshRef?: string;
   sshAmount?: string;
   deviation?: number;
-  receiptImg: string;
-  photoImg: string;
+  anomalyNote?: string | null;
+  aiFlag?: boolean;
+  receiptImg?: string;
+  photoImg?: string;
+}
+
+// ==== Bentuk respons /api/transparansi (BE-03/BE-07) ====
+
+interface ApiExpense {
+  id: string;
+  activity_name: string;
+  category: string;
+  volume: number;
+  unit: string;
+  claimed_unit_price: number;
+  budget_allocated: number;
+  amount_realized: number;
+  remaining_amount: number;
+  ai_anomaly_flag: boolean;
+  anomaly_note: string | null;
+  created_at?: string;
+}
+
+interface ApiGrant {
+  id: string;
+  fiscal_year: number;
+  funding_source: string;
+  total_allocated: number;
+  total_realized: number;
+  remaining_balance: number;
+  lpj_document_url?: string | null;
+  lpj_status?: string | null;
+}
+
+interface ApiVillage {
+  id: string;
+  slug: string;
+  name: string;
+  regency: string;
+  district?: string;
+}
+
+interface TransparansiResponse {
+  success: boolean;
+  data?: {
+    village: ApiVillage;
+    grant: ApiGrant | null;
+    expenses: ApiExpense[];
+  };
+}
+
+const DEFAULT_KABUPATEN = [
+  'Kabupaten Magelang',
+  'Kabupaten Banyumas',
+  'Kabupaten Kendal',
+  'Kabupaten Karanganyar',
+  'Kabupaten Banjarnegara',
+  'Kabupaten Wonosobo',
+];
+
+const DEFAULT_DESA = [
+  'Desa Candirejo',
+  'Desa Limpakuwus',
+  'Desa Dieng Kulon',
+  'Desa Berjo',
+];
+
+function formatAngka(value: number): string {
+  return new Intl.NumberFormat('id-ID').format(Math.round(value || 0));
+}
+
+function formatTanggalPendek(input?: string): string {
+  if (!input) return '—';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(d);
+}
+
+function mapExpense(exp: ApiExpense): ExpenditureItem {
+  const budget = exp.budget_allocated || 0;
+  const realized = exp.amount_realized || 0;
+  const deviation = budget > 0 ? ((realized - budget) / budget) * 100 : undefined;
+
+  const volumeText =
+    exp.volume && exp.unit ? `${formatAngka(exp.volume)} ${exp.unit}` : '';
+
+  return {
+    id: exp.id,
+    date: formatTanggalPendek(exp.created_at),
+    title: exp.activity_name,
+    sub: [volumeText, exp.category].filter(Boolean).join(' · ') || 'Belanja desa',
+    amount: formatAngka(realized),
+    sshRef: exp.category,
+    sshAmount: formatAngka(budget),
+    deviation: deviation !== undefined ? Math.round(deviation * 10) / 10 : undefined,
+    anomalyNote: exp.anomaly_note,
+    aiFlag: Boolean(exp.ai_anomaly_flag),
+  };
 }
 
 const EXPENDITURES: ExpenditureItem[] = [
@@ -86,6 +188,125 @@ export default function TransparansiPage() {
     type: 'Nota' | 'Foto Fisik';
   } | null>(null);
 
+  // Data live dari BE-03/BE-07; jatuh ke data contoh bila basis data belum tersedia
+  const [villages, setVillages] = useState<ApiVillage[]>([]);
+  const [villagesLoaded, setVillagesLoaded] = useState(false);
+  const [grant, setGrant] = useState<ApiGrant | null>(null);
+  const [liveExpenses, setLiveExpenses] = useState<ApiExpense[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Muat daftar desa wisata untuk mengisi dropdown
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/villages?limit=200')
+      .then((res) => res.json())
+      .then((json) => {
+        if (cancelled || !json?.success || !Array.isArray(json.data)) return;
+        const list = json.data as ApiVillage[];
+        if (list.length === 0) return;
+        setVillages(list);
+        setSelectedKabupaten((prev) =>
+          list.some((v) => v.regency === prev) ? prev : list[0].regency
+        );
+      })
+      .catch(() => {
+        // Basis data belum siap: pertahankan opsi contoh
+      })
+      .finally(() => {
+        if (!cancelled) setVillagesLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const kabupatenOptions = useMemo(() => {
+    if (villages.length === 0) return DEFAULT_KABUPATEN;
+    return Array.from(new Set(villages.map((v) => v.regency))).sort();
+  }, [villages]);
+
+  const desaOptions = useMemo(() => {
+    if (villages.length === 0) return DEFAULT_DESA;
+    const inRegency = villages.filter((v) => v.regency === selectedKabupaten);
+    return (inRegency.length > 0 ? inRegency : villages).map((v) => v.name);
+  }, [villages, selectedKabupaten]);
+
+  // Pastikan desa terpilih selalu ada di kabupaten aktif
+  useEffect(() => {
+    if (desaOptions.length === 0) return;
+    if (!desaOptions.includes(selectedDesa)) {
+      setSelectedDesa(desaOptions[0]);
+    }
+  }, [desaOptions, selectedDesa]);
+
+  const selectedVillage = useMemo(
+    () => villages.find((v) => v.name === selectedDesa),
+    [villages, selectedDesa]
+  );
+
+  // Muat anggaran & rincian belanja desa terpilih
+  useEffect(() => {
+    if (!selectedVillage) {
+      setLiveExpenses(null);
+      setGrant(null);
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+
+    const params = new URLSearchParams({
+      village_id: selectedVillage.id,
+      fiscal_year: selectedTahun,
+    });
+
+    fetch(`/api/transparansi?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json: TransparansiResponse) => {
+        if (cancelled) return;
+        if (json?.success && json.data) {
+          setGrant(json.data.grant);
+          setLiveExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
+        } else {
+          setGrant(null);
+          setLiveExpenses(null);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setGrant(null);
+        setLiveExpenses(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedVillage, selectedTahun, villagesLoaded]);
+
+  const isLive = liveExpenses !== null;
+  const expenses = useMemo(
+    () => (isLive ? liveExpenses!.map(mapExpense) : EXPENDITURES),
+    [isLive, liveExpenses]
+  );
+
+  const totalPendanaan = isLive ? (grant?.total_allocated ?? 0) : 1_200_000_000;
+  const totalTerpakai = isLive ? (grant?.total_realized ?? 0) : 840_000_000;
+  const sisaSaldo = isLive ? (grant?.remaining_balance ?? 0) : 360_000_000;
+  const persenTerpakai =
+    totalPendanaan > 0 ? Math.round((totalTerpakai / totalPendanaan) * 100) : 0;
+  const persenSisa = Math.max(0, 100 - persenTerpakai);
+
+  const totalBelanja = useMemo(() => {
+    if (!isLive) return 840_000_000;
+    return liveExpenses!.reduce((sum, e) => sum + (e.amount_realized || 0), 0);
+  }, [isLive, liveExpenses]);
+
   return (
     <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
       {/* 1. Breadcrumbs */}
@@ -133,12 +354,11 @@ export default function TransparansiPage() {
                 onChange={(e) => setSelectedKabupaten(e.target.value)}
                 className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-medium focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
               >
-                <option value="Kabupaten Magelang">Kabupaten Magelang</option>
-                <option value="Kabupaten Banyumas">Kabupaten Banyumas</option>
-                <option value="Kabupaten Kendal">Kabupaten Kendal</option>
-                <option value="Kabupaten Karanganyar">Kabupaten Karanganyar</option>
-                <option value="Kabupaten Banjarnegara">Kabupaten Banjarnegara</option>
-                <option value="Kabupaten Wonosobo">Kabupaten Wonosobo</option>
+                {kabupatenOptions.map((kab) => (
+                  <option key={kab} value={kab}>
+                    {kab}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="w-4 h-4 text-[#767676] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -155,10 +375,11 @@ export default function TransparansiPage() {
                 onChange={(e) => setSelectedDesa(e.target.value)}
                 className="w-full bg-[#EBEBEB] border border-[#F5F5F5] rounded-[15px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-medium focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
               >
-                <option value="Desa Candirejo">Desa Candirejo</option>
-                <option value="Desa Limpakuwus">Desa Limpakuwus</option>
-                <option value="Desa Dieng Kulon">Desa Dieng Kulon</option>
-                <option value="Desa Berjo">Desa Berjo</option>
+                {desaOptions.map((desa) => (
+                  <option key={desa} value={desa}>
+                    {desa}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="w-4 h-4 text-[#767676] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -203,7 +424,15 @@ export default function TransparansiPage() {
             {selectedDesa}
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 font-normal">
-            Borobudur, {selectedKabupaten} · Tahun anggaran {selectedTahun}
+            {selectedVillage?.district ? `${selectedVillage.district}, ` : ''}
+            {selectedKabupaten} · Tahun anggaran {selectedTahun}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+            {!villagesLoaded || isLoading
+              ? 'Memuat data anggaran…'
+              : isLive
+                ? 'Data live dari basis data desa'
+                : 'Data contoh · basis data belum terhubung'}
           </p>
         </div>
 
@@ -212,14 +441,83 @@ export default function TransparansiPage() {
             Total Pendanaan
           </span>
           <span className="text-2xl sm:text-[34px] font-extrabold text-white tracking-tight block mt-0.5">
-            Rp 1.200.000.000
+            {formatRupiah(totalPendanaan)}
           </span>
         </div>
       </section>
 
       {/* 4. Two Comparison Cards: Sumber Pendanaan vs Dana Terpakai */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        {/* Card A: Sumber Pendanaan Desa (Donut Chart) */}
+        {/* Card A: Sumber Pendanaan Desa */}
+        {isLive ? (
+          <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-[#0D2453]">
+                Sumber Pendanaan Desa
+              </h3>
+              <p className="text-xs text-[#767676] mt-0.5 mb-6">
+                Sumber dana yang tercatat pada sistem untuk tahun anggaran {selectedTahun}.
+              </p>
+            </div>
+
+            {grant ? (
+              <div className="space-y-5">
+                <div className="p-5 rounded-2xl bg-[#F7F9FC] border border-[#E6ECF5]">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#767676]">
+                    Sumber dana
+                  </div>
+                  <div className="text-base font-bold text-[#0D2453] mt-1">
+                    {grant.funding_source}
+                  </div>
+                </div>
+
+                <dl className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#767676] font-medium">Pagu anggaran</dt>
+                    <dd className="font-bold text-[#0D2453]">
+                      {formatRupiah(grant.total_allocated)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#767676] font-medium">Realisasi</dt>
+                    <dd className="font-bold text-[#0D2453]">
+                      {formatRupiah(grant.total_realized)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#767676] font-medium">Sisa saldo kas</dt>
+                    <dd className="font-bold text-[#0D2453]">
+                      {formatRupiah(grant.remaining_balance)}
+                    </dd>
+                  </div>
+                  {grant.lpj_status && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-[#767676] font-medium">Status LPJ</dt>
+                      <dd className="font-semibold text-[#0D2453]">{grant.lpj_status}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                {grant.lpj_document_url && (
+                  <a
+                    href={grant.lpj_document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D2453] hover:underline"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Buka dokumen LPJ</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-[#767676] leading-relaxed">
+                Belum ada data anggaran yang dipublikasikan untuk desa dan tahun anggaran ini.
+              </p>
+            )}
+          </div>
+        ) : (
         <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-[#0D2453]">
@@ -279,9 +577,9 @@ export default function TransparansiPage() {
               </svg>
 
               {/* Center Text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                <span className="text-base sm:text-lg font-bold text-[#0D2453] leading-tight">
-                  Rp 1,2 Miliar
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-6">
+                <span className="text-sm sm:text-base font-bold text-[#0D2453] leading-tight">
+                  {formatRupiah(totalPendanaan)}
                 </span>
                 <span className="text-[10px] text-[#767676] font-medium">
                   Total pendanaan
@@ -341,6 +639,7 @@ export default function TransparansiPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Card B: Dana Terpakai (Progress Bar & Stats) */}
         <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between">
@@ -354,10 +653,10 @@ export default function TransparansiPage() {
           </div>
 
           <div className="space-y-6">
-            {/* 70% Big Indicator */}
+            {/* Persentase Terpakai */}
             <div className="flex items-baseline justify-between">
               <div className="text-5xl font-extrabold text-[#0D2453] tracking-tight">
-                70%
+                {persenTerpakai}%
               </div>
               <div className="text-xs text-[#767676] font-medium">
                 dari total dana telah terpakai
@@ -366,7 +665,10 @@ export default function TransparansiPage() {
 
             {/* Progress Bar Track */}
             <div className="w-full h-4 rounded-full bg-[#DCE7F5] overflow-hidden flex">
-              <div className="h-full bg-[#0D2453] rounded-full" style={{ width: '70%' }} />
+              <div
+                className="h-full bg-[#0D2453] rounded-full transition-all duration-500"
+                style={{ width: `${persenTerpakai}%` }}
+              />
             </div>
 
             {/* Bottom Summary (Dana Terpakai vs Sisa Saldo Kas) */}
@@ -374,20 +676,20 @@ export default function TransparansiPage() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-[#767676] mb-1 font-medium">
                   <span className="w-2.5 h-2.5 rounded-xs bg-[#0D2453]" />
-                  <span>Dana Terpakai · 70%</span>
+                  <span>Dana Terpakai · {persenTerpakai}%</span>
                 </div>
                 <div className="text-base sm:text-lg font-bold text-[#0D2453]">
-                  Rp 840.000.000
+                  {formatRupiah(totalTerpakai)}
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-[#767676] mb-1 font-medium">
                   <span className="w-2.5 h-2.5 rounded-xs bg-[#DCE7F5]" />
-                  <span>Sisa Saldo Kas · 30%</span>
+                  <span>Sisa Saldo Kas · {persenSisa}%</span>
                 </div>
                 <div className="text-base sm:text-lg font-bold text-[#0D2453]">
-                  Rp 360.000.000
+                  {formatRupiah(sisaSaldo)}
                 </div>
               </div>
             </div>
@@ -408,7 +710,7 @@ export default function TransparansiPage() {
             </p>
           </div>
           <div className="text-xs text-[#767676] font-medium">
-            Oktober 2026
+            Tahun anggaran {selectedTahun}
           </div>
         </div>
 
@@ -421,14 +723,23 @@ export default function TransparansiPage() {
                 <th scope="col" className="px-5 py-3.5 rounded-l-xl">Tanggal</th>
                 <th scope="col" className="px-5 py-3.5">Nama Kegiatan / Fasilitas</th>
                 <th scope="col" className="px-5 py-3.5">Nominal (Rp)</th>
-                <th scope="col" className="px-5 py-3.5">SSH Jateng</th>
+                <th scope="col" className="px-5 py-3.5">Pagu / SSH</th>
                 <th scope="col" className="px-5 py-3.5">Status Audit</th>
                 <th scope="col" className="px-5 py-3.5 rounded-r-xl">Foto Bukti Nota &amp; Fisik</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-[#E6ECF5]">
-              {EXPENDITURES.map((row) => {
+              {expenses.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-xs text-[#64748B] font-medium">
+                    {isLoading
+                      ? 'Memuat rincian belanja…'
+                      : 'Belum ada rincian belanja tercatat untuk tahun anggaran ini.'}
+                  </td>
+                </tr>
+              )}
+              {expenses.map((row) => {
                 const isOverBudget = row.deviation !== undefined && row.deviation > 40;
                 return (
                   <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
@@ -462,21 +773,48 @@ export default function TransparansiPage() {
 
                     {/* Status Audit / Deviasi */}
                     <td className="px-5 py-4 align-middle">
-                      {row.deviation !== undefined ? (
+                      {row.deviation !== undefined || row.aiFlag ? (
                         <div className="flex flex-col gap-1 items-start">
+                          {row.deviation !== undefined && (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                isOverBudget || row.aiFlag
+                                  ? 'bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]'
+                                  : 'bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]'
+                              }`}
+                            >
+                              {isOverBudget || row.aiFlag ? (
+                                <AlertTriangle className="w-3 h-3" />
+                              ) : (
+                                <span aria-hidden="true">✓</span>
+                              )}
+                              <span>
+                                {row.deviation > 0 ? '+' : ''}
+                                {row.deviation.toFixed(1)}%
+                              </span>
+                            </span>
+                          )}
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                              isOverBudget
-                                ? 'bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]'
-                                : 'bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]'
+                            className={`text-[9px] font-medium ${
+                              isOverBudget || row.aiFlag ? 'text-[#991B1B]' : 'text-[#065F46]'
                             }`}
                           >
-                            <span>{isOverBudget ? '⚠️' : '✓'}</span>
-                            <span>+{row.deviation.toFixed(1)}%</span>
+                            {row.aiFlag
+                              ? 'Ditandai anomali AI'
+                              : isOverBudget
+                                ? 'Melebihi batas wajar'
+                                : 'Sesuai standar SSH'}
                           </span>
-                          <span className={`text-[9px] font-medium ${isOverBudget ? 'text-[#991B1B]' : 'text-[#065F46]'}`}>
-                            {isOverBudget ? 'Melebihi batas wajar' : 'Sesuai standar SSH'}
-                          </span>
+                          {row.anomalyNote && (
+                            <span
+                              className="text-[9px] text-[#767676] leading-snug max-w-[220px]"
+                              title={row.anomalyNote}
+                            >
+                              {row.anomalyNote.length > 80
+                                ? `${row.anomalyNote.slice(0, 80)}…`
+                                : row.anomalyNote}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <span className="text-[11px] text-slate-400">Belum diaudit</span>
@@ -485,74 +823,66 @@ export default function TransparansiPage() {
 
                     {/* Foto Bukti Nota & Fisik */}
                     <td className="px-5 py-4 align-middle">
-                      <div className="flex items-center gap-3">
-                        {/* Nota Box */}
-                        <div className="flex flex-col">
-                          <div
-                            onClick={() =>
-                              setActiveModal({
-                                url: row.receiptImg,
-                                title: `${row.title} - Nota Kuitansi`,
-                                type: 'Nota',
-                              })
-                            }
-                            className="w-16 h-11 rounded-lg bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-[9px] font-bold text-[#475569] tracking-tighter text-center px-1 leading-tight select-none cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all"
-                          >
-                            NOTA KUITANSI
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveModal({
-                                url: row.receiptImg,
-                                title: `${row.title} - Nota Kuitansi`,
-                                type: 'Nota',
-                              })
-                            }
-                            className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1 hover:underline cursor-pointer"
-                          >
-                            <span>Nota</span>
-                            <ArrowUpRight className="w-2.5 h-2.5" />
-                          </button>
-                        </div>
-
-                        {/* Foto Fisik Box */}
-                        <div className="flex flex-col">
-                          <div
-                            onClick={() =>
-                              setActiveModal({
-                                url: row.photoImg,
-                                title: `${row.title} - Foto Fisik Fasilitas`,
-                                type: 'Foto Fisik',
-                              })
-                            }
-                            className="w-16 h-11 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all relative group"
-                          >
-                            <img
-                              src={row.photoImg}
-                              alt={row.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                            <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
-                              <Maximize2 className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {row.receiptImg || row.photoImg ? (
+                        <div className="flex items-center gap-3">
+                          {/* Nota Box */}
+                          {row.receiptImg && (
+                            <div className="flex flex-col">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveModal({
+                                    url: row.receiptImg!,
+                                    title: `${row.title} - Nota Kuitansi`,
+                                    type: 'Nota',
+                                  })
+                                }
+                                className="w-16 h-11 rounded-lg bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-[9px] font-bold text-[#475569] tracking-tighter text-center px-1 leading-tight select-none cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all"
+                              >
+                                NOTA KUITANSI
+                              </button>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1">
+                                <span>Nota</span>
+                                <ArrowUpRight className="w-2.5 h-2.5" />
+                              </span>
                             </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveModal({
-                                url: row.photoImg,
-                                title: `${row.title} - Foto Fisik Fasilitas`,
-                                type: 'Foto Fisik',
-                              })
-                            }
-                            className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1 hover:underline cursor-pointer"
-                          >
-                            <span>Foto Fisik</span>
-                            <ArrowUpRight className="w-2.5 h-2.5" />
-                          </button>
+                          )}
+
+                          {/* Foto Fisik Box */}
+                          {row.photoImg && (
+                            <div className="flex flex-col">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveModal({
+                                    url: row.photoImg!,
+                                    title: `${row.title} - Foto Fisik Fasilitas`,
+                                    type: 'Foto Fisik',
+                                  })
+                                }
+                                className="w-16 h-11 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all relative group"
+                              >
+                                <img
+                                  src={row.photoImg}
+                                  alt={`Foto fisik ${row.title}`}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
+                                  <Maximize2 className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              </button>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1">
+                                <span>Foto Fisik</span>
+                                <ArrowUpRight className="w-2.5 h-2.5" />
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400">
+                          Bukti belum diunggah
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -566,52 +896,18 @@ export default function TransparansiPage() {
                   <span className="font-bold text-[#0D2453] text-sm">Total belanja tercatat</span>
                 </td>
                 <td className="px-5 py-4">
-                  <span className="font-bold text-[#0D2453] text-sm">Rp 840.000.000</span>
+                  <span className="font-bold text-[#0D2453] text-sm">
+                    {formatRupiah(totalBelanja)}
+                  </span>
                 </td>
                 <td className="px-5 py-4 text-xs text-[#767676] font-normal" colSpan={3}>
-                  Sama dengan dana terpakai · 70%
+                  {isLive
+                    ? `${expenses.length} pos belanja pada tahun anggaran ${selectedTahun}`
+                    : `Sama dengan dana terpakai · ${persenTerpakai}%`}
                 </td>
               </tr>
             </tfoot>
           </table>
-        </div>
-
-        {/* Pagination Bar exactly matching Figma */}
-        <div className="flex items-center justify-center gap-2 pt-4 pb-2 text-xs font-semibold text-[#767676] select-none">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 hover:text-[#0D2453] transition-colors pr-2 cursor-pointer"
-          >
-            <span>&larr; Prev 10</span>
-          </button>
-
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">1</span>
-          <span className="px-1 text-slate-400">...</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">11</span>
-
-          {/* Active Page 12 with Blue Underline Indicator */}
-          <div className="flex flex-col items-center">
-            <span className="px-2 py-0.5 text-[#0D2453] font-bold">12</span>
-            <span className="w-4 h-0.5 bg-[#0D2453] rounded-full" />
-          </div>
-
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">13</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">14</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">15</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">16</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">17</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">18</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">19</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">20</span>
-          <span className="px-1 text-slate-400">...</span>
-          <span className="px-1.5 py-1 hover:text-[#0D2453] cursor-pointer">78</span>
-
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 hover:text-[#0D2453] transition-colors pl-2 cursor-pointer"
-          >
-            <span>Next 10 &rarr;</span>
-          </button>
         </div>
       </section>
 

@@ -124,6 +124,7 @@ export async function GET(req: NextRequest) {
           remaining_amount: parseInt(exp.remaining_amount, 10),
           ai_anomaly_flag: exp.ai_anomaly_flag,
           anomaly_note: exp.anomaly_note,
+          created_at: exp.created_at,
         })),
         tariffs: tariffsRes.rows.map((t) => ({
           id: t.id,

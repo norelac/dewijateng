@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import {
   Search,
   ChevronDown,
@@ -18,6 +17,11 @@ import {
   Columns,
   Sparkles,
 } from 'lucide-react';
+
+import {
+  getPublicReportsAction,
+} from '@/app/actions/reportActions';
+import type { IncidentReportDetail } from '@/lib/services/reportService';
 
 interface TimelineStep {
   title: string;
@@ -471,13 +475,120 @@ const REPORTS_DATA: ReportItem[] = [
 const STATUS_FILTERS = ['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const;
 const ITEMS_PER_PAGE = 4;
 
+// ==== Pemetaan data backend (BE-04) ke bentuk tampilan ====
+
+const CATEGORY_LABEL: Record<string, string> = {
+  FASILITAS_RUSAK: 'Fasilitas & Sanitasi',
+  KEBERSIHAN: 'Fasilitas & Sanitasi',
+  PUNGLI: 'Pungutan Liar',
+  BAHAYA_K3: 'Bahaya Keselamatan (K3)',
+};
+
+function mapStatus(status: string): ReportItem['status'] {
+  switch (status) {
+    case 'RESOLVED':
+      return 'Selesai';
+    case 'IN_PROGRESS':
+      return 'Diproses';
+    case 'VERIFIED':
+      return 'Diverifikasi';
+    default:
+      return 'Masuk';
+  }
+}
+
+function formatTanggalPendek(input: string | Date | null | undefined): string {
+  if (!input) return '-';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return '-';
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(d);
+}
+
+function formatTanggalJam(input: string | Date | null | undefined): string {
+  if (!input) return '-';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return '-';
+  const tanggal = formatTanggalPendek(d);
+  const jam = new Intl.DateTimeFormat('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+  return `${tanggal} · ${jam.replace(':', '.')} WIB`;
+}
+
+function mapIncidentToReportItem(detail: IncidentReportDetail): ReportItem {
+  const villageName = detail.village?.name || 'Desa Wisata';
+  const regency = detail.village?.regency || 'Jawa Tengah';
+  const district = detail.village?.district ? `, ${detail.village.district}` : '';
+  const tanggal = formatTanggalPendek(detail.createdAt);
+  const status = mapStatus(detail.status);
+
+  const timeline: TimelineStep[] = [
+    { title: 'Laporan terkirim', date: formatTanggalJam(detail.createdAt), done: true },
+  ];
+
+  if (detail.status === 'IN_PROGRESS' || detail.status === 'RESOLVED') {
+    timeline.push({
+      title: 'Ditindaklanjuti pengelola desa',
+      date: formatTanggalJam(detail.updatedAt),
+      done: true,
+    });
+  }
+
+  if (detail.status === 'RESOLVED' && detail.resolution) {
+    timeline.push({
+      title: 'Perbaikan selesai & terverifikasi',
+      date: formatTanggalJam(detail.resolution.resolvedAt),
+      done: true,
+    });
+  }
+
+  const afterUrl = detail.resolution?.photoAfterUrl;
+
+  return {
+    id: detail.id,
+    ticketCode: detail.reportCode,
+    status,
+    title: detail.title,
+    summary: detail.description,
+    detailDesc: detail.description,
+    locationShort: `${villageName}, ${regency}`,
+    locationFull: `${villageName}${district}, ${regency}`,
+    date: tanggal,
+    category: CATEGORY_LABEL[detail.category] || 'Fasilitas & Sanitasi',
+    kabupaten: regency,
+    desa: villageName,
+    thumbImg: detail.photoBeforeUrl || REPORTS_DATA[0].thumbImg,
+    beforePhoto: detail.photoBeforeUrl
+      ? { url: detail.photoBeforeUrl, label: `Sebelum · ${tanggal}` }
+      : undefined,
+    afterPhoto:
+      afterUrl && detail.resolution
+        ? {
+            url: afterUrl,
+            label: `Sesudah · ${formatTanggalPendek(detail.resolution.resolvedAt)}`,
+          }
+        : undefined,
+    timeline,
+  };
+}
+
 function LaporContent() {
-  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedKabupaten, setSelectedKabupaten] = useState('Kabupaten Magelang');
   const [selectedDesa, setSelectedDesa] = useState('Desa Candirejo');
   const [selectedKategori, setSelectedKategori] = useState('Semua kategori');
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>('Semua');
+
+  // Data live dari BE-04; jatuh ke data contoh bila basis data belum tersedia
+  const [reports, setReports] = useState<ReportItem[]>(REPORTS_DATA);
+  const [isLive, setIsLive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [activeReportId, setActiveReportId] = useState<string>(REPORTS_DATA[0].id);
@@ -486,34 +597,72 @@ function LaporContent() {
   const [viewMode, setViewMode] = useState<'slider' | 'side-by-side'>('slider');
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
-  // URL query parameter sync (?code= or ?tiket= or ?id=)
   useEffect(() => {
-    const code = searchParams.get('code') || searchParams.get('tiket') || searchParams.get('id');
-    if (code) {
-      const clean = code.trim().toLowerCase();
-      const match = REPORTS_DATA.find((r) => {
-        const t = r.ticketCode.toLowerCase();
-        return (
-          t === clean ||
-          r.id.toLowerCase() === clean ||
-          t.replace('lp-jtg', 'ds-jtg') === clean ||
-          t.replace('ds-jtg', 'lp-jtg') === clean
-        );
-      });
-      if (match) {
-        setActiveReportId(match.id);
-        const idx = REPORTS_DATA.findIndex((r) => r.id === match.id);
-        if (idx !== -1) {
-          setCurrentPage(Math.floor(idx / ITEMS_PER_PAGE) + 1);
+    let cancelled = false;
+
+    getPublicReportsAction({ limit: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          const mapped = res.data.map(mapIncidentToReportItem);
+          setReports(mapped);
+          setActiveReportId((prev) =>
+            mapped.some((r) => r.id === prev) ? prev : mapped[0].id
+          );
+          const first = mapped[0];
+          if (first.kabupaten) setSelectedKabupaten(first.kabupaten);
+          if (first.desa) setSelectedDesa(first.desa);
+          setIsLive(true);
         }
+      })
+      .catch(() => {
+        // Basis data belum siap: pertahankan data contoh
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Sinkronisasi kode tiket dari URL (?code= / ?tiket= / ?id=)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || params.get('tiket') || params.get('id');
+    if (!code) return;
+
+    const clean = code.trim().toLowerCase();
+    const match = reports.find((r) => {
+      const t = r.ticketCode.toLowerCase();
+      return (
+        t === clean ||
+        r.id.toLowerCase() === clean ||
+        t.replace('lp-jtg', 'ds-jtg') === clean ||
+        t.replace('ds-jtg', 'lp-jtg') === clean
+      );
+    });
+    if (match) {
+      setActiveReportId(match.id);
+      const idx = reports.findIndex((r) => r.id === match.id);
+      if (idx !== -1) {
+        setCurrentPage(Math.floor(idx / ITEMS_PER_PAGE) + 1);
       }
     }
-  }, [searchParams]);
+  }, [reports]);
 
   // Filtered reports
   const filteredReports = useMemo(() => {
-    return REPORTS_DATA.filter((item) => {
+    return reports.filter((item) => {
       if (statusFilter !== 'Semua' && item.status !== statusFilter) {
+        return false;
+      }
+      if (selectedKabupaten && item.kabupaten !== selectedKabupaten) {
+        return false;
+      }
+      if (selectedDesa && item.desa !== selectedDesa) {
         return false;
       }
       if (searchQuery.trim()) {
@@ -530,7 +679,7 @@ function LaporContent() {
       }
       return true;
     });
-  }, [statusFilter, searchQuery, selectedKategori]);
+  }, [reports, statusFilter, searchQuery, selectedKategori, selectedKabupaten, selectedDesa]);
 
   // Reset to page 1 whenever filters or search query change
   useEffect(() => {
@@ -546,9 +695,9 @@ function LaporContent() {
 
   // Active report selection
   const activeReport = useMemo(() => {
-    const found = REPORTS_DATA.find((r) => r.id === activeReportId);
-    return found || paginatedReports[0] || filteredReports[0] || REPORTS_DATA[0];
-  }, [activeReportId, paginatedReports, filteredReports]);
+    const found = reports.find((r) => r.id === activeReportId);
+    return found || paginatedReports[0] || filteredReports[0] || reports[0];
+  }, [reports, activeReportId, paginatedReports, filteredReports]);
 
   const renderStatusBadge = (status: ReportItem['status']) => {
     switch (status) {
@@ -749,12 +898,21 @@ function LaporContent() {
         </div>
 
         {/* Section Header Meta */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="text-lg sm:text-xl font-bold text-[#0D2453]">
             Laporan di {selectedDesa}
           </h2>
           <span className="text-xs sm:text-[13px] font-medium text-[#767676]">
-            Urutan: relevansi pencarian ↓
+            {isLoading ? (
+              'Memuat data terbaru…'
+            ) : isLive ? (
+              <>
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 align-middle" />
+                Data live dari basis data desa
+              </>
+            ) : (
+              'Data contoh · basis data belum terhubung'
+            )}
           </span>
         </div>
 
@@ -764,7 +922,9 @@ function LaporContent() {
           <div className="w-full lg:w-[560px] shrink-0 flex flex-col gap-4">
             {paginatedReports.length === 0 ? (
               <div className="bg-white rounded-[20px] border border-[#E6ECF5] p-8 text-center text-[#64748B] text-sm shadow-[0_1px_2px_rgba(13,36,83,0.035),0_6px_14px_-8px_rgba(13,36,83,0.10)] font-medium">
-                Tidak ada laporan yang sesuai dengan filter pencarian.
+                {isLoading
+                  ? 'Memuat laporan…'
+                  : 'Tidak ada laporan yang sesuai dengan filter pencarian.'}
               </div>
             ) : (
               paginatedReports.map((report) => {
@@ -1330,15 +1490,5 @@ function LaporContent() {
 }
 
 export default function LaporPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-20 text-center text-xs font-semibold text-[#64748B]">
-          Memuat data pelacakan laporan...
-        </div>
-      }
-    >
-      <LaporContent />
-    </Suspense>
-  );
+  return <LaporContent />;
 }

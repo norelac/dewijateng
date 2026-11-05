@@ -4,8 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { getPublicReportsAction } from '@/app/actions/reportActions';
+import type { IncidentReportDetail } from '@/lib/services/reportService';
 
-const TICKER_ITEMS = [
+interface TickerItem {
+  id: string | number;
+  tag: string;
+  ticket: string;
+  text: string;
+  time: string;
+  link: string;
+}
+
+const TICKER_ITEMS: TickerItem[] = [
   {
     id: 1,
     tag: 'Selesai Ditangani',
@@ -32,17 +43,67 @@ const TICKER_ITEMS = [
   },
 ];
 
+function relativeTime(input?: string | Date | null): string {
+  if (!input) return 'baru saja';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return 'baru saja';
+
+  const diffMinutes = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (diffMinutes < 1) return 'baru saja';
+  if (diffMinutes < 60) return `${diffMinutes} menit lalu`;
+  const hours = Math.floor(diffMinutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  const days = Math.floor(hours / 24);
+  return `${days} hari lalu`;
+}
+
+function mapToTicker(detail: IncidentReportDetail): TickerItem {
+  const isResolved = detail.status === 'RESOLVED';
+  return {
+    id: detail.id,
+    tag: isResolved ? 'Selesai Ditangani' : 'Tindak Lanjut',
+    ticket: detail.reportCode,
+    text: isResolved
+      ? `${detail.title} di ${detail.village?.name || 'desa wisata'} telah selesai ditindaklanjuti.`
+      : `${detail.title} di ${detail.village?.name || 'desa wisata'} sedang ditindaklanjuti.`,
+    time: relativeTime(detail.updatedAt || detail.createdAt),
+    link: `/lapor?code=${encodeURIComponent(detail.reportCode)}`,
+  };
+}
+
 export default function HomeLiveTicker() {
+  const [items, setItems] = useState<TickerItem[]>(TICKER_ITEMS);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % TICKER_ITEMS.length);
-    }, 4500);
-    return () => clearInterval(timer);
+    let cancelled = false;
+
+    getPublicReportsAction({ limit: 5 })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          setItems(res.data.map(mapToTicker));
+          setIndex(0);
+        }
+      })
+      .catch(() => {
+        // Basis data belum siap: pertahankan item contoh
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const current = TICKER_ITEMS[index];
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % items.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [items.length]);
+
+  const current = items[index % items.length];
 
   return (
     <div className="w-full bg-white rounded-2xl border border-[#E6ECF5] px-4 sm:px-5 py-2.5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden">
