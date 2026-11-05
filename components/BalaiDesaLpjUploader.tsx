@@ -43,11 +43,10 @@ export default function BalaiDesaLpjUploader() {
       try {
         const res = await fetch('/api/villages');
         const json = await res.json();
-        if (json.success && json.data?.villages) {
-          setVillages(json.data.villages);
-          if (json.data.villages.length > 0) {
-            setSelectedVillageId(json.data.villages[0].id);
-          }
+        const villageList = Array.isArray(json.data) ? json.data : json.data?.villages || [];
+        if (json.success && villageList.length > 0) {
+          setVillages(villageList);
+          setSelectedVillageId((prev) => prev || villageList[0].id);
         }
       } catch (err) {
         console.error('Gagal mengambil daftar desa:', err);

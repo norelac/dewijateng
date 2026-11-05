@@ -99,7 +99,12 @@ function handlePhotoError(e: React.SyntheticEvent<HTMLImageElement>) {
   const img = e.currentTarget;
   if (img.dataset.fallbackApplied === '1') return;
   img.dataset.fallbackApplied = '1';
-  img.src = FALLBACK_AFTER;
+  const alt = (img.getAttribute('alt') || '').toLowerCase();
+  if (alt.includes('sebelum')) {
+    img.src = FALLBACK_BEFORE;
+  } else {
+    img.src = FALLBACK_AFTER;
+  }
 }
 
 function formatTanggal(input?: string | Date | null): string {
@@ -198,12 +203,12 @@ export default function HomeReportFeed() {
           .filter((item): item is ReportCardItem => item !== null);
         if (mapped.length === 0) return;
 
-        setCards(mapped.slice(0, 2));
+        setCards(mapped.slice(0, 4));
         setSliderModes(
-          Object.fromEntries(mapped.slice(0, 2).map((item) => [item.id, true]))
+          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, true]))
         );
         setSliderPositions(
-          Object.fromEntries(mapped.slice(0, 2).map((item) => [item.id, 50]))
+          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, 50]))
         );
       })
       .catch(() => {
@@ -248,7 +253,7 @@ export default function HomeReportFeed() {
                       {item.title}
                     </h3>
                     <Link
-                      href="/lapor"
+                      href={`/lapor?code=${encodeURIComponent(item.ticketCode)}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#0D2453] hover:underline mt-0.5"
                     >
                       <span>{item.ticketCode}</span>
@@ -292,7 +297,7 @@ export default function HomeReportFeed() {
                       {/* Sesudah (Full Background Image) */}
                       <img
                         src={item.afterPhoto}
-                        alt={item.afterLabel}
+                        alt="Foto kondisi sesudah perbaikan"
                         onError={handlePhotoError}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
@@ -304,7 +309,7 @@ export default function HomeReportFeed() {
                       >
                         <img
                           src={item.beforePhoto}
-                          alt={item.beforeLabel}
+                          alt="Foto kondisi sebelum perbaikan"
                           onError={handlePhotoError}
                           className="absolute inset-0 w-full h-full object-cover max-w-none"
                           style={{ width: '100%', height: '100%' }}

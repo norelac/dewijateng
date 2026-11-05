@@ -86,6 +86,9 @@ export default function HomeReportForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
 
+  const [villages, setVillages] = useState<Array<{ id: string; name: string; regency: string }>>([]);
+  const [selectedVillageId, setSelectedVillageId] = useState<string>('');
+
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
     lat: -6.9928,
     lng: 110.3957,
@@ -99,6 +102,22 @@ export default function HomeReportForm() {
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    async function loadVillages() {
+      try {
+        const res = await fetch('/api/villages');
+        const json = await res.json();
+        const list = Array.isArray(json.data) ? json.data : json.data?.villages || [];
+        if (json.success && list.length > 0) {
+          setVillages(list);
+        }
+      } catch (err) {
+        console.warn('Gagal mengambil daftar desa:', err);
+      }
+    }
+    loadVillages();
+  }, []);
 
   // Initialize Leaflet Map on Client
   useEffect(() => {
@@ -232,6 +251,20 @@ export default function HomeReportForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    const cleanTitle = selectedTitle.trim();
+    const cleanDesc = description.trim();
+
+    if (!cleanTitle || cleanTitle.length < 5) {
+      setErrorMessage('Judul laporan minimal 5 karakter (contoh: "Akses jalan wisata rusak").');
+      return;
+    }
+
+    if (!cleanDesc || cleanDesc.length < 10) {
+      setErrorMessage('Rincian deskripsi aduan minimal 10 karakter agar petugas dapat mengidentifikasi masalah.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Buat AbortController baru untuk request ini
@@ -239,23 +272,40 @@ export default function HomeReportForm() {
 
     try {
       const formData = new FormData();
-      formData.append('title', selectedTitle);
+      formData.append('title', cleanTitle);
 
       // Kategori otomatis berdasarkan judul
       let category = 'FASILITAS_RUSAK';
-      if (selectedTitle.toLowerCase().includes('kotor') || selectedTitle.toLowerCase().includes('sampah')) {
+      const lowerTitle = cleanTitle.toLowerCase();
+      if (lowerTitle.includes('kotor') || lowerTitle.includes('sampah')) {
         category = 'KEBERSIHAN';
-      } else if (selectedTitle.toLowerCase().includes('pungli')) {
+      } else if (lowerTitle.includes('pungli') || lowerTitle.includes('tarif') || lowerTitle.includes('parkir liar')) {
         category = 'PUNGLI';
-      } else if (selectedTitle.toLowerCase().includes('goyang') || selectedTitle.toLowerCase().includes('bahaya')) {
+      } else if (lowerTitle.includes('goyang') || lowerTitle.includes('bahaya') || lowerTitle.includes('k3') || lowerTitle.includes('patah')) {
         category = 'BAHAYA_K3';
       }
 
       formData.append('category', category);
-      formData.append('description', description);
+      formData.append('description', cleanDesc);
       formData.append('latitude', coords.lat.toString());
       formData.append('longitude', coords.lng.toString());
       formData.append('is_anonymous', isAnonymous ? 'true' : 'false');
+
+      // Tentukan village_id jika ada kecocokan eksplisit dari alamat/lokasi
+      let targetVillageId = selectedVillageId;
+      if (!targetVillageId && villages.length > 0) {
+        const searchPool = (address + ' ' + locationLabel).toLowerCase();
+        const matched = villages.find((v) => {
+          const simplifiedName = v.name.toLowerCase().replace(/desa\s+(wisata\s+)?/, '').trim();
+          return simplifiedName.length > 3 && searchPool.includes(simplifiedName);
+        });
+        if (matched) {
+          targetVillageId = matched.id;
+        }
+      }
+      if (targetVillageId) {
+        formData.append('village_id', targetVillageId);
+      }
 
       if (rawFiles.length > 0) {
         formData.append('photo', rawFiles[0]);

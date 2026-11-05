@@ -20,6 +20,7 @@ import {
 
 import {
   getPublicReportsAction,
+  getReportDetailAction,
 } from '@/app/actions/reportActions';
 import type { IncidentReportDetail } from '@/lib/services/reportService';
 
@@ -475,14 +476,20 @@ const REPORTS_DATA: ReportItem[] = [
 const STATUS_FILTERS = ['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const;
 const ITEMS_PER_PAGE = 4;
 
-const FALLBACK_PHOTO = '/img/figma/aduan-curug-sebelum.png';
+const FALLBACK_BEFORE = '/img/figma/aduan-curug-sebelum.png';
+const FALLBACK_AFTER = '/img/figma/aduan-curug-sesudah.png';
 
 /** Ganti foto yang gagal dimuat dengan aset contoh agar tidak muncul ikon rusak. */
 function handlePhotoError(e: React.SyntheticEvent<HTMLImageElement>) {
   const img = e.currentTarget;
   if (img.dataset.fallbackApplied === '1') return;
   img.dataset.fallbackApplied = '1';
-  img.src = FALLBACK_PHOTO;
+  const alt = (img.getAttribute('alt') || '').toLowerCase();
+  if (alt.includes('sesudah') || alt.includes('selesai')) {
+    img.src = FALLBACK_AFTER;
+  } else {
+    img.src = FALLBACK_BEFORE;
+  }
 }
 
 // ==== Pemetaan data backend (BE-04) ke bentuk tampilan ====
@@ -663,6 +670,26 @@ function LaporContent() {
       if (idx !== -1) {
         setCurrentPage(Math.floor(idx / ITEMS_PER_PAGE) + 1);
       }
+    } else {
+      // Jika belum termuat di daftar publik, ambil langsung dari basis data
+      getReportDetailAction(code.trim().toUpperCase())
+        .then((res) => {
+          if (res.success && res.data) {
+            const mapped = mapIncidentToReportItem(res.data);
+            setReports((prev) => [
+              mapped,
+              ...prev.filter((p) => p.ticketCode !== mapped.ticketCode),
+            ]);
+            setSelectedKabupaten('Semua Kabupaten');
+            setSelectedDesa('Semua Desa');
+            setStatusFilter('Semua');
+            setSelectedKategori('Semua kategori');
+            setSearchQuery('');
+            setActiveReportId(mapped.id);
+            setCurrentPage(1);
+          }
+        })
+        .catch(() => {});
     }
   }, [reports]);
 

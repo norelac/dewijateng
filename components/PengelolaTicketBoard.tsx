@@ -19,7 +19,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { formatDateIndo } from '@/lib/utils';
-import { getPublicReportsAction } from '@/app/actions/reportActions';
+import { getPublicReportsAction, markReportInProgressAction } from '@/app/actions/reportActions';
 import { resolveReportAction } from '@/app/actions/resolutionActions';
 
 interface TicketData {
@@ -57,10 +57,28 @@ export default function PengelolaTicketBoard() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const [markingInProgress, setMarkingInProgress] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successTicket, setSuccessTicket] = useState<TicketData | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleStartWork = async (ticketCode: string) => {
+    setMarkingInProgress(ticketCode);
+    try {
+      const res = await markReportInProgressAction(ticketCode);
+      if (res.success) {
+        await loadReports();
+      } else {
+        alert(res.error || 'Gagal mengubah status pengerjaan');
+      }
+    } catch (err: any) {
+      console.error('Error starting work:', err);
+      alert(err.message || 'Terjadi kesalahan sistem');
+    } finally {
+      setMarkingInProgress(null);
+    }
+  };
 
   // Ambil daftar laporan riil dari database via Server Action
   const loadReports = async () => {
@@ -297,6 +315,9 @@ export default function PengelolaTicketBoard() {
                       <img
                         src={ticket.photo_before_url}
                         alt={ticket.title}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/img/figma/aduan-curug-sebelum.png';
+                        }}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -356,6 +377,9 @@ export default function PengelolaTicketBoard() {
                             <img
                               src={ticket.resolution_photo_after}
                               alt="Foto After"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/img/figma/aduan-curug-sesudah.png';
+                              }}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -375,22 +399,41 @@ export default function PengelolaTicketBoard() {
                         </div>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveResolvingTicket(ticket);
-                          setActionSummary('');
-                          setOfficerName('');
-                          setPhotoAfterFile(null);
-                          setPhotoPreview(null);
-                          setErrorMessage(null);
-                        }}
-                        className="px-4 py-2.5 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs shadow-xs hover:shadow transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                      >
-                        <Upload className="w-4 h-4" />
-                        <span>Unggah Bukti Selesai (Proof-of-Fix)</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {ticket.status === 'SUBMITTED' && (
+                          <button
+                            type="button"
+                            disabled={markingInProgress === ticket.report_code}
+                            onClick={() => handleStartWork(ticket.report_code)}
+                            className="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs hover:shadow transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+                            title="Tandai tiket sedang ditangani di lapangan"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>
+                              {markingInProgress === ticket.report_code
+                                ? 'Memproses...'
+                                : 'Mulai Pengerjaan'}
+                            </span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveResolvingTicket(ticket);
+                            setActionSummary('');
+                            setOfficerName('');
+                            setPhotoAfterFile(null);
+                            setPhotoPreview(null);
+                            setErrorMessage(null);
+                          }}
+                          className="px-4 py-2.5 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs shadow-xs hover:shadow transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                        >
+                          <Upload className="w-4 h-4" />
+                          <span>Unggah Bukti Selesai (Proof-of-Fix)</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
