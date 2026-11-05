@@ -14,22 +14,34 @@ export async function generateReportCode(): Promise<string> {
   const prefix = `LP-JTG-${currentYear}-`;
 
   try {
-    // Memastikan sequence untuk tahun berjalan tersedia dan disinkronkan dengan data yang ada
+    // Memastikan sequence untuk tahun berjalan tersedia dan selalu disinkronkan dengan data terbaru
     await query(`
       DO $$
+      DECLARE
+        max_existing_seq BIGINT;
+        current_seq_val BIGINT;
       BEGIN
+        -- Buat sequence jika belum ada
         IF NOT EXISTS (SELECT 1 FROM pg_sequences WHERE sequencename = '${seqName}') THEN
           CREATE SEQUENCE ${seqName} START 1;
-          PERFORM setval(
-            '${seqName}',
-            COALESCE((
-              SELECT MAX(SUBSTRING(report_code FROM '(\\d+)$')::bigint)
-              FROM incident_reports
-              WHERE report_code LIKE 'LP-JTG-${currentYear}-%'
-            ), 0) + 1,
-            false
-          );
         END IF;
+
+        -- Ambil nomor urut tertinggi yang sudah ada di tabel
+        SELECT COALESCE(MAX(SUBSTRING(report_code FROM '(\\d+)$')::bigint), 0)
+        INTO max_existing_seq
+        FROM incident_reports
+        WHERE report_code LIKE 'LP-JTG-${currentYear}-%';
+
+        -- Ambil nilai sequence saat ini
+        SELECT last_value INTO current_seq_val FROM ${seqName};
+
+        -- Sinkronkan: gunakan nilai terbesar antara MAX di tabel vs sequence saat ini
+        -- Tambah 1 untuk nomor berikutnya
+        PERFORM setval(
+          '${seqName}',
+          GREATEST(max_existing_seq, current_seq_val) + 1,
+          false
+        );
       END $$;
     `);
 

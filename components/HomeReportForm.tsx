@@ -98,6 +98,7 @@ export default function HomeReportForm() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Initialize Leaflet Map on Client
   useEffect(() => {
@@ -233,6 +234,9 @@ export default function HomeReportForm() {
     setErrorMessage(null);
     setIsSubmitting(true);
 
+    // Buat AbortController baru untuk request ini
+    abortControllerRef.current = new AbortController();
+
     try {
       const formData = new FormData();
       formData.append('title', selectedTitle);
@@ -259,6 +263,12 @@ export default function HomeReportForm() {
 
       const res = await submitReportAction(formData);
 
+      // Cek apakah request di-abort
+      if (abortControllerRef.current?.signal.aborted) {
+        setErrorMessage('Pengiriman laporan dibatalkan.');
+        return;
+      }
+
       if (res.success && res.data) {
         setSuccessTicket(res.data.reportCode);
         setSelectedTitle('');
@@ -270,8 +280,20 @@ export default function HomeReportForm() {
         setErrorMessage(res.error || 'Gagal mengirimkan laporan aduan. Silakan coba lagi.');
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Terjadi kesalahan sistem saat memproses laporan aduan.');
+      if (err.name === 'AbortError' || abortControllerRef.current?.signal.aborted) {
+        setErrorMessage('Pengiriman laporan dibatalkan.');
+      } else {
+        setErrorMessage(err.message || 'Terjadi kesalahan sistem saat memproses laporan aduan.');
+      }
     } finally {
+      setIsSubmitting(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleCancelSubmit = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
       setIsSubmitting(false);
     }
   };
@@ -432,21 +454,32 @@ export default function HomeReportForm() {
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] text-white font-semibold text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 mt-4"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Memproses Laporan...</span>
-              </>
-            ) : (
-              <span>Laporkan</span>
+          {/* Submit & Cancel Buttons */}
+          <div className="flex gap-3 mt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Memproses Laporan...</span>
+                </>
+              ) : (
+                <span>Laporkan</span>
+              )}
+            </button>
+            {isSubmitting && (
+              <button
+                type="button"
+                onClick={handleCancelSubmit}
+                className="px-5 py-3 rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-all"
+              >
+                Batal
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </form>
 
