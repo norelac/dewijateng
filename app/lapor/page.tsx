@@ -475,6 +475,16 @@ const REPORTS_DATA: ReportItem[] = [
 const STATUS_FILTERS = ['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const;
 const ITEMS_PER_PAGE = 4;
 
+const FALLBACK_PHOTO = '/img/figma/aduan-curug-sebelum.png';
+
+/** Ganti foto yang gagal dimuat dengan aset contoh agar tidak muncul ikon rusak. */
+function handlePhotoError(e: React.SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget;
+  if (img.dataset.fallbackApplied === '1') return;
+  img.dataset.fallbackApplied = '1';
+  img.src = FALLBACK_PHOTO;
+}
+
 // ==== Pemetaan data backend (BE-04) ke bentuk tampilan ====
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -580,8 +590,8 @@ function mapIncidentToReportItem(detail: IncidentReportDetail): ReportItem {
 
 function LaporContent() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedKabupaten, setSelectedKabupaten] = useState('Kabupaten Magelang');
-  const [selectedDesa, setSelectedDesa] = useState('Desa Candirejo');
+  const [selectedKabupaten, setSelectedKabupaten] = useState('Semua Kabupaten');
+  const [selectedDesa, setSelectedDesa] = useState('Semua Desa');
   const [selectedKategori, setSelectedKategori] = useState('Semua kategori');
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>('Semua');
 
@@ -609,9 +619,6 @@ function LaporContent() {
           setActiveReportId((prev) =>
             mapped.some((r) => r.id === prev) ? prev : mapped[0].id
           );
-          const first = mapped[0];
-          if (first.kabupaten) setSelectedKabupaten(first.kabupaten);
-          if (first.desa) setSelectedDesa(first.desa);
           setIsLive(true);
         }
       })
@@ -645,6 +652,12 @@ function LaporContent() {
       );
     });
     if (match) {
+      // Pastikan laporan yang dituju tidak tersembunyi oleh filter aktif
+      setSelectedKabupaten('Semua Kabupaten');
+      setSelectedDesa('Semua Desa');
+      setStatusFilter('Semua');
+      setSelectedKategori('Semua kategori');
+      setSearchQuery('');
       setActiveReportId(match.id);
       const idx = reports.findIndex((r) => r.id === match.id);
       if (idx !== -1) {
@@ -653,16 +666,38 @@ function LaporContent() {
     }
   }, [reports]);
 
+  // Opsi filter dibangun dari data yang tampil, bukan daftar statis
+  const kabupatenOptions = useMemo(() => {
+    const list = Array.from(new Set(reports.map((r) => r.kabupaten).filter(Boolean)));
+    return ['Semua Kabupaten', ...list.sort((a, b) => a.localeCompare(b, 'id'))];
+  }, [reports]);
+
+  const desaOptions = useMemo(() => {
+    const scoped =
+      selectedKabupaten === 'Semua Kabupaten'
+        ? reports
+        : reports.filter((r) => r.kabupaten === selectedKabupaten);
+    const list = Array.from(new Set(scoped.map((r) => r.desa).filter(Boolean)));
+    return ['Semua Desa', ...list.sort((a, b) => a.localeCompare(b, 'id'))];
+  }, [reports, selectedKabupaten]);
+
+  // Jaga agar desa terpilih tetap valid saat kabupaten berganti
+  useEffect(() => {
+    if (selectedDesa !== 'Semua Desa' && !desaOptions.includes(selectedDesa)) {
+      setSelectedDesa('Semua Desa');
+    }
+  }, [desaOptions, selectedDesa]);
+
   // Filtered reports
   const filteredReports = useMemo(() => {
     return reports.filter((item) => {
       if (statusFilter !== 'Semua' && item.status !== statusFilter) {
         return false;
       }
-      if (selectedKabupaten && item.kabupaten !== selectedKabupaten) {
+      if (selectedKabupaten !== 'Semua Kabupaten' && item.kabupaten !== selectedKabupaten) {
         return false;
       }
-      if (selectedDesa && item.desa !== selectedDesa) {
+      if (selectedDesa !== 'Semua Desa' && item.desa !== selectedDesa) {
         return false;
       }
       if (searchQuery.trim()) {
@@ -819,12 +854,11 @@ function LaporContent() {
                 onChange={(e) => setSelectedKabupaten(e.target.value)}
                 className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-semibold focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
               >
-                <option value="Kabupaten Magelang">Kabupaten Magelang</option>
-                <option value="Kabupaten Banyumas">Kabupaten Banyumas</option>
-                <option value="Kabupaten Kendal">Kabupaten Kendal</option>
-                <option value="Kabupaten Karanganyar">Kabupaten Karanganyar</option>
-                <option value="Kabupaten Banjarnegara">Kabupaten Banjarnegara</option>
-                <option value="Kabupaten Wonosobo">Kabupaten Wonosobo</option>
+                {kabupatenOptions.map((kab) => (
+                  <option key={kab} value={kab}>
+                    {kab}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -841,11 +875,11 @@ function LaporContent() {
                 onChange={(e) => setSelectedDesa(e.target.value)}
                 className="w-full bg-[#F3F5F8] border-0 rounded-[14px] px-4 py-3 text-xs sm:text-sm text-[#0D2453] font-semibold focus:ring-1 focus:ring-[#0D2453]/30 focus:outline-none appearance-none cursor-pointer"
               >
-                <option value="Desa Candirejo">Desa Candirejo</option>
-                <option value="Desa Limpakuwus">Desa Limpakuwus</option>
-                <option value="Desa Dieng Kulon">Desa Dieng Kulon</option>
-                <option value="Desa Berjo">Desa Berjo</option>
-                <option value="Desa Getas (Tubing Genting)">Desa Getas (Tubing Genting)</option>
+                {desaOptions.map((desa) => (
+                  <option key={desa} value={desa}>
+                    {desa}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="w-4 h-4 text-[#0D2453] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -900,7 +934,11 @@ function LaporContent() {
         {/* Section Header Meta */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="text-lg sm:text-xl font-bold text-[#0D2453]">
-            Laporan di {selectedDesa}
+            {selectedDesa === 'Semua Desa'
+              ? selectedKabupaten === 'Semua Kabupaten'
+                ? 'Semua laporan aduan warga'
+                : `Laporan di ${selectedKabupaten}`
+              : `Laporan di ${selectedDesa}`}
           </h2>
           <span className="text-xs sm:text-[13px] font-medium text-[#767676]">
             {isLoading ? (
@@ -962,6 +1000,7 @@ function LaporContent() {
                         <img
                           src={report.thumbImg}
                           alt={report.title}
+                          onError={handlePhotoError}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -1202,6 +1241,7 @@ function LaporContent() {
                       <img
                         src={activeReport.afterPhoto.url}
                         alt="Kondisi sesudah perbaikan"
+                        onError={handlePhotoError}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                       <span className="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-md bg-[#0D2453]/90 text-white text-[11px] font-bold shadow-md pointer-events-none">
@@ -1218,6 +1258,7 @@ function LaporContent() {
                         <img
                           src={activeReport.beforePhoto.url}
                           alt="Kondisi sebelum perbaikan"
+                          onError={handlePhotoError}
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                         <span className="absolute bottom-3 left-3 z-10 px-2.5 py-1 rounded-md bg-black/80 text-white text-[11px] font-bold shadow-md">
@@ -1294,6 +1335,7 @@ function LaporContent() {
                           <img
                             src={activeReport.beforePhoto.url}
                             alt="Foto kondisi sebelum perbaikan"
+                            onError={handlePhotoError}
                             className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]"
                           />
                           <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors duration-150 flex items-center justify-center">
@@ -1332,6 +1374,7 @@ function LaporContent() {
                           <img
                             src={activeReport.afterPhoto.url}
                             alt="Foto kondisi sesudah perbaikan"
+                            onError={handlePhotoError}
                             className="w-full h-full object-cover transition-transform duration-[400ms] ease-out group-hover:scale-[1.03]"
                           />
                           <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors duration-150 flex items-center justify-center">
@@ -1469,6 +1512,7 @@ function LaporContent() {
               <img
                 src={lightboxImg.url}
                 alt={lightboxImg.label}
+                onError={handlePhotoError}
                 className="max-h-[65vh] w-auto object-contain rounded-lg shadow-lg"
               />
             </div>

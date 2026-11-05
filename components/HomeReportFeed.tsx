@@ -94,6 +94,14 @@ const REPORT_CARDS: ReportCardItem[] = [
 const FALLBACK_BEFORE = '/img/figma/aduan-curug-sebelum.png';
 const FALLBACK_AFTER = '/img/figma/aduan-curug-sesudah.png';
 
+/** Ganti foto yang gagal dimuat dengan aset contoh agar tidak muncul ikon rusak. */
+function handlePhotoError(e: React.SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget;
+  if (img.dataset.fallbackApplied === '1') return;
+  img.dataset.fallbackApplied = '1';
+  img.src = FALLBACK_AFTER;
+}
+
 function formatTanggal(input?: string | Date | null): string {
   if (!input) return '—';
   const d = new Date(input);
@@ -285,6 +293,7 @@ export default function HomeReportFeed() {
                       <img
                         src={item.afterPhoto}
                         alt={item.afterLabel}
+                        onError={handlePhotoError}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
 
@@ -296,6 +305,7 @@ export default function HomeReportFeed() {
                         <img
                           src={item.beforePhoto}
                           alt={item.beforeLabel}
+                          onError={handlePhotoError}
                           className="absolute inset-0 w-full h-full object-cover max-w-none"
                           style={{ width: '100%', height: '100%' }}
                         />
@@ -365,6 +375,7 @@ export default function HomeReportFeed() {
                         <img
                           src={item.beforePhoto}
                           alt={item.beforeLabel}
+                          onError={handlePhotoError}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
                         />
                         <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors flex items-center justify-center">
@@ -391,6 +402,7 @@ export default function HomeReportFeed() {
                         <img
                           src={item.afterPhoto}
                           alt={item.afterLabel}
+                          onError={handlePhotoError}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
                         />
                         <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors flex items-center justify-center">
@@ -487,6 +499,7 @@ export default function HomeReportFeed() {
                 <img
                   src={lightboxImg.url}
                   alt={lightboxImg.title}
+                  onError={handlePhotoError}
                   className="max-h-[70vh] w-auto object-contain rounded-xl shadow-lg"
                 />
               </div>

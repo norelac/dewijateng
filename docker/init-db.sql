@@ -284,6 +284,28 @@ INSERT INTO report_resolutions (report_id, action_summary, photo_after_url, offi
 -- ==============================================================================
 -- ROW-LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
+-- Supabase memakai role bawaan "authenticated" / "service_role" dan helper
+-- auth.role(). Di PostgreSQL lokal role tersebut tidak ada, sehingga seluruh
+-- blok policy di bawah gagal dan seed data ikut terhenti. Buat stub-nya lebih
+-- dulu agar skrip aman dijalankan di Docker lokal.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        CREATE ROLE anon NOLOGIN;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        CREATE ROLE authenticated NOLOGIN;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+        CREATE ROLE service_role NOLOGIN;
+    END IF;
+END
+$$;
+
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE OR REPLACE FUNCTION auth.role() RETURNS text
+    LANGUAGE sql STABLE AS $$ SELECT current_setting('role', true) $$;
+
 ALTER TABLE tourist_villages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE official_tariffs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE village_grants ENABLE ROW LEVEL SECURITY;
