@@ -105,6 +105,7 @@ export default function HomeReportForm() {
   const markerRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isReverseGeocodingRef = useRef<boolean>(false);
 
   useEffect(() => {
     async function loadVillages() {
@@ -167,13 +168,15 @@ export default function HomeReportForm() {
       marker.on('dragend', () => {
         const pos = marker.getLatLng();
         setCoords({ lat: pos.lat, lng: pos.lng });
-        setLocationLabel(`Titik Pin GPS: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
+        setLocationLabel('Mencari alamat...');
+        reverseGeocode(pos.lat, pos.lng);
       });
 
       map.on('click', (e: any) => {
         marker.setLatLng(e.latlng);
         setCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
-        setLocationLabel(`Titik Pin GPS: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`);
+        setLocationLabel('Mencari alamat...');
+        reverseGeocode(e.latlng.lat, e.latlng.lng);
       });
 
       mapInstanceRef.current = map;
@@ -197,6 +200,38 @@ export default function HomeReportForm() {
       markerRef.current.setLatLng([lat, lng]);
     }
     setCoords({ lat, lng });
+  };
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const data = await res.json();
+      if (data && data.address) {
+        const a = data.address;
+        const road = a.road || a.pedestrian || a.suburb || a.hamlet || a.neighbourhood || '';
+        const village = a.village || a.town || a.municipality || a.city_district || '';
+        const city = a.city || a.county || a.regency || a.state_district || '';
+        const parts = [road, village, city].filter(Boolean);
+        const resolvedName =
+          parts.length > 0
+            ? parts.join(', ')
+            : (data.display_name?.split(',').slice(0, 3).join(', ') || '');
+        if (resolvedName) {
+          isReverseGeocodingRef.current = true;
+          setAddress(resolvedName);
+          setLocationLabel(resolvedName);
+          return;
+        }
+      }
+    } catch {
+      // fallback jika jaringan offline
+    }
+    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    isReverseGeocodingRef.current = true;
+    setAddress(`Lokasi Terpilih (${fallback})`);
+    setLocationLabel(`Lokasi (${fallback})`);
   };
 
   const handleGeocode = async (queryText: string) => {
@@ -236,6 +271,10 @@ export default function HomeReportForm() {
   };
 
   useEffect(() => {
+    if (isReverseGeocodingRef.current) {
+      isReverseGeocodingRef.current = false;
+      return;
+    }
     if (!address.trim() || address === 'Nama Desa, Kecamatan, Kabupaten') return;
     const timer = setTimeout(() => {
       handleGeocode(address);
@@ -250,13 +289,12 @@ export default function HomeReportForm() {
     }
     setIsSearchingMap(true);
     setErrorMessage(null);
+    setLocationLabel('Mencari alamat...');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const { latitude, longitude } = pos.coords;
         moveMapTo(latitude, longitude, 16);
-        const locStr = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        setLocationLabel(`Lokasi Saya (${locStr})`);
-        setAddress(`Titik Koordinat (${locStr})`);
+        await reverseGeocode(latitude, longitude);
         setIsSearchingMap(false);
       },
       (err) => {
