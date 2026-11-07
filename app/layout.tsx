@@ -24,9 +24,12 @@ const monteCarlo = MonteCarlo({
 });
 
 export const metadata: Metadata = {
-  title: 'DEWI JATENG - Dari Laporan, Menjadi Perbaikan',
+  title: {
+    default: 'DEWI JATENG - Dari Laporan, Menjadi Perbaikan',
+    template: '%s · DEWI JATENG',
+  },
   description:
-    'Pantau penggunaan dana desa secara terbuka dan laporkan kendala fasilitas wisata secara cepat.',
+    'Platform keterbukaan dokumen LPJ bantuan keuangan sarpras dan tindak lanjut aduan fasilitas desa wisata di Jawa Tengah.',
   icons: {
     icon: '/favicon.svg',
   },

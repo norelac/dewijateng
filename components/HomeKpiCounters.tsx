@@ -24,32 +24,70 @@ export default function HomeKpiCounters() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-40px' });
 
+  const [dynamicMetrics, setDynamicMetrics] = useState<{
+    villages?: number;
+    reports?: number;
+    resolutionRate?: number;
+    allocatedMiliar?: number;
+  }>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/disporapar/overview')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (cancelled || !json?.success || !json.data?.macro_metrics) return;
+        const m = json.data.macro_metrics;
+        setDynamicMetrics({
+          villages: m.total_villages ?? undefined,
+          reports: m.total_reports ?? undefined,
+          resolutionRate: m.resolution_rate ?? undefined,
+          allocatedMiliar:
+            m.total_allocated > 0
+              ? Number((m.total_allocated / 1_000_000_000).toFixed(1))
+              : undefined,
+        });
+      })
+      .catch(() => {
+        // Fallback ke angka acuan RPJMD Jateng
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const totalDesa = dynamicMetrics.villages ?? 776;
+  const totalLaporan = dynamicMetrics.reports ?? 12;
+  const rateSelesai = dynamicMetrics.resolutionRate ?? 100;
+  const danaMiliar = dynamicMetrics.allocatedMiliar ?? 87.5;
+
   const metrics: MetricItem[] = [
     {
-      value: 'Rp 185 Miliar',
-      targetNumber: 185,
+      value: `Rp ${danaMiliar.toLocaleString('id-ID')} Miliar`,
+      targetNumber: danaMiliar,
       prefix: 'Rp ',
       suffix: ' Miliar',
-      label: 'Total Dana Desa',
+      decimals: danaMiliar % 1 === 0 ? 0 : 1,
+      label: 'Alokasi Bantuan Sarpras',
       icon: Landmark,
     },
     {
-      value: '9.607',
-      targetNumber: 9607,
-      label: 'Total Laporan',
+      value: totalLaporan.toLocaleString('id-ID'),
+      targetNumber: totalLaporan,
+      label: 'Aduan Warga Diproses',
       icon: FileText,
     },
     {
-      value: '889',
-      targetNumber: 889,
-      label: 'Desa Wisata',
+      value: totalDesa.toLocaleString('id-ID'),
+      targetNumber: totalDesa,
+      label: 'Desa Wisata Terdata',
       icon: MapPin,
     },
     {
-      value: '94,2%',
-      targetNumber: 94.2,
+      value: `${rateSelesai.toLocaleString('id-ID')}%`,
+      targetNumber: rateSelesai,
       suffix: '%',
-      decimals: 1,
+      decimals: rateSelesai % 1 === 0 ? 0 : 1,
       label: 'Tingkat Penyelesaian Laporan',
       icon: CheckCheck,
     },

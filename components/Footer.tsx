@@ -222,15 +222,15 @@ export default function Footer() {
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between text-[13px] text-white/40 gap-3">
           <p>© 2024 – 2026 Pemerintah Provinsi Jawa Tengah. Hak Cipta Dilindungi.</p>
           <div className="flex items-center gap-5">
-            <a href="#" className="hover:text-white/70 transition-colors">
+            <Link href="/edukasi" className="hover:text-white/70 transition-colors">
               Kebijakan Privasi
-            </a>
-            <a href="#" className="hover:text-white/70 transition-colors">
+            </Link>
+            <Link href="/edukasi" className="hover:text-white/70 transition-colors">
               Syarat Penggunaan
-            </a>
-            <a href="#" className="hover:text-white/70 transition-colors">
+            </Link>
+            <Link href="/edukasi" className="hover:text-white/70 transition-colors">
               Aksesibilitas
-            </a>
+            </Link>
           </div>
         </div>
       </div>

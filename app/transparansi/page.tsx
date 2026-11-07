@@ -188,6 +188,15 @@ export default function TransparansiPage() {
     type: 'Nota' | 'Foto Fisik';
   } | null>(null);
 
+  useEffect(() => {
+    if (!activeModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveModal(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeModal]);
+
   // Data live dari BE-03/BE-07; jatuh ke data contoh bila basis data belum tersedia
   const [villages, setVillages] = useState<ApiVillage[]>([]);
   const [villagesLoaded, setVillagesLoaded] = useState(false);
@@ -199,7 +208,7 @@ export default function TransparansiPage() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/villages?limit=200')
+    fetch('/api/villages?limit=1000')
       .then((res) => res.json())
       .then((json) => {
         if (cancelled || !json?.success || !Array.isArray(json.data)) return;
@@ -914,6 +923,9 @@ export default function TransparansiPage() {
       {/* Lightbox / Modal for Evidence Preview */}
       {activeModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={activeModal.title}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
           onClick={() => setActiveModal(null)}
         >
@@ -929,6 +941,7 @@ export default function TransparansiPage() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
+                aria-label="Tutup pratinjau kuitansi"
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />

@@ -3,16 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 
 const navItems = [
-  { href: '/', label: 'Beranda', disabled: false },
-  { href: '/transparansi', label: 'Transparansi Dana', disabled: false },
-  { href: '/lapor', label: 'Telusuri Laporan', disabled: false },
-  { href: '/edukasi', label: 'Edukasi & Panduan', disabled: false },
+  { href: '/', label: 'Beranda' },
+  { href: '/transparansi', label: 'Transparansi Dana' },
+  { href: '/lapor', label: 'Telusuri Laporan' },
+  { href: '/edukasi', label: 'Edukasi & Panduan' },
 ];
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -24,6 +26,11 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Tutup menu mobile tiap ganti rute
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
     <>
@@ -37,79 +44,135 @@ export default function Navbar() {
         }`}
       >
         <div
-          className={`pointer-events-auto flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          className={`pointer-events-auto flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isScrolled
-              ? 'w-full max-w-[1060px] h-[68px] px-6 sm:px-8 rounded-full bg-white/95 backdrop-blur-md border border-[#E6ECF5] shadow-[0_12px_36px_rgba(13,36,83,0.09)] text-[#0D2453]'
-              : 'w-full max-w-[1280px] h-[76px] px-6 sm:px-8 rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]'
+              ? 'w-full max-w-[1060px] rounded-3xl sm:rounded-full bg-white/95 backdrop-blur-md border border-[#E6ECF5] shadow-[0_12px_36px_rgba(13,36,83,0.09)] text-[#0D2453]'
+              : 'w-full max-w-[1280px] rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]'
           }`}
         >
-          {/* Brand Logo with Pemprov Jateng Image */}
-          <Link href="/" className="flex items-center gap-3 group shrink-0">
-            <img
-              src="/img/logo-pemprov-jateng.png"
-              alt="Logo Pemerintah Provinsi Jawa Tengah"
-              className="h-6 w-auto object-contain shrink-0"
-              width={23}
-              height={24}
-            />
-            <span className="font-bold text-[#0D2453] text-lg sm:text-xl tracking-tight group-hover:text-blue-900 transition-colors">
-              DEWI JATENG
-            </span>
-          </Link>
+          {/* Main Bar */}
+          <div
+            className={`flex items-center justify-between px-5 sm:px-8 transition-all duration-300 ${
+              isScrolled ? 'h-[64px] sm:h-[68px]' : 'h-[72px] sm:h-[76px]'
+            }`}
+          >
+            {/* Brand Logo with Pemprov Jateng Image */}
+            <Link href="/" className="flex items-center gap-3 group shrink-0">
+              <img
+                src="/img/logo-pemprov-jateng.png"
+                alt="Logo Pemerintah Provinsi Jawa Tengah"
+                className="h-6 w-auto object-contain shrink-0"
+                width={23}
+                height={24}
+              />
+              <span className="font-bold text-[#0D2453] text-lg sm:text-xl tracking-tight group-hover:text-blue-900 transition-colors">
+                DEWI JATENG
+              </span>
+            </Link>
 
-          {/* Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-7 lg:gap-8">
-            {navItems.map((item) => {
-              if (item.disabled) {
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-7 lg:gap-8">
+              {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== '/' && (pathname || '').startsWith(item.href));
+
                 return (
-                  <a
-                    key={item.label}
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="text-sm text-[#0D2453]/70 font-semibold hover:text-[#0D2453] transition-all py-1 cursor-pointer"
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`text-sm transition-all py-1 ${
+                      isActive
+                        ? 'text-[#0D2453] font-bold border-b-2 border-[#0D2453]'
+                        : 'text-[#0D2453]/70 font-semibold hover:text-[#0D2453]'
+                    }`}
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 );
-              }
+              })}
+            </nav>
 
-              const isActive =
-                pathname === item.href ||
-                (item.href !== '/' && (pathname || '').startsWith(item.href));
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex items-center gap-3">
+              <Link
+                href="/#buat-laporan"
+                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all shadow-xs active:scale-95"
+              >
+                <span className="text-sm font-light leading-none">+</span>
+                <span>Buat Laporan</span>
+              </Link>
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`text-sm transition-all py-1 ${
-                    isActive
-                      ? 'text-[#0D2453] font-bold border-b-2 border-[#0D2453]'
-                      : 'text-[#0D2453]/70 font-semibold hover:text-[#0D2453]'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+              <Link
+                href="/pengelola"
+                className="inline-flex items-center px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all shadow-xs active:scale-95 cursor-pointer"
+              >
+                Masuk
+              </Link>
+            </div>
 
-          {/* Right Actions: + Buat Laporan & Masuk */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/#buat-laporan"
-              className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all shadow-xs active:scale-95"
-            >
-              <span className="text-sm font-light leading-none">+</span>
-              <span>Buat Laporan</span>
-            </Link>
-
-            <Link
-              href="/pengelola"
-              className="inline-flex items-center px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all shadow-xs active:scale-95 cursor-pointer"
-            >
-              Masuk
-            </Link>
+            {/* Mobile Actions: Lapor Ringkas + Hamburger */}
+            <div className="flex sm:hidden items-center gap-2">
+              <Link
+                href="/#buat-laporan"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all"
+              >
+                <span>+ Lapor</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMobileOpen((prev) => !prev)}
+                className="p-2 rounded-xl text-[#0D2453] hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label={mobileOpen ? 'Tutup navigasi' : 'Buka navigasi'}
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
+
+          {/* Mobile Drawer Accordion */}
+          {mobileOpen && (
+            <div className="sm:hidden border-t border-[#E6ECF5] px-5 py-4 flex flex-col gap-2 bg-white rounded-b-3xl">
+              {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== '/' && (pathname || '').startsWith(item.href));
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                      isActive
+                        ? 'bg-[#0D2453]/10 text-[#0D2453] font-bold'
+                        : 'text-[#0D2453]/80 hover:bg-slate-50'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                <Link
+                  href="/pengelola"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all"
+                >
+                  Portal Pengelola
+                </Link>
+                <Link
+                  href="/disporapar"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all"
+                >
+                  Command Center
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </header>
     </>

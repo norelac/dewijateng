@@ -4,17 +4,23 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Newspaper, ChevronRight } from 'lucide-react';
 import HomeHeroBanner from '@/components/HomeHeroBanner';
+import HomeLiveTicker from '@/components/HomeLiveTicker';
 import HomeKpiCounters from '@/components/HomeKpiCounters';
 import HomeReportForm from '@/components/HomeReportForm';
 import HomeReportFeed from '@/components/HomeReportFeed';
 
 export default function HomePage() {
   return (
-    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[36px] mt-[36px] mb-24">
       {/* 1. Dynamic Hero Banner with Slideshow & Entrance Animations */}
       <HomeHeroBanner />
 
-      {/* 2. Unified Navy KPI Counters */}
+      {/* 2. Live Activity Ticker (Proof-of-Fix & Update Real-time) */}
+      <section className="w-full">
+        <HomeLiveTicker />
+      </section>
+
+      {/* 3. Unified Navy KPI Counters */}
       <section className="w-full">
         <HomeKpiCounters />
       </section>

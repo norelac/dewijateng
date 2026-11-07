@@ -615,6 +615,15 @@ function LaporContent() {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!lightboxImg) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxImg(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxImg]);
+
+  useEffect(() => {
     let cancelled = false;
 
     getPublicReportsAction({ limit: 100 })
@@ -1518,6 +1527,9 @@ function LaporContent() {
       {/* Lightbox Modal */}
       {lightboxImg && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightboxImg.label}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
           onClick={() => setLightboxImg(null)}
         >
@@ -1530,6 +1542,7 @@ function LaporContent() {
               <button
                 type="button"
                 onClick={() => setLightboxImg(null)}
+                aria-label="Tutup pratinjau foto"
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
