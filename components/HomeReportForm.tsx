@@ -12,7 +12,9 @@ import {
   Loader2,
   Search,
   Check,
-  AlertCircle
+  AlertCircle,
+  Navigation,
+  X
 } from 'lucide-react';
 import { submitReportAction } from '@/app/actions/reportActions';
 
@@ -101,6 +103,7 @@ export default function HomeReportForm() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -240,11 +243,43 @@ export default function HomeReportForm() {
     return () => clearTimeout(timer);
   }, [address]);
 
+  const handleUseCurrentLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setErrorMessage('Fitur geolokasi tidak didukung oleh browser Anda.');
+      return;
+    }
+    setIsSearchingMap(true);
+    setErrorMessage(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        moveMapTo(latitude, longitude, 16);
+        const locStr = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        setLocationLabel(`Lokasi Saya (${locStr})`);
+        setAddress(`Titik Koordinat (${locStr})`);
+        setIsSearchingMap(false);
+      },
+      (err) => {
+        setIsSearchingMap(false);
+        setErrorMessage('Gagal mendeteksi lokasi GPS. Pastikan izin lokasi aktif atau pilih manual pada peta.');
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
+
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
       setRawFiles((prev) => [...prev, ...filesArray]);
       setUploadedFiles((prev) => [...prev, ...filesArray.map((f) => f.name)]);
+    }
+  };
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    setRawFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setUploadedFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -400,9 +435,20 @@ export default function HomeReportForm() {
 
           {/* Tandai di Peta */}
           <div>
-            <label className="block text-sm sm:text-[17px] text-black font-normal mb-2">
-              Tandai di Peta
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm sm:text-[17px] text-black font-normal">
+                Tandai di Peta
+              </label>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-xs font-semibold border border-blue-200 transition-all active:scale-95 cursor-pointer"
+                title="Gunakan lokasi GPS saya saat ini"
+              >
+                <Navigation className="w-3.5 h-3.5 text-blue-700" />
+                <span>Gunakan Lokasi Saya</span>
+              </button>
+            </div>
 
             <div className="relative w-full h-[244px] rounded-[17px] overflow-hidden border border-[#EBEBEB] bg-[#E8ECEF] shadow-2xs">
               <div ref={mapContainerRef} className="w-full h-full z-0" />
@@ -452,6 +498,7 @@ export default function HomeReportForm() {
             </label>
             <label className="border border-dashed border-[#0D2453] rounded-[9px] h-[175px] p-4 text-center bg-white cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center block">
               <input
+                ref={fileInputRef}
                 type="file"
                 multiple
                 accept="image/*,video/*"
@@ -474,8 +521,20 @@ export default function HomeReportForm() {
                     key={i}
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-900 text-xs font-semibold border border-blue-200"
                   >
-                    <FileCheck2 className="w-3.5 h-3.5" />
-                    <span>{name}</span>
+                    <FileCheck2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="max-w-[180px] sm:max-w-[240px] truncate">{name}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(i);
+                      }}
+                      className="p-0.5 hover:bg-blue-200/80 rounded-full text-blue-900 transition-colors cursor-pointer"
+                      title="Hapus berkas"
+                      aria-label={`Hapus berkas ${name}`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </span>
                 ))}
               </div>

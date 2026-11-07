@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { getPublicReportsAction } from '@/app/actions/reportActions';
 import type { IncidentReportDetail } from '@/lib/services/reportService';
@@ -113,8 +113,7 @@ export default function HomeLiveTicker() {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
         </span>
-        <span className="text-[11px] font-bold tracking-wider text-[#0D2453] uppercase flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-amber-500" />
+        <span className="text-[11px] font-bold tracking-wider text-[#0D2453] uppercase">
           Aktivitas Terkini
         </span>
         <span className="text-slate-300 hidden sm:inline">|</span>
