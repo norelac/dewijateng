@@ -1,14 +1,60 @@
 'use client';
 
 import React from 'react';
+import { VillageBudgetData, INITIAL_BUDGET_DATA } from './types';
 
-export default function AnggaranSection() {
+interface AnggaranSectionProps {
+  budget?: VillageBudgetData;
+  onManageBudget?: () => void;
+}
+
+function formatRupiah(num: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(num).replace('Rp', 'Rp');
+}
+
+function formatShortMiliar(num: number): string {
+  if (num >= 1_000_000_000) {
+    const val = (num / 1_000_000_000).toLocaleString('id-ID', {
+      maximumFractionDigits: 2,
+    });
+    return `Rp ${val} M`;
+  }
+  if (num >= 1_000_000) {
+    const val = (num / 1_000_000).toLocaleString('id-ID', {
+      maximumFractionDigits: 0,
+    });
+    return `Rp ${val} Jt`;
+  }
+  return formatRupiah(num);
+}
+
+export default function AnggaranSection({
+  budget = INITIAL_BUDGET_DATA,
+  onManageBudget,
+}: AnggaranSectionProps) {
+  const total = budget.apbdes + budget.banprov + budget.pades;
+  const apbdesRatio = total > 0 ? budget.apbdes / total : 0;
+  const banprovRatio = total > 0 ? budget.banprov / total : 0;
+  const padesRatio = total > 0 ? budget.pades / total : 0;
+
+  const apbdesPct = Math.round(apbdesRatio * 100);
+  const banprovPct = Math.round(banprovRatio * 100);
+  const padesPct = Math.max(0, 100 - apbdesPct - banprovPct);
+
+  const usedPct = total > 0 ? Math.round((budget.usedAmount / total) * 100) : 0;
+  const sisaPct = Math.max(0, 100 - usedPct);
+  const sisaKas = Math.max(0, total - budget.usedAmount);
+
   // SVG Donut calculation
   // Radius r = 58, Circumference = 2 * PI * 58 ≈ 364.42
   const c = 364.42;
-  const apbdesLength = 0.60 * c; // 218.65
-  const banprovLength = 0.25 * c; // 91.10
-  const padesLength = 0.15 * c; // 54.66
+  const apbdesLength = apbdesRatio * c;
+  const banprovLength = banprovRatio * c;
+  const padesLength = padesRatio * c;
 
   const banprovOffset = -apbdesLength;
   const padesOffset = -(apbdesLength + banprovLength);
@@ -23,7 +69,7 @@ export default function AnggaranSection() {
             Sumber pendanaan
           </h2>
           <p className="text-[#64748B] text-[12px] font-normal leading-relaxed">
-            Komposisi pendapatan desa · TA 2026
+            Komposisi pendapatan desa · TA {budget.year || 2026}
           </p>
         </div>
 
@@ -44,7 +90,7 @@ export default function AnggaranSection() {
                 stroke="#F3F5F8"
                 strokeWidth="20"
               />
-              {/* APBDes 60% */}
+              {/* APBDes */}
               <circle
                 cx="78"
                 cy="78"
@@ -55,7 +101,7 @@ export default function AnggaranSection() {
                 strokeDasharray={`${apbdesLength} ${c}`}
                 strokeDashoffset="0"
               />
-              {/* Bantuan Provinsi 25% */}
+              {/* Bantuan Provinsi */}
               <circle
                 cx="78"
                 cy="78"
@@ -66,7 +112,7 @@ export default function AnggaranSection() {
                 strokeDasharray={`${banprovLength} ${c}`}
                 strokeDashoffset={banprovOffset}
               />
-              {/* PADes Wisata 15% */}
+              {/* PADes Wisata */}
               <circle
                 cx="78"
                 cy="78"
@@ -81,8 +127,8 @@ export default function AnggaranSection() {
 
             {/* Center Overlay Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[#0D2453] text-[20px] font-semibold tracking-tight leading-none">
-                Rp 1,2 M
+              <span className="text-[#0D2453] text-[18px] sm:text-[20px] font-semibold tracking-tight leading-none text-center">
+                {formatShortMiliar(total)}
               </span>
               <span className="text-[#64748B] text-[10px] font-normal mt-1 leading-none">
                 Total pendanaan
@@ -98,10 +144,10 @@ export default function AnggaranSection() {
               <div className="flex flex-col gap-0.5 flex-1 leading-tight">
                 <div className="flex items-center justify-between text-[#0D2453] text-[12px]">
                   <span className="font-normal">APBDes</span>
-                  <span className="font-semibold">60%</span>
+                  <span className="font-semibold">{apbdesPct}%</span>
                 </div>
-                <span className="text-[#64748B] text-[11px] font-normal">
-                  Rp 720.000.000
+                <span className="text-[#64748B] text-[11px] font-normal font-mono">
+                  {formatRupiah(budget.apbdes)}
                 </span>
               </div>
             </div>
@@ -112,10 +158,10 @@ export default function AnggaranSection() {
               <div className="flex flex-col gap-0.5 flex-1 leading-tight">
                 <div className="flex items-center justify-between text-[#0D2453] text-[12px]">
                   <span className="font-normal">Bantuan Provinsi</span>
-                  <span className="font-semibold">25%</span>
+                  <span className="font-semibold">{banprovPct}%</span>
                 </div>
-                <span className="text-[#64748B] text-[11px] font-normal">
-                  Rp 300.000.000
+                <span className="text-[#64748B] text-[11px] font-normal font-mono">
+                  {formatRupiah(budget.banprov)}
                 </span>
               </div>
             </div>
@@ -126,10 +172,10 @@ export default function AnggaranSection() {
               <div className="flex flex-col gap-0.5 flex-1 leading-tight">
                 <div className="flex items-center justify-between text-[#0D2453] text-[12px]">
                   <span className="font-normal">PADes Wisata</span>
-                  <span className="font-semibold">15%</span>
+                  <span className="font-semibold">{padesPct}%</span>
                 </div>
-                <span className="text-[#64748B] text-[11px] font-normal">
-                  Rp 180.000.000
+                <span className="text-[#64748B] text-[11px] font-normal font-mono">
+                  {formatRupiah(budget.pades)}
                 </span>
               </div>
             </div>
@@ -151,7 +197,8 @@ export default function AnggaranSection() {
           </div>
           <button
             type="button"
-            className="text-[#0D2453] text-[12px] font-semibold hover:underline shrink-0"
+            onClick={onManageBudget}
+            className="text-[#0D2453] text-[12px] font-semibold hover:underline shrink-0 cursor-pointer"
           >
             Kelola anggaran →
           </button>
@@ -160,23 +207,23 @@ export default function AnggaranSection() {
         {/* Persentase Realisasi */}
         <div className="flex items-end justify-between w-full pt-1">
           <span className="text-[#0D2453] text-[36px] sm:text-[38px] font-semibold tracking-[-1px] leading-none">
-            70%
+            {usedPct}%
           </span>
           <span className="bg-[#F3F5F8] text-[#64748B] text-[11px] font-medium px-2.5 py-1.5 rounded-full leading-none">
-            4 kegiatan tercatat
+            {budget.usedActivitiesCount || 4} kegiatan tercatat
           </span>
         </div>
 
-        {/* Progress Bar (Dual Color 70% vs 30%) */}
+        {/* Progress Bar (Dual Color usedPct vs sisaPct) */}
         <div className="h-[16px] w-full rounded-[5px] overflow-hidden flex bg-slate-100">
           <div
             className="bg-[#0D2453] h-full transition-all duration-500"
-            style={{ width: '70%' }}
-            title="Dana terpakai: 70%"
+            style={{ width: `${Math.min(100, Math.max(0, usedPct))}%` }}
+            title={`Dana terpakai: ${usedPct}%`}
           />
           <div
             className="bg-[#CBE2FF] h-full transition-all duration-500 flex-1"
-            title="Sisa kas: 30%"
+            title={`Sisa kas: ${sisaPct}%`}
           />
         </div>
 
@@ -184,19 +231,19 @@ export default function AnggaranSection() {
         <div className="flex items-start gap-6 w-full pt-1">
           <div className="flex-1 flex flex-col gap-1">
             <span className="text-[#64748B] text-[11px] font-normal leading-none">
-              Dana terpakai · 70%
+              Dana terpakai · {usedPct}%
             </span>
-            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-medium leading-tight">
-              Rp 840.000.000
+            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-semibold font-mono leading-tight">
+              {formatRupiah(budget.usedAmount)}
             </span>
           </div>
 
           <div className="flex-1 flex flex-col gap-1">
             <span className="text-[#64748B] text-[11px] font-normal leading-none">
-              Sisa kas · 30%
+              Sisa kas · {sisaPct}%
             </span>
-            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-medium leading-tight">
-              Rp 360.000.000
+            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-semibold font-mono leading-tight">
+              {formatRupiah(sisaKas)}
             </span>
           </div>
         </div>

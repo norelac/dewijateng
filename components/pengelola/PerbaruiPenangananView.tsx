@@ -11,7 +11,6 @@ import {
   X,
   CheckCircle2,
   Trash2,
-  Sparkles,
 } from 'lucide-react';
 import { DashboardTicket } from './types';
 
@@ -62,32 +61,6 @@ export default function PerbaruiPenangananView({
       const url = URL.createObjectURL(file);
       setResolvedImage(url);
     }
-  };
-
-  // Determine contextual sample image matching ticket context
-  const getContextualSample = () => {
-    const text = `${ticket.title} ${ticket.category || ''} ${ticket.location || ''}`.toLowerCase();
-    if (
-      text.includes('curug') ||
-      text.includes('tangga') ||
-      text.includes('akses') ||
-      text.includes('jalur') ||
-      text.includes('pagar')
-    ) {
-      return {
-        url: '/img/figma/aduan-curug-sesudah.png',
-        label: 'Sampel Pagar Curug',
-      };
-    }
-    return {
-      url: '/img/figma/toilet-sesudah.png',
-      label: 'Sampel Sanitasi/Toilet',
-    };
-  };
-
-  const handleUseSampleImage = (customUrl?: string) => {
-    const sample = getContextualSample();
-    setResolvedImage(customUrl || sample.url);
   };
 
   const handleToggleComplete = () => {
@@ -343,22 +316,13 @@ export default function PerbaruiPenangananView({
                     >
                       Unggah
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleUseSampleImage()}
-                      className="inline-flex items-center gap-1 text-[11px] text-blue-700 font-semibold hover:bg-blue-100 bg-blue-50 px-2.5 py-1 rounded transition-colors"
-                      title="Pakai foto sampel sesudah perbaikan sesuai kategori laporan"
-                    >
-                      <Sparkles className="w-3 h-3 text-blue-600" />
-                      <span>+ {getContextualSample().label}</span>
-                    </button>
                   </>
                 )}
               </div>
             </div>
 
             {/* Pratinjau Komparasi Sebelum & Sesudah (Proof-of-Fix) */}
-            {resolvedImage ? (
+            {resolvedImage && (
               <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[12px] p-[16px] flex flex-col gap-[12px]">
                 <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-2">
                   <div className="flex items-center gap-2">
@@ -413,13 +377,6 @@ export default function PerbaruiPenangananView({
 
                 <p className="text-[#64748b] text-[11px] leading-[1.4] bg-white border border-[#e6ecf5] rounded-lg p-2.5">
                   Foto sesudah ini akan dipublikasikan ke slider komparasi sebelum-sesudah di portal warga (<span className="font-mono text-[#0d2453]">/lapor</span>) untuk membuktikan penanganan nyata desa kepada publik.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-amber-50/60 border border-amber-200/80 rounded-[10px] p-3 flex items-start gap-2.5">
-                <span className="text-amber-700 text-xs shrink-0 mt-0.5">📸</span>
-                <p className="text-[11px] text-amber-900 leading-relaxed">
-                  <strong>Foto sesudah belum dilampirkan:</strong> Unggah bukti foto pengerjaan fisik atau klik tombol <strong>+ {getContextualSample().label}</strong> di atas agar bukti komparasi fisik otomatis terverifikasi.
                 </p>
               </div>
             )}

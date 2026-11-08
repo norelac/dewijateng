@@ -37,6 +37,28 @@ export interface BudgetSource {
   color: string;
 }
 
+export interface VillageBudgetData {
+  year: number;
+  dateStr: string;
+  apbdes: number;
+  banprov: number;
+  pades: number;
+  usedAmount: number;
+  usedActivitiesCount: number;
+  lastUpdatedStr: string;
+}
+
+export const INITIAL_BUDGET_DATA: VillageBudgetData = {
+  year: 2026,
+  dateStr: '28 Oktober 2026',
+  apbdes: 720000000,
+  banprov: 300000000,
+  pades: 180000000,
+  usedAmount: 840000000,
+  usedActivitiesCount: 4,
+  lastUpdatedStr: '20 Okt 2026 · Bantuan Provinsi Rp300.000.000 dipublikasikan.',
+};
+
 export interface ExpenseItem {
   id: string;
   date: string;

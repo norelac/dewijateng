@@ -1,0 +1,305 @@
+'use client';
+
+import React, { useState } from 'react';
+import { ChevronDown, ShieldCheck } from 'lucide-react';
+import { VillageBudgetData } from './types';
+
+interface UbahAnggaranViewProps {
+  budget: VillageBudgetData;
+  onBack: () => void;
+  onSaveBudget: (updated: Partial<VillageBudgetData>) => void;
+}
+
+function formatRupiah(num: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(num).replace('Rp', 'Rp');
+}
+
+function formatNumberInput(val: number | string): string {
+  const digits = String(val).replace(/\D/g, '');
+  if (!digits) return '0';
+  return new Intl.NumberFormat('id-ID').format(Number(digits));
+}
+
+function parseNumberInput(str: string): number {
+  const digits = str.replace(/\D/g, '');
+  return digits ? Number(digits) : 0;
+}
+
+export default function UbahAnggaranView({
+  budget,
+  onBack,
+  onSaveBudget,
+}: UbahAnggaranViewProps) {
+  const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+
+  const [apbdesStr, setApbdesStr] = useState<string>(
+    formatNumberInput(budget.apbdes)
+  );
+  const [banprovStr, setBanprovStr] = useState<string>(
+    formatNumberInput(budget.banprov)
+  );
+  const [padesStr, setPadesStr] = useState<string>(
+    formatNumberInput(budget.pades)
+  );
+
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Live dynamic calculations
+  const apbdesNum = parseNumberInput(apbdesStr);
+  const banprovNum = parseNumberInput(banprovStr);
+  const padesNum = parseNumberInput(padesStr);
+
+  const totalPendanaan = apbdesNum + banprovNum + padesNum;
+  const danaTerpakaiTetap = budget.usedAmount;
+  const sisaKasSaatIni = totalPendanaan - danaTerpakaiTetap;
+
+  const handleInputChange = (
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value.replace(/\D/g, '');
+      if (!raw) {
+        setter('0');
+      } else {
+        setter(new Intl.NumberFormat('id-ID').format(Number(raw)));
+      }
+    };
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSaveBudget({
+      year: selectedYear,
+      apbdes: apbdesNum,
+      banprov: banprovNum,
+      pades: padesNum,
+      lastUpdatedStr: `Diperbarui TA ${selectedYear} · Total ${formatRupiah(totalPendanaan)} dipublikasikan.`,
+    });
+    setIsSaved(true);
+    setTimeout(() => {
+      onBack();
+    }, 600);
+  };
+
+  return (
+    <div className="flex flex-col gap-[24px] w-full" data-node-id="371:1034">
+      {/* 1. Tombol Kembali */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="font-semibold text-[#0d2453] text-[12px] leading-normal self-start hover:underline cursor-pointer flex items-center gap-1.5"
+      >
+        <span>←</span>
+        <span>Kembali ke Anggaran desa</span>
+      </button>
+
+      {/* 2. Pengantar Halaman (Judul & Subtitle) */}
+      <div className="flex flex-col gap-[7px] w-full">
+        <h1 className="text-[#0d2453] text-[28px] font-semibold tracking-[-0.7px] leading-normal">
+          Ubah anggaran
+        </h1>
+        <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
+          Perbarui sumber pendanaan Desa Candirejo. Nilai awal sesuai anggaran tersimpan.
+        </p>
+      </div>
+
+      {/* 3. Formulir Anggaran (Layout 2 Kolom) */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col lg:flex-row gap-[24px] items-start w-full"
+      >
+        {/* Kolom Kiri: Isian Pendanaan */}
+        <div className="flex-1 min-w-px flex flex-col gap-[24px] w-full">
+          <div className="bg-white border border-[#e6ecf5] rounded-[16px] p-[24px] flex flex-col gap-[18px] shadow-xs">
+            <h2 className="text-[#0d2453] text-[17px] font-semibold leading-[1.5]">
+              Tahun &amp; sumber dana
+            </h2>
+
+            {/* Isian: Tahun Anggaran Dropdown */}
+            <div className="flex flex-col gap-[7px] relative">
+              <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                Tahun anggaran
+              </label>
+              <button
+                type="button"
+                onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
+                className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] p-[12px] flex items-center justify-between text-left text-[13px] text-[#0d2453] hover:border-slate-400 transition-colors cursor-pointer"
+              >
+                <span>{selectedYear}</span>
+                <ChevronDown className="w-[16px] h-[16px] text-[#64748b]" />
+              </button>
+
+              {yearDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setYearDropdownOpen(false)}
+                  />
+                  <div className="absolute top-[72px] left-0 right-0 bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
+                    {[2026, 2025, 2024].map((yr) => (
+                      <button
+                        key={yr}
+                        type="button"
+                        onClick={() => {
+                          setSelectedYear(yr);
+                          setYearDropdownOpen(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-[13px] hover:bg-slate-50 ${
+                          selectedYear === yr
+                            ? 'text-[#0d2453] font-semibold bg-slate-50'
+                            : 'text-[#64748b]'
+                        }`}
+                      >
+                        {yr}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Isian: APBDes (Rp) */}
+            <div className="flex flex-col gap-[7px]">
+              <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                APBDes (Rp)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={apbdesStr}
+                  onChange={handleInputChange(setApbdesStr)}
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Isian: Bantuan Provinsi (Rp) */}
+            <div className="flex flex-col gap-[7px]">
+              <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                Bantuan Provinsi (Rp)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={banprovStr}
+                  onChange={handleInputChange(setBanprovStr)}
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Isian: PADes Wisata (Rp) */}
+            <div className="flex flex-col gap-[7px]">
+              <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                PADes Wisata (Rp)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={padesStr}
+                  onChange={handleInputChange(setPadesStr)}
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Pemisah Garis */}
+            <div className="bg-[#e6ecf5] h-px w-full my-1" />
+
+            {/* Total Pendanaan Dinamis */}
+            <div className="flex items-center justify-between text-[#0d2453] leading-[1.5] w-full">
+              <span className="text-[13px] font-semibold">Total pendanaan</span>
+              <span className="text-[22px] font-semibold font-mono tracking-tight">
+                {formatRupiah(totalPendanaan)}
+              </span>
+            </div>
+
+            <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
+              Total adalah penjumlahan ketiga sumber dana.
+            </p>
+
+            {/* Tindakan Formulir */}
+            <div className="flex items-center gap-[10px] pt-[6px]">
+              <button
+                type="submit"
+                className="bg-[#0d2453] border-2 border-[#0d2453] text-white text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-[#132d66] transition-all active:scale-95 shadow-2xs cursor-pointer"
+              >
+                {isSaved ? 'Tersimpan!' : 'Simpan perubahan'}
+              </button>
+
+              <button
+                type="button"
+                onClick={onBack}
+                className="bg-white border-2 border-[#e6ecf5] text-[#0d2453] text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-slate-50 transition-all active:scale-95 shadow-2xs cursor-pointer"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Kolom Kanan: Dampak Perubahan */}
+        <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-[20px]">
+          {/* Card: Sebelum Menyimpan */}
+          <div className="bg-white border border-[#e6ecf5] rounded-[16px] p-[24px] flex flex-col gap-[18px] shadow-xs">
+            <h2 className="text-[#0d2453] text-[17px] font-semibold leading-[1.5]">
+              Sebelum menyimpan
+            </h2>
+            <p className="text-[#0d2453] text-[13px] font-normal leading-[1.5]">
+              Nilai sumber dana dan total pendanaan pada situs publik akan diperbarui setelah perubahan disimpan.
+            </p>
+
+            <div className="bg-[#e6ecf5] h-px w-full" />
+
+            {/* Dana Terpakai Tetap */}
+            <div className="flex flex-col gap-[4px]">
+              <span className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
+                Dana terpakai tetap
+              </span>
+              <span className="text-[#0d2453] text-[20px] font-semibold font-mono leading-[1.5]">
+                {formatRupiah(danaTerpakaiTetap)}
+              </span>
+            </div>
+
+            {/* Sisa Kas dengan Isian Saat Ini */}
+            <div className="flex flex-col gap-[4px]">
+              <span className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
+                Sisa kas dengan isian saat ini
+              </span>
+              <span
+                className={`text-[20px] font-semibold font-mono leading-[1.5] ${
+                  sisaKasSaatIni < 0 ? 'text-red-600' : 'text-[#0d2453]'
+                }`}
+              >
+                {formatRupiah(sisaKasSaatIni)}
+              </span>
+            </div>
+
+            <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
+              Sisa kas dihitung dari total pendanaan dikurangi pengeluaran yang tersimpan.
+            </p>
+          </div>
+
+          {/* Card Catatan Informasi */}
+          <div className="bg-[#edf3fc] rounded-[10px] p-[16px] flex items-start gap-[10px] w-full">
+            <ShieldCheck className="w-[18px] h-[18px] text-[#0d2453] shrink-0 mt-0.5" />
+            <p className="text-[#0d2453] text-[13px] font-normal leading-[1.5] flex-1">
+              Periksa nominal sebelum menyimpan. Batal mengembalikan Anda tanpa menerapkan perubahan.
+            </p>
+          </div>
+        </div>
+      </form>
+
+      {/* 4. Sub-Footer Layanan */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
+        <span>© 2026 DEWI JATENG</span>
+        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+      </div>
+    </div>
+  );
+}

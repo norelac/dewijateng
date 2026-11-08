@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import DashboardKpis from '@/components/pengelola/DashboardKpis';
@@ -11,14 +12,21 @@ import AktivitasPanduanSection from '@/components/pengelola/AktivitasPanduanSect
 import KelolaLaporanListView from '@/components/pengelola/KelolaLaporanListView';
 import VerifikasiLaporanView from '@/components/pengelola/VerifikasiLaporanView';
 import PerbaruiPenangananView from '@/components/pengelola/PerbaruiPenangananView';
+import AnggaranDesaView from '@/components/pengelola/AnggaranDesaView';
+import UbahAnggaranView from '@/components/pengelola/UbahAnggaranView';
 import {
   DashboardTicket,
   TicketStatus,
   INITIAL_TICKETS_DATA,
+  VillageBudgetData,
+  INITIAL_BUDGET_DATA,
 } from '@/components/pengelola/types';
 
-export default function PengelolaPage() {
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+function PengelolaDashboardContent() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'dashboard';
+
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const [tickets, setTickets] = useState<DashboardTicket[]>(INITIAL_TICKETS_DATA);
 
@@ -27,6 +35,19 @@ export default function PengelolaPage() {
     'list'
   );
   const [selectedTicketId, setSelectedTicketId] = useState<string>('t-1');
+
+  // Budget data & sub-view in 'anggaran' tab: 'view' | 'edit'
+  const [budget, setBudget] = useState<VillageBudgetData>(INITIAL_BUDGET_DATA);
+  const [anggaranSubView, setAnggaranSubView] = useState<'view' | 'edit'>('view');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+      if (tab === 'anggaran') setAnggaranSubView('view');
+      if (tab === 'laporan') setLaporanSubView('list');
+    }
+  }, [searchParams]);
 
   const selectedTicket =
     tickets.find((t) => t.id === selectedTicketId) || tickets[0];
@@ -55,11 +76,11 @@ export default function PengelolaPage() {
     if (tabId === 'laporan') {
       setLaporanSubView('list');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tabId === 'anggaran') {
+      setAnggaranSubView('view');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (tabId === 'dashboard') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tabId === 'anggaran') {
-      const el = document.getElementById('section-anggaran');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else if (tabId === 'pengeluaran') {
       const el = document.getElementById('section-pengeluaran');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -195,7 +216,10 @@ export default function PengelolaPage() {
 
               {/* Ringkasan Anggaran (Sumber Dana Donut + Realisasi Bar) */}
               <section id="section-anggaran" className="w-full">
-                <AnggaranSection />
+                <AnggaranSection
+                  budget={budget}
+                  onManageBudget={() => handleTabChange('anggaran')}
+                />
               </section>
 
               {/* Pengeluaran & Kelengkapan Publikasi */}
@@ -243,6 +267,31 @@ export default function PengelolaPage() {
                 />
               )}
             </>
+          ) : activeTab === 'anggaran' ? (
+            anggaranSubView === 'view' ? (
+              <AnggaranDesaView
+                budget={budget}
+                onOpenEdit={() => {
+                  setAnggaranSubView('edit');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onNavigateToPengeluaran={() => {
+                  setActiveTab('pengeluaran');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            ) : (
+              <UbahAnggaranView
+                budget={budget}
+                onBack={() => {
+                  setAnggaranSubView('view');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onSaveBudget={(updated) => {
+                  setBudget((prev) => ({ ...prev, ...updated }));
+                }}
+              />
+            )
           ) : (
             /* Fallback for other sidebar items */
             <div className="bg-white rounded-[16px] border border-[#e6ecf5] p-8 text-center flex flex-col items-center gap-3">
@@ -264,5 +313,19 @@ export default function PengelolaPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PengelolaPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]">
+          <div className="w-8 h-8 border-3 border-[#0D2453] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <PengelolaDashboardContent />
+    </Suspense>
   );
 }
