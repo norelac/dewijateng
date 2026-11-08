@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Montserrat, MonteCarlo } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import LayoutShell from '@/components/LayoutShell';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -46,13 +45,7 @@ export default function RootLayout({
       className={`scroll-smooth ${plusJakartaSans.variable} ${montserrat.variable} ${monteCarlo.variable}`}
     >
       <body className="bg-[#F7F9FC] text-[#0D2453] font-sans antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-[#0D2453]">
-        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 pt-6">
-          <Navbar />
-        </div>
-
-        <main className="flex-grow">{children}</main>
-
-        <Footer />
+        <LayoutShell>{children}</LayoutShell>
       </body>
     </html>
   );
