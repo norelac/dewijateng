@@ -3,71 +3,28 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Search, ShieldCheck } from 'lucide-react';
-import { DashboardTicket, TicketStatus } from './types';
+import { DashboardTicket, TicketStatus, INITIAL_TICKETS_DATA } from './types';
 import TicketActionModal from './TicketActionModal';
 
-const INITIAL_TICKETS: DashboardTicket[] = [
-  {
-    id: 't-1',
-    code: 'DS-JTG-2026-0953',
-    title: 'Keran wastafel rusak',
-    date: '28 Okt 2026',
-    status: 'Masuk',
-    actionLabel: 'Verifikasi laporan',
-    image: '/img/figma/aduan-wastafel.png',
-    location: 'Toilet Umum Pusat Edukasi Candirejo',
-    category: 'Sanitasi & Kebersihan',
-    description:
-      'Keran air di wastafel toilet umum area barat patah dan bocor terus menerus sejak pagi, mengakibatkan genangan air.',
-    pelapor: 'Anonim (Warga/Wisatawan)',
-  },
-  {
-    id: 't-2',
-    code: 'DS-JTG-2026-0948',
-    title: 'Pungli parkir tidak sesuai',
-    date: '27 Okt 2026',
-    status: 'Diverifikasi',
-    actionLabel: 'Mulai penanganan',
-    image: '/img/figma/aduan-parkir.png',
-    location: 'Area Parkir Masuk Gerbang Timur',
-    category: 'Ketertiban & Retribusi',
-    description:
-      'Oknum meminta tarif parkir mobil Rp 15.000 tanpa karcis resmi perda desa wisata. Harap ditertibkan pengelola Pokdarwis.',
-    pelapor: 'Anonim (Wisatawan)',
-  },
-  {
-    id: 't-3',
-    code: 'DS-JTG-2026-0942',
-    title: 'Sampah menumpuk di area istirahat',
-    date: '25 Okt 2026',
-    status: 'Diproses',
-    actionLabel: 'Perbarui progres',
-    image: '/img/figma/aduan-sampah.png',
-    location: 'Gazebo & Rest Area Utama',
-    category: 'Sanitasi & Lingkungan',
-    description:
-      'Tempat pembuangan sampah penuh dan meluber setelah akhir pekan panjang. Mengeluarkan bau tidak sedap.',
-    pelapor: 'Anonim (Warga Lokal)',
-  },
-  {
-    id: 't-4',
-    code: 'DS-JTG-2026-0891',
-    title: 'Akses ke curug buruk',
-    date: '1 Ags 2026',
-    status: 'Selesai',
-    actionLabel: 'Lihat dokumentasi',
-    image: '/img/figma/aduan-curug-sebelum.png',
-    resolvedImage: '/img/figma/aduan-curug-sesudah.png',
-    location: 'Jalur Setapak Curug Candirejo',
-    category: 'Akses & Fasilitas Fisik',
-    description:
-      'Anak tangga setapak menuju curug licin dan pegangan pagar bambu patah. Telah diperbaiki dengan pagar baja galvanis & cor semen bertekstur.',
-    pelapor: 'Anonim (Wisatawan Mancanegara)',
-  },
-];
+interface AntreanLaporanTableProps {
+  tickets?: DashboardTicket[];
+  onOpenKelolaLaporan?: () => void;
+  onOpenTicketView?: (ticket: DashboardTicket, action: 'detail' | 'progres') => void;
+  onUpdateStatus?: (ticketId: string, newStatus: TicketStatus) => void;
+}
 
-export default function AntreanLaporanTable() {
-  const [tickets, setTickets] = useState<DashboardTicket[]>(INITIAL_TICKETS);
+export default function AntreanLaporanTable({
+  tickets: propTickets,
+  onOpenKelolaLaporan,
+  onOpenTicketView,
+  onUpdateStatus: propUpdateStatus,
+}: AntreanLaporanTableProps) {
+  const [internalTickets, setInternalTickets] = useState<DashboardTicket[]>(
+    INITIAL_TICKETS_DATA
+  );
+
+  const tickets = propTickets || internalTickets;
+
   const [activeFilter, setActiveFilter] = useState<string>('Semua');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
@@ -124,22 +81,26 @@ export default function AntreanLaporanTable() {
     filteredTickets.every((t) => selectedIds[t.id]);
 
   const handleUpdateStatus = (ticketId: string, newStatus: TicketStatus) => {
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id === ticketId) {
-          const actionLabel =
-            newStatus === 'Masuk'
-              ? 'Verifikasi laporan'
-              : newStatus === 'Diverifikasi'
-              ? 'Mulai penanganan'
-              : newStatus === 'Diproses'
-              ? 'Perbarui progres'
-              : 'Lihat dokumentasi';
-          return { ...t, status: newStatus, actionLabel };
-        }
-        return t;
-      })
-    );
+    if (propUpdateStatus) {
+      propUpdateStatus(ticketId, newStatus);
+    } else {
+      setInternalTickets((prev) =>
+        prev.map((t) => {
+          if (t.id === ticketId) {
+            const actionLabel =
+              newStatus === 'Masuk'
+                ? 'Verifikasi laporan'
+                : newStatus === 'Diverifikasi'
+                ? 'Mulai penanganan'
+                : newStatus === 'Diproses'
+                ? 'Perbarui progres'
+                : 'Lihat detail';
+            return { ...t, status: newStatus, actionLabel };
+          }
+          return t;
+        })
+      );
+    }
   };
 
   return (
@@ -157,10 +118,14 @@ export default function AntreanLaporanTable() {
         <button
           type="button"
           onClick={() => {
-            setActiveFilter('Semua');
-            setSearchQuery('');
+            if (onOpenKelolaLaporan) {
+              onOpenKelolaLaporan();
+            } else {
+              setActiveFilter('Semua');
+              setSearchQuery('');
+            }
           }}
-          className="text-[#0D2453] text-[12px] font-semibold hover:underline self-start sm:self-auto"
+          className="text-[#0D2453] text-[12px] font-semibold hover:underline self-start sm:self-auto cursor-pointer"
         >
           Kelola semua laporan →
         </button>
@@ -170,61 +135,22 @@ export default function AntreanLaporanTable() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
         {/* Status Filters */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setActiveFilter('Semua')}
-            className={`px-3 py-2 rounded-full text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
-              activeFilter === 'Semua'
-                ? 'bg-[#0D2453] text-white font-semibold'
-                : 'bg-[#F3F5F8] text-[#64748B] hover:bg-slate-200'
-            }`}
-          >
-            Semua · {counts.Semua}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('Masuk')}
-            className={`px-3 py-2 rounded-full text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
-              activeFilter === 'Masuk'
-                ? 'bg-[#0D2453] text-white font-semibold'
-                : 'bg-[#F3F5F8] text-[#64748B] hover:bg-slate-200'
-            }`}
-          >
-            Masuk · {counts.Masuk}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('Diverifikasi')}
-            className={`px-3 py-2 rounded-full text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
-              activeFilter === 'Diverifikasi'
-                ? 'bg-[#0D2453] text-white font-semibold'
-                : 'bg-[#F3F5F8] text-[#64748B] hover:bg-slate-200'
-            }`}
-          >
-            Diverifikasi · {counts.Diverifikasi}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('Diproses')}
-            className={`px-3 py-2 rounded-full text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
-              activeFilter === 'Diproses'
-                ? 'bg-[#0D2453] text-white font-semibold'
-                : 'bg-[#F3F5F8] text-[#64748B] hover:bg-slate-200'
-            }`}
-          >
-            Diproses · {counts.Diproses}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('Selesai')}
-            className={`px-3 py-2 rounded-full text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
-              activeFilter === 'Selesai'
-                ? 'bg-[#0D2453] text-white font-semibold'
-                : 'bg-[#F3F5F8] text-[#64748B] hover:bg-slate-200'
-            }`}
-          >
-            Selesai · {counts.Selesai}
-          </button>
+          {(['Semua', 'Masuk', 'Diverifikasi', 'Diproses', 'Selesai'] as const).map(
+            (statusKey) => (
+              <button
+                key={statusKey}
+                type="button"
+                onClick={() => setActiveFilter(statusKey)}
+                className={`px-3 py-2 rounded-full text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
+                  activeFilter === statusKey
+                    ? 'bg-[#0D2453] text-white font-semibold'
+                    : 'bg-[#F3F5F8] text-[#64748B] hover:bg-slate-200'
+                }`}
+              >
+                {statusKey} · {counts[statusKey]}
+              </button>
+            )
+          )}
         </div>
 
         {/* Search Input */}
@@ -331,7 +257,16 @@ export default function AntreanLaporanTable() {
                   <div className="w-[150px] shrink-0">
                     <button
                       type="button"
-                      onClick={() => setActiveModalTicket(ticket)}
+                      onClick={() => {
+                        if (onOpenTicketView) {
+                          onOpenTicketView(
+                            ticket,
+                            ticket.status === 'Diproses' ? 'progres' : 'detail'
+                          );
+                        } else {
+                          setActiveModalTicket(ticket);
+                        }
+                      }}
                       className="bg-white border border-[#E6ECF5] h-8 px-3 rounded-full text-[#0D2453] text-[11px] font-semibold flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-2xs whitespace-nowrap"
                     >
                       {ticket.actionLabel}
@@ -357,7 +292,7 @@ export default function AntreanLaporanTable() {
         </div>
       </div>
 
-      {/* Interactive Modal */}
+      {/* Interactive Modal (Fallback when opened in modal mode) */}
       <TicketActionModal
         ticket={activeModalTicket}
         isOpen={!!activeModalTicket}
