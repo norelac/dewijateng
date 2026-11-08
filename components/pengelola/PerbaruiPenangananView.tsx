@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
   FileImage,
@@ -11,6 +11,7 @@ import {
   X,
   CheckCircle2,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { DashboardTicket } from './types';
 
@@ -47,6 +48,14 @@ export default function PerbaruiPenangananView({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync state if incoming ticket changes
+  useEffect(() => {
+    setStage(ticket.status === 'Selesai' ? 'Selesai' : 'Diproses');
+    setMarkCompleted(ticket.status === 'Selesai');
+    setNotes(ticket.notes || '');
+    setResolvedImage(ticket.resolvedImage || null);
+  }, [ticket.id, ticket.status, ticket.notes, ticket.resolvedImage]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -55,9 +64,30 @@ export default function PerbaruiPenangananView({
     }
   };
 
-  const handleUseSampleImage = () => {
-    // Pick sample proof-of-fix image from local assets
-    setResolvedImage('/img/figma/aduan-curug-sesudah.png');
+  // Determine contextual sample image matching ticket context
+  const getContextualSample = () => {
+    const text = `${ticket.title} ${ticket.category || ''} ${ticket.location || ''}`.toLowerCase();
+    if (
+      text.includes('curug') ||
+      text.includes('tangga') ||
+      text.includes('akses') ||
+      text.includes('jalur') ||
+      text.includes('pagar')
+    ) {
+      return {
+        url: '/img/figma/aduan-curug-sesudah.png',
+        label: 'Sampel Pagar Curug',
+      };
+    }
+    return {
+      url: '/img/figma/toilet-sesudah.png',
+      label: 'Sampel Sanitasi/Toilet',
+    };
+  };
+
+  const handleUseSampleImage = (customUrl?: string) => {
+    const sample = getContextualSample();
+    setResolvedImage(customUrl || sample.url);
   };
 
   const handleToggleComplete = () => {
@@ -112,7 +142,9 @@ export default function PerbaruiPenangananView({
           className={`text-[11px] font-medium px-[10px] py-[5px] rounded-full inline-block leading-normal ${
             ticket.status === 'Selesai'
               ? 'bg-[#e7f5ed] text-[#16725c]'
-              : 'bg-[#fff4dd] text-[#99620e]'
+              : ticket.status === 'Diproses'
+              ? 'bg-[#fff4dd] text-[#99620e]'
+              : 'bg-[#edf3fc] text-[#0d2453]'
           }`}
         >
           {ticket.status}
@@ -211,9 +243,17 @@ export default function PerbaruiPenangananView({
 
           {/* Card: Dokumentasi Sebelum & Sesudah */}
           <div className="bg-white border border-[#e6ecf5] rounded-[16px] p-[24px] flex flex-col gap-[18px] shadow-xs">
-            <h2 className="text-[#0d2453] text-[17px] font-semibold leading-[1.5]">
-              Dokumentasi sebelum &amp; sesudah
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-[#0d2453] text-[17px] font-semibold leading-[1.5]">
+                Dokumentasi sebelum &amp; sesudah
+              </h2>
+              {resolvedImage && (
+                <span className="bg-[#e7f5ed] text-[#16725c] text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Foto sesudah siap</span>
+                </span>
+              )}
+            </div>
 
             {/* Kotak Lampiran Sebelum */}
             <div className="bg-[#f3f5f8] border border-[#e6ecf5] rounded-[10px] p-[16px] flex items-center justify-between gap-[12px] w-full">
@@ -254,7 +294,7 @@ export default function PerbaruiPenangananView({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-2.5 shrink-0">
                 {resolvedImage ? (
                   <>
                     <button
@@ -264,13 +304,27 @@ export default function PerbaruiPenangananView({
                     >
                       Lihat
                     </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[#64748b] hover:text-[#0d2453] text-[11px] hover:underline"
+                    >
+                      Ganti
+                    </button>
                     <button
                       type="button"
                       onClick={() => setResolvedImage(null)}
-                      className="text-red-600 hover:text-red-700 p-1"
-                      title="Hapus foto"
+                      className="text-red-500 hover:text-red-700 p-1"
+                      title="Hapus foto sesudah"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </>
                 ) : (
@@ -291,16 +345,84 @@ export default function PerbaruiPenangananView({
                     </button>
                     <button
                       type="button"
-                      onClick={handleUseSampleImage}
-                      className="text-[11px] text-blue-700 font-semibold hover:underline bg-blue-50 px-2 py-1 rounded"
-                      title="Pakai foto sampel sesudah perbaikan"
+                      onClick={() => handleUseSampleImage()}
+                      className="inline-flex items-center gap-1 text-[11px] text-blue-700 font-semibold hover:bg-blue-100 bg-blue-50 px-2.5 py-1 rounded transition-colors"
+                      title="Pakai foto sampel sesudah perbaikan sesuai kategori laporan"
                     >
-                      + Sampel
+                      <Sparkles className="w-3 h-3 text-blue-600" />
+                      <span>+ {getContextualSample().label}</span>
                     </button>
                   </>
                 )}
               </div>
             </div>
+
+            {/* Pratinjau Komparasi Sebelum & Sesudah (Proof-of-Fix) */}
+            {resolvedImage ? (
+              <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[12px] p-[16px] flex flex-col gap-[12px]">
+                <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span className="text-[13px] font-semibold text-[#0d2453]">
+                      Pratinjau Komparasi Fisik (Proof-of-Fix)
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#16725c] bg-[#e7f5ed] px-2 py-0.5 rounded-full font-medium">
+                    Tampil di /lapor
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Kondisi Sebelum */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="relative h-[120px] sm:h-[150px] w-full rounded-lg overflow-hidden bg-slate-200 border border-slate-300">
+                      <Image
+                        src={ticket.image}
+                        alt="Sebelum penanganan"
+                        fill
+                        className="object-cover"
+                      />
+                      <span className="absolute bottom-1.5 left-1.5 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded font-medium backdrop-blur-xs">
+                        Sebelum
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#64748b] truncate">
+                      {ticket.imageLabel || 'Kondisi awal pelapor'}
+                    </span>
+                  </div>
+
+                  {/* Kondisi Sesudah */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="relative h-[120px] sm:h-[150px] w-full rounded-lg overflow-hidden bg-slate-200 border border-emerald-400 ring-2 ring-emerald-500/20">
+                      <Image
+                        src={resolvedImage}
+                        alt="Sesudah penanganan"
+                        fill
+                        unoptimized={resolvedImage.startsWith('blob:')}
+                        className="object-cover"
+                      />
+                      <span className="absolute bottom-1.5 left-1.5 bg-emerald-700/90 text-white text-[10px] px-2 py-0.5 rounded font-medium backdrop-blur-xs">
+                        Sesudah
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-emerald-700 font-medium truncate">
+                      Hasil fisik perbaikan
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[#64748b] text-[11px] leading-[1.4] bg-white border border-[#e6ecf5] rounded-lg p-2.5">
+                  Foto sesudah ini akan dipublikasikan ke slider komparasi sebelum-sesudah di portal warga (<span className="font-mono text-[#0d2453]">/lapor</span>) untuk membuktikan penanganan nyata desa kepada publik.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-amber-50/60 border border-amber-200/80 rounded-[10px] p-3 flex items-start gap-2.5">
+                <span className="text-amber-700 text-xs shrink-0 mt-0.5">📸</span>
+                <p className="text-[11px] text-amber-900 leading-relaxed">
+                  <strong>Foto sesudah belum dilampirkan:</strong> Unggah bukti foto pengerjaan fisik atau klik tombol <strong>+ {getContextualSample().label}</strong> di atas agar bukti komparasi fisik otomatis terverifikasi.
+                </p>
+              </div>
+            )}
 
             <p className="text-[#64748b] text-[11px] leading-[1.5]">
               Representasi lampiran bukan bukti asli yang telah ditinjau. Foto sesudah wajib tersedia untuk menandai laporan selesai.
@@ -337,6 +459,12 @@ export default function PerbaruiPenangananView({
                 ? 'Laporan akan diperbarui menjadi status Selesai.'
                 : 'Belum dipilih. Laporan tetap berstatus Diproses.'}
             </p>
+
+            {markCompleted && !resolvedImage && (
+              <p className="text-amber-800 text-[11px] bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                ⚠️ Harap lampirkan foto sesudah penanganan agar garansi Proof-of-Fix dapat dipublikasikan ke portal transparansi publik.
+              </p>
+            )}
 
             <p className="text-[#64748b] text-[11px] leading-[1.5]">
               Untuk menyelesaikan: lampirkan foto sesudah, isi hasil penanganan, dan pastikan masalah sudah tertangani. Perubahan status berlaku hanya setelah Simpan progres.
@@ -466,6 +594,7 @@ export default function PerbaruiPenangananView({
                 src={resolvedImage}
                 alt="Sesudah penanganan"
                 fill
+                unoptimized={resolvedImage.startsWith('blob:')}
                 className="object-cover"
               />
             </div>

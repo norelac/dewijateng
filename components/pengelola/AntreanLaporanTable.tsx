@@ -211,18 +211,28 @@ export default function AntreanLaporanTable({
                   </div>
 
                   {/* Info Laporan (Foto + Judul + Kode) */}
-                  <div className="flex-1 min-w-px flex items-center gap-3">
+                  <div
+                    onClick={() => {
+                      if (onOpenTicketView) {
+                        onOpenTicketView(
+                          ticket,
+                          ticket.status === 'Masuk' ? 'detail' : 'progres'
+                        );
+                      }
+                    }}
+                    className="flex-1 min-w-px flex items-center gap-3 cursor-pointer group"
+                  >
                     <div className="relative w-[44px] h-[42px] rounded-[8px] overflow-hidden shrink-0 bg-slate-100 border border-[#E6ECF5]">
                       <Image
                         src={ticket.image}
                         alt={ticket.title}
                         fill
                         sizes="44px"
-                        className="object-cover"
+                        className="object-cover group-hover:scale-105 transition-transform"
                       />
                     </div>
                     <div className="flex flex-col gap-1 min-w-0">
-                      <p className="text-[#0D2453] text-[12px] font-medium leading-tight truncate">
+                      <p className="text-[#0D2453] text-[12px] font-medium leading-tight truncate group-hover:text-blue-700 transition-colors">
                         {ticket.title}
                       </p>
                       <p className="text-[#64748B] text-[10px] font-normal leading-none font-mono">
@@ -261,13 +271,17 @@ export default function AntreanLaporanTable({
                         if (onOpenTicketView) {
                           onOpenTicketView(
                             ticket,
-                            ticket.status === 'Diproses' ? 'progres' : 'detail'
+                            ticket.status === 'Masuk' ? 'detail' : 'progres'
                           );
                         } else {
                           setActiveModalTicket(ticket);
                         }
                       }}
-                      className="bg-white border border-[#E6ECF5] h-8 px-3 rounded-full text-[#0D2453] text-[11px] font-semibold flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-2xs whitespace-nowrap"
+                      className={`h-8 px-3 rounded-full text-[11px] font-semibold flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs whitespace-nowrap ${
+                        ticket.status === 'Diverifikasi' || ticket.status === 'Diproses'
+                          ? 'bg-[#0D2453] border border-[#0D2453] text-white hover:bg-[#132D66]'
+                          : 'bg-white border border-[#E6ECF5] text-[#0D2453] hover:bg-slate-50'
+                      }`}
                     >
                       {ticket.actionLabel}
                     </button>

@@ -184,15 +184,30 @@ export default function KelolaLaporanListView({
               </div>
             ) : (
               filteredTickets.map((ticket) => {
+                const isMasuk = ticket.status === 'Masuk';
                 const isDiproses = ticket.status === 'Diproses';
+                const isDiverifikasi = ticket.status === 'Diverifikasi';
+
+                const actionTarget: 'detail' | 'progres' = isMasuk ? 'detail' : 'progres';
+                const actionLabel = isMasuk
+                  ? 'Verifikasi laporan'
+                  : isDiverifikasi
+                  ? 'Mulai penanganan'
+                  : isDiproses
+                  ? 'Perbarui progres'
+                  : 'Lihat bukti fisik';
+
                 return (
                   <div
                     key={ticket.id}
                     className="border-b border-[#e6ecf5] px-[14px] py-[20px] flex items-center gap-[20px] hover:bg-slate-50/70 transition-colors"
                   >
                     {/* Informasi Laporan */}
-                    <div className="flex-1 min-w-[220px] flex flex-col gap-[4px]">
-                      <span className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                    <div
+                      onClick={() => onSelectTicket(ticket, actionTarget)}
+                      className="flex-1 min-w-[220px] flex flex-col gap-[4px] cursor-pointer group"
+                    >
+                      <span className="text-[#0d2453] text-[13px] font-semibold leading-[1.5] group-hover:text-blue-700 transition-colors">
                         {ticket.title}
                       </span>
                       <span className="text-[#64748b] text-[11px] font-normal leading-[1.5] font-mono">
@@ -214,15 +229,21 @@ export default function KelolaLaporanListView({
                     <div className="w-[150px] shrink-0">
                       <button
                         type="button"
-                        onClick={() =>
-                          onSelectTicket(
-                            ticket,
-                            isDiproses ? 'progres' : 'detail'
-                          )
+                        onClick={() => onSelectTicket(ticket, actionTarget)}
+                        className={`border-2 rounded-full h-[40px] px-[14px] flex items-center justify-center text-[12px] font-semibold transition-all active:scale-95 shadow-2xs whitespace-nowrap cursor-pointer ${
+                          isDiverifikasi || isDiproses
+                            ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66]'
+                            : 'bg-white border-[#e6ecf5] text-[#0d2453] hover:bg-slate-50'
+                        }`}
+                        title={
+                          isMasuk
+                            ? 'Lakukan verifikasi lokasi dan bukti awal'
+                            : isDiverifikasi || isDiproses
+                            ? 'Perbarui progres pengerjaan dan unggah foto sesudah perbaikan'
+                            : 'Lihat foto komparasi sebelum dan sesudah'
                         }
-                        className="bg-white border-2 border-[#e6ecf5] rounded-full h-[40px] px-[14px] flex items-center justify-center text-[#0d2453] text-[12px] font-semibold hover:bg-slate-50 transition-all active:scale-95 shadow-2xs whitespace-nowrap cursor-pointer"
                       >
-                        {isDiproses ? 'Perbarui progres' : 'Lihat detail'}
+                        {actionLabel}
                       </button>
                     </div>
                   </div>

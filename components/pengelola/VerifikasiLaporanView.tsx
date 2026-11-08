@@ -20,12 +20,14 @@ interface VerifikasiLaporanViewProps {
     result: string,
     notes: string
   ) => void;
+  onSwitchToProgres?: () => void;
 }
 
 export default function VerifikasiLaporanView({
   ticket,
   onBack,
   onConfirmVerification,
+  onSwitchToProgres,
 }: VerifikasiLaporanViewProps) {
   const [selectedResult, setSelectedResult] = useState<string>('');
   const [resultDropdownOpen, setResultDropdownOpen] = useState<boolean>(false);
@@ -33,6 +35,8 @@ export default function VerifikasiLaporanView({
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState<boolean>(false);
+
+  const isAlreadyVerified = ticket.status !== 'Masuk';
 
   const verificationOptions = [
     'Sesuai fakta lapangan (Diverifikasi)',
@@ -50,8 +54,12 @@ export default function VerifikasiLaporanView({
     );
     setVerifiedSuccess(true);
     setTimeout(() => {
-      onBack();
-    }, 1200);
+      if (onSwitchToProgres) {
+        onSwitchToProgres();
+      } else {
+        onBack();
+      }
+    }, 700);
   };
 
   return (
@@ -180,118 +188,159 @@ export default function VerifikasiLaporanView({
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]">
-              {/* Hasil Pemeriksaan Dropdown */}
-              <div className="flex flex-col gap-[7px] relative">
-                <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
-                  Hasil pemeriksaan
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setResultDropdownOpen(!resultDropdownOpen)}
-                  className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] p-[12px] flex items-center justify-between text-left text-[13px] hover:border-slate-400 transition-colors"
-                >
-                  <span
-                    className={
-                      selectedResult ? 'text-[#0d2453]' : 'text-[#64748b]'
-                    }
+            {!isAlreadyVerified ? (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]">
+                {/* Hasil Pemeriksaan Dropdown */}
+                <div className="flex flex-col gap-[7px] relative">
+                  <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                    Hasil pemeriksaan
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setResultDropdownOpen(!resultDropdownOpen)}
+                    className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] p-[12px] flex items-center justify-between text-left text-[13px] hover:border-slate-400 transition-colors"
                   >
-                    {selectedResult || 'Pilih hasil pemeriksaan'}
-                  </span>
-                  <ChevronDown className="w-[16px] h-[16px] text-[#64748b] shrink-0" />
-                </button>
+                    <span
+                      className={
+                        selectedResult ? 'text-[#0d2453]' : 'text-[#64748b]'
+                      }
+                    >
+                      {selectedResult || 'Pilih hasil pemeriksaan'}
+                    </span>
+                    <ChevronDown className="w-[16px] h-[16px] text-[#64748b] shrink-0" />
+                  </button>
 
-                {resultDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30"
-                      onClick={() => setResultDropdownOpen(false)}
-                    />
-                    <div className="absolute top-[72px] left-0 right-0 bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
-                      {verificationOptions.map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => {
-                            setSelectedResult(opt);
-                            setResultDropdownOpen(false);
-                          }}
-                          className={`w-full px-4 py-2.5 text-left text-[13px] flex items-center justify-between hover:bg-slate-50 ${
-                            selectedResult === opt
-                              ? 'text-[#0d2453] font-semibold bg-slate-50'
-                              : 'text-[#64748b]'
-                          }`}
-                        >
-                          <span>{opt}</span>
-                          {selectedResult === opt && (
-                            <Check className="w-4 h-4 text-[#0d2453]" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Catatan Verifikasi */}
-              <div className="flex flex-col gap-[7px]">
-                <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
-                  Catatan verifikasi
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Tulis hasil pengecekan fasilitas dan rencana tindak lanjut…"
-                  className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[92px] p-[12px] text-[13px] text-[#0d2453] placeholder:text-[#64748b] outline-none focus:ring-1 focus:ring-[#0d2453] resize-none"
-                />
-              </div>
-
-              {/* Pilihan Checkbox Konfirmasi */}
-              <div
-                onClick={() => setIsConfirmed(!isConfirmed)}
-                className="flex items-center gap-[10px] cursor-pointer select-none pt-1"
-              >
-                <div
-                  className={`size-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${
-                    isConfirmed
-                      ? 'bg-[#0d2453] border-[#0d2453] text-white'
-                      : 'bg-white border-[#b9b9b9]'
-                  }`}
-                >
-                  {isConfirmed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  {resultDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-30"
+                        onClick={() => setResultDropdownOpen(false)}
+                      />
+                      <div className="absolute top-[72px] left-0 right-0 bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
+                        {verificationOptions.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setSelectedResult(opt);
+                              setResultDropdownOpen(false);
+                            }}
+                            className={`w-full px-4 py-2.5 text-left text-[13px] flex items-center justify-between hover:bg-slate-50 ${
+                              selectedResult === opt
+                                ? 'text-[#0d2453] font-semibold bg-slate-50'
+                                : 'text-[#64748b]'
+                            }`}
+                          >
+                            <span>{opt}</span>
+                            {selectedResult === opt && (
+                              <Check className="w-4 h-4 text-[#0d2453]" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <span className="text-[#0d2453] text-[13px] leading-[1.5]">
-                  Informasi dan bukti sudah diperiksa
-                </span>
-              </div>
 
-              <p className="text-[#64748b] text-[11px] leading-[1.5]">
-                Setelah diverifikasi, status berubah menjadi Diverifikasi. Penanganan dicatat pada tahap berikutnya.
-              </p>
+                {/* Catatan Verifikasi */}
+                <div className="flex flex-col gap-[7px]">
+                  <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
+                    Catatan verifikasi
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Tulis hasil pengecekan fasilitas dan rencana tindak lanjut…"
+                    className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[92px] p-[12px] text-[13px] text-[#0d2453] placeholder:text-[#64748b] outline-none focus:ring-1 focus:ring-[#0d2453] resize-none"
+                  />
+                </div>
 
-              {/* Tindakan Formulir */}
-              <div className="flex items-center gap-[10px] pt-[6px]">
-                <button
-                  type="submit"
-                  disabled={!isConfirmed}
-                  className={`border-2 rounded-full h-[40px] px-[18px] text-[12px] font-semibold transition-all ${
-                    isConfirmed
-                      ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer'
-                      : 'bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
+                {/* Pilihan Checkbox Konfirmasi */}
+                <div
+                  onClick={() => setIsConfirmed(!isConfirmed)}
+                  className="flex items-center gap-[10px] cursor-pointer select-none pt-1"
                 >
-                  {verifiedSuccess ? 'Terverifikasi!' : 'Verifikasi laporan'}
-                </button>
+                  <div
+                    className={`size-[20px] rounded-[4px] border flex items-center justify-center transition-colors ${
+                      isConfirmed
+                        ? 'bg-[#0d2453] border-[#0d2453] text-white'
+                        : 'bg-white border-[#b9b9b9]'
+                    }`}
+                  >
+                    {isConfirmed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <span className="text-[#0d2453] text-[13px] leading-[1.5]">
+                    Informasi dan bukti sudah diperiksa
+                  </span>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="bg-white border-2 border-[#e6ecf5] text-[#0d2453] text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
-                >
-                  Batal
-                </button>
+                <p className="text-[#64748b] text-[11px] leading-[1.5]">
+                  Setelah diverifikasi, status berubah menjadi Diverifikasi. Penanganan dicatat pada tahap berikutnya.
+                </p>
+
+                {/* Tindakan Formulir */}
+                <div className="flex items-center gap-[10px] pt-[6px]">
+                  <button
+                    type="submit"
+                    disabled={!isConfirmed}
+                    className={`border-2 rounded-full h-[40px] px-[18px] text-[12px] font-semibold transition-all ${
+                      isConfirmed
+                        ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer'
+                        : 'bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {verifiedSuccess ? 'Terverifikasi!' : 'Verifikasi laporan'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="bg-white border-2 border-[#e6ecf5] text-[#0d2453] text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="bg-[#e7f5ed] border border-[#a3e2cb] rounded-xl p-3.5 flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-[#16725c] shrink-0 mt-0.5" />
+                  <div className="flex flex-col gap-1 text-[12px] leading-tight">
+                    <span className="font-semibold text-[#16725c]">
+                      Status: {ticket.status}
+                    </span>
+                    <span className="text-[#16725c]/80 text-[11px]">
+                      Tahap verifikasi pemeriksaan awal telah selesai.
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-[#64748b] text-[13px] leading-relaxed">
+                  Laporan ini sudah diverifikasi. Silakan buka halaman <strong>Perbarui Penanganan</strong> untuk mencatat perkembangan fisik lapangan dan mengunggah foto bukti setelah perbaikan (Proof-of-Fix).
+                </p>
+
+                <div className="pt-2 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSwitchToProgres) onSwitchToProgres();
+                    }}
+                    className="w-full bg-[#0d2453] text-white text-[12px] font-semibold rounded-full h-[42px] px-[18px] hover:bg-[#132d66] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  >
+                    <span>Lanjut ke Penanganan &amp; Bukti Foto Sesudah</span>
+                    <span>→</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    className="w-full bg-white border-2 border-[#e6ecf5] text-[#0d2453] text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-slate-50 transition-all cursor-pointer text-center"
+                  >
+                    Kembali ke Daftar Laporan
+                  </button>
+                </div>
               </div>
-            </form>
+            )}
           </div>
 
           {/* Catatan Informasi Privasi */}

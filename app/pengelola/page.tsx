@@ -225,6 +225,10 @@ export default function PengelolaPage() {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   onConfirmVerification={handleConfirmVerification}
+                  onSwitchToProgres={() => {
+                    setLaporanSubView('progres');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                 />
               )}
 
