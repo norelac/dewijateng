@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import DashboardKpis from '@/components/pengelola/DashboardKpis';
@@ -14,6 +14,8 @@ import VerifikasiLaporanView from '@/components/pengelola/VerifikasiLaporanView'
 import PerbaruiPenangananView from '@/components/pengelola/PerbaruiPenangananView';
 import AnggaranDesaView from '@/components/pengelola/AnggaranDesaView';
 import UbahAnggaranView from '@/components/pengelola/UbahAnggaranView';
+import AktivitasPengelolaanView from '@/components/pengelola/AktivitasPengelolaanView';
+import PusatBantuanView from '@/components/pengelola/PusatBantuanView';
 import {
   DashboardTicket,
   TicketStatus,
@@ -24,6 +26,7 @@ import {
 
 function PengelolaDashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = searchParams.get('tab') || 'dashboard';
 
   const [activeTab, setActiveTab] = useState<string>(initialTab);
@@ -64,6 +67,8 @@ function PengelolaDashboardContent() {
         return 'Profil desa';
       case 'aktivitas':
         return 'Aktivitas';
+      case 'pusat-bantuan':
+        return 'Pusat bantuan';
       case 'pengaturan':
         return 'Pengaturan';
       default:
@@ -85,8 +90,9 @@ function PengelolaDashboardContent() {
       const el = document.getElementById('section-pengeluaran');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     } else if (tabId === 'aktivitas') {
-      const el = document.getElementById('section-aktivitas');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tabId === 'pusat-bantuan') {
+      router.push('/pengelola/pusat-bantuan');
     }
   };
 
@@ -292,6 +298,21 @@ function PengelolaDashboardContent() {
                 }}
               />
             )
+          ) : activeTab === 'aktivitas' ? (
+            <AktivitasPengelolaanView
+              onNavigate={(tab, ticketId) => {
+                if (tab === 'laporan') {
+                  if (ticketId) setSelectedTicketId(ticketId);
+                  setLaporanSubView(ticketId ? 'detail' : 'list');
+                } else {
+                  setAnggaranSubView('view');
+                }
+                setActiveTab(tab);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : activeTab === 'pusat-bantuan' ? (
+            <PusatBantuanView />
           ) : (
             /* Fallback for other sidebar items */
             <div className="bg-white rounded-[16px] border border-[#e6ecf5] p-8 text-center flex flex-col items-center gap-3">

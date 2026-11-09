@@ -81,6 +81,67 @@ export interface ActivityItem {
   code?: string;
 }
 
+export type ActivityType = 'Semua' | 'Laporan' | 'Anggaran';
+
+export interface ActivityHistoryEvent {
+  id: string;
+  date: string;
+  type: 'Laporan' | 'Anggaran';
+  title: string;
+  subject: string;
+  desc: string;
+  actionLabel: string;
+  actionTab: 'laporan' | 'anggaran';
+  ticketId?: string;
+}
+
+export interface HandlingStage {
+  date: string;
+  label: string;
+}
+
+export const INITIAL_ACTIVITY_HISTORY: ActivityHistoryEvent[] = [
+  {
+    id: 'hist-1',
+    date: '28 Okt 2026',
+    type: 'Laporan',
+    title: 'Laporan baru diterima',
+    subject: 'Keran wastafel rusak · DS-JTG-2026-0953',
+    desc: 'Masuk · menunggu verifikasi pengelola desa.',
+    actionLabel: 'Lihat detail laporan →',
+    actionTab: 'laporan',
+    ticketId: 't-1',
+  },
+  {
+    id: 'hist-2',
+    date: '20 Okt 2026',
+    type: 'Anggaran',
+    title: 'Sumber dana diperbarui',
+    subject: 'Bantuan Provinsi · Rp300.000.000',
+    desc: 'Nilai sumber pendanaan diperbarui dan dipublikasikan.',
+    actionLabel: 'Lihat anggaran →',
+    actionTab: 'anggaran',
+  },
+  {
+    id: 'hist-3',
+    date: '12 Okt 2026',
+    type: 'Laporan',
+    title: 'Penanganan laporan selesai',
+    subject: 'Akses ke curug buruk · DS-JTG-2026-0891',
+    desc: 'Dokumentasi perbaikan tersedia.',
+    actionLabel: 'Lihat laporan →',
+    actionTab: 'laporan',
+    ticketId: 't-3',
+  },
+];
+
+export const INITIAL_HANDLING_STAGES: HandlingStage[] = [
+  { date: '1 Ags 2026', label: 'Masuk' },
+  { date: '3 Ags 2026', label: 'Diverifikasi' },
+  { date: '5 Okt 2026', label: 'Proses perbaikan' },
+  { date: '12 Okt 2026', label: 'Selesai' },
+];
+
 export const INITIAL_TICKETS_DATA: DashboardTicket[] = [
   {
     id: 't-1',

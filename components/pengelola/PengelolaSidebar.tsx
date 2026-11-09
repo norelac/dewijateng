@@ -135,30 +135,50 @@ export default function PengelolaSidebar({
         <div className="h-px bg-[#E6ECF5] w-full" />
 
         {/* Menu Pendukung */}
-        <div className="flex flex-col gap-5 px-3">
+        <div className="flex flex-col gap-1.5">
           <Link
             href="/"
-            className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors text-[12px]"
+            className="h-10 px-3 rounded-[10px] flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] hover:bg-slate-50 transition-colors text-[12px]"
           >
             <ExternalLink className="w-[17px] h-[17px] shrink-0" />
             <span>Lihat situs publik</span>
           </Link>
-          <Link
-            href="/edukasi"
-            className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors text-[12px]"
+          <button
+            type="button"
+            onClick={() => {
+              if (onTabChange) onTabChange('pusat-bantuan');
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-2.5 transition-colors text-[12px] text-left ${
+              activeTab === 'pusat-bantuan'
+                ? 'bg-[#0D2453] text-white font-semibold'
+                : 'text-[#64748B] hover:text-[#0D2453] hover:bg-slate-50'
+            }`}
           >
-            <HelpCircle className="w-[17px] h-[17px] shrink-0" />
+            <HelpCircle
+              className={`w-[17px] h-[17px] shrink-0 ${
+                activeTab === 'pusat-bantuan' ? 'text-white' : 'text-[#64748B]'
+              }`}
+            />
             <span>Pusat bantuan</span>
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => {
               if (onTabChange) onTabChange('pengaturan');
               if (onCloseMobile) onCloseMobile();
             }}
-            className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors text-[12px] text-left"
+            className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-2.5 transition-colors text-[12px] text-left ${
+              activeTab === 'pengaturan'
+                ? 'bg-[#0D2453] text-white font-semibold'
+                : 'text-[#64748B] hover:text-[#0D2453] hover:bg-slate-50'
+            }`}
           >
-            <Settings className="w-[17px] h-[17px] shrink-0" />
+            <Settings
+              className={`w-[17px] h-[17px] shrink-0 ${
+                activeTab === 'pengaturan' ? 'text-white' : 'text-[#64748B]'
+              }`}
+            />
             <span>Pengaturan</span>
           </button>
         </div>
