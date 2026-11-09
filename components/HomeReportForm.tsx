@@ -306,11 +306,33 @@ export default function HomeReportForm() {
   };
 
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files);
-      setRawFiles((prev) => [...prev, ...filesArray]);
-      setUploadedFiles((prev) => [...prev, ...filesArray.map((f) => f.name)]);
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const MAX_FILE_BYTES = 5 * 1024 * 1024;
+    const MAX_FILES = 3;
+    const incoming = Array.from(e.target.files);
+
+    const tooBig = incoming.find((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig) {
+      setErrorMessage(`Berkas "${tooBig.name}" melebihi batas 5 MB per file.`);
+      e.target.value = '';
+      return;
     }
+
+    const room = MAX_FILES - rawFiles.length;
+    if (room <= 0) {
+      setErrorMessage(`Maksimal ${MAX_FILES} berkas bukti.`);
+      e.target.value = '';
+      return;
+    }
+
+    const accepted = incoming.slice(0, room);
+    if (incoming.length > room) {
+      setErrorMessage(`Hanya ${room} berkas lagi yang dapat ditambahkan (maks ${MAX_FILES}).`);
+    }
+    setRawFiles((prev) => [...prev, ...accepted]);
+    setUploadedFiles((prev) => [...prev, ...accepted.map((f) => f.name)]);
+    e.target.value = '';
   };
 
   const handleRemoveFile = (indexToRemove: number) => {

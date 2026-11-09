@@ -46,6 +46,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (file.size > 25 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: 'Ukuran berkas PDF melebihi batas 25 MB' },
+        { status: 413 }
+      );
+    }
+
     let itemsOverride: any[] | undefined;
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);

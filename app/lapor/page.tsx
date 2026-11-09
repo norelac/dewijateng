@@ -1457,7 +1457,7 @@ function LaporContent() {
                     <div>
                       <span className="text-[11px] text-[#64748B] block">Waktu dokumentasi:</span>
                       <span className="font-medium text-[#0D2453]">
-                        {activeReport.afterPhoto.label.replace('Sesudah · ', '')} · 11.30 WIB
+                        {activeReport.afterPhoto.label.replace('Sesudah · ', '')}
                       </span>
                     </div>
                     <div>

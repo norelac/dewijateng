@@ -65,6 +65,14 @@ export default function BalaiDesaLpjUploader() {
         });
         return;
       }
+      if (selected.size > 25 * 1024 * 1024) {
+        setStatusMessage({
+          type: 'error',
+          text: 'Ukuran berkas PDF melebihi batas 25 MB.',
+        });
+        e.target.value = '';
+        return;
+      }
       setFile(selected);
       setStatusMessage(null);
     }
