@@ -19,6 +19,10 @@ function AktivitasContent() {
       router.push('/pengelola/anggaran');
     } else if (tabId === 'aktivitas') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tabId === 'pusat-bantuan') {
+      router.push('/pengelola/pusat-bantuan');
+    } else if (tabId === 'pengaturan') {
+      router.push('/pengelola/pengaturan');
     } else {
       router.push(`/pengelola?tab=${tabId}`);
     }

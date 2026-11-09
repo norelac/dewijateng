@@ -21,6 +21,8 @@ function PusatBantuanContent() {
       router.push('/pengelola/aktivitas');
     } else if (tabId === 'pusat-bantuan') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tabId === 'pengaturan') {
+      router.push('/pengelola/pengaturan');
     } else {
       router.push(`/pengelola?tab=${tabId}`);
     }

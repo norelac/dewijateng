@@ -16,6 +16,7 @@ import AnggaranDesaView from '@/components/pengelola/AnggaranDesaView';
 import UbahAnggaranView from '@/components/pengelola/UbahAnggaranView';
 import AktivitasPengelolaanView from '@/components/pengelola/AktivitasPengelolaanView';
 import PusatBantuanView from '@/components/pengelola/PusatBantuanView';
+import PengaturanView from '@/components/pengelola/PengaturanView';
 import {
   DashboardTicket,
   TicketStatus,
@@ -93,6 +94,8 @@ function PengelolaDashboardContent() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (tabId === 'pusat-bantuan') {
       router.push('/pengelola/pusat-bantuan');
+    } else if (tabId === 'pengaturan') {
+      router.push('/pengelola/pengaturan');
     }
   };
 
@@ -313,6 +316,8 @@ function PengelolaDashboardContent() {
             />
           ) : activeTab === 'pusat-bantuan' ? (
             <PusatBantuanView />
+          ) : activeTab === 'pengaturan' ? (
+            <PengaturanView />
           ) : (
             /* Fallback for other sidebar items */
             <div className="bg-white rounded-[16px] border border-[#e6ecf5] p-8 text-center flex flex-col items-center gap-3">
