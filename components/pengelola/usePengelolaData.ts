@@ -50,9 +50,9 @@ export function useDashboardTickets() {
 
 /**
  * Ambil data transparansi desa (village, grant, expenses) dari GET /api/transparansi.
- * ponytail: tanpa sesi/auth, default desa = desa-wisata-candirejo; ganti ke sesi setelah auth ada.
+ * ponytail: tanpa sesi/auth, default desa = candirejo-magelang; ganti ke sesi setelah auth ada.
  */
-export function useBudgetData(fiscalYear = 2026, villageSlug = 'desa-wisata-candirejo') {
+export function useBudgetData(fiscalYear = 2026, villageSlug = 'candirejo-magelang') {
   const [budget, setBudget] = useState<VillageBudgetData>(INITIAL_BUDGET_DATA);
   const [village, setVillage] = useState<TransparansiVillage | null>(null);
   const [grant, setGrant] = useState<TransparansiGrant | null>(null);

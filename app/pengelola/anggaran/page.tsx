@@ -57,7 +57,7 @@ function AnggaranContent() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onNavigateToPengeluaran={() => {
-                router.push('/pengelola?tab=pengeluaran');
+                router.push('/pengelola/pengeluaran');
               }}
             />
           ) : (

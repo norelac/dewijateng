@@ -8,7 +8,6 @@ import {
   MessagesSquare,
   Wallet,
   ReceiptText,
-  Landmark,
   ScrollText,
   ExternalLink,
   HelpCircle,
@@ -54,7 +53,6 @@ export default function PengelolaSidebar({
     { id: 'anggaran', label: 'Anggaran desa', icon: Wallet },
     { id: 'lpj', label: 'Unggah LPJ', icon: ScrollText },
     { id: 'pengeluaran', label: 'Pengeluaran & bukti', icon: ReceiptText },
-    { id: 'profil', label: 'Profil desa', icon: Landmark },
     { id: 'aktivitas', label: 'Aktivitas', icon: ScrollText },
   ];
 

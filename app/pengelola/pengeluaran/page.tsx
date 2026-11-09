@@ -4,15 +4,15 @@ import React, { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
-import ProfilDesaView from '@/components/pengelola/ProfilDesaView';
+import PengeluaranView from '@/components/pengelola/PengeluaranView';
 import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
 
-function ProfilDesaContent() {
+function PengeluaranContent() {
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   const handleTabChange = (tabId: string) => {
-    if (tabId === 'profil') {
+    if (tabId === 'pengeluaran') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -23,7 +23,7 @@ function ProfilDesaContent() {
   return (
     <div className="bg-[#F7F9FC] min-h-screen flex items-start w-full relative">
       <PengelolaSidebar
-        activeTab="profil"
+        activeTab="pengeluaran"
         onTabChange={handleTabChange}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
@@ -32,18 +32,18 @@ function ProfilDesaContent() {
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden min-h-screen">
         <PengelolaHeader
           onOpenMobile={() => setMobileSidebarOpen(true)}
-          activeTabTitle="Profil desa"
+          activeTabTitle="Pengeluaran & bukti"
         />
 
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">
-          <ProfilDesaView />
+          <PengeluaranView />
         </div>
       </div>
     </div>
   );
 }
 
-export default function PengelolaProfilDesaPage() {
+export default function PengelolaPengeluaranPage() {
   return (
     <Suspense
       fallback={
@@ -52,7 +52,7 @@ export default function PengelolaProfilDesaPage() {
         </div>
       }
     >
-      <ProfilDesaContent />
+      <PengeluaranContent />
     </Suspense>
   );
 }

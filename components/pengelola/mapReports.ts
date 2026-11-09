@@ -133,6 +133,22 @@ export interface TransparansiExpense {
   created_at?: string | null;
 }
 
+const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
+  MATERIAL_FISIK: 'Material fisik',
+  OPERASIONAL: 'Operasional',
+  UPAH_TENAGA: 'Upah tenaga',
+  KESELAMATAN_K3: 'Keselamatan (K3)',
+  PERALATAN: 'Peralatan',
+  LAINNYA: 'Lainnya',
+};
+
+function prettyCategory(value?: string | null): string | null {
+  if (!value) return null;
+  if (EXPENSE_CATEGORY_LABELS[value]) return EXPENSE_CATEGORY_LABELS[value];
+  const text = value.replace(/_/g, ' ').toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function toNumber(value: number | string | null | undefined): number {
   if (value == null) return 0;
   const n = typeof value === 'string' ? Number(value) : value;
@@ -152,7 +168,7 @@ export function mapGrantExpenseToExpenseItem(
   const date = exp.created_at
     ? fmt(exp.created_at, { day: 'numeric', month: 'short', year: 'numeric' })
     : '-';
-  const subtitle = [exp.category, exp.volume ? `${exp.volume} ${exp.unit || ''}`.trim() : null]
+  const subtitle = [prettyCategory(exp.category), exp.volume ? `${exp.volume} ${exp.unit || ''}`.trim() : null]
     .filter(Boolean)
     .join(' · ');
 

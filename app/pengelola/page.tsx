@@ -63,24 +63,16 @@ function PengelolaDashboardContent() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (tabId === 'pengeluaran') {
-      document
-        .getElementById('section-pengeluaran')
-        ?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
     const target = TAB_ROUTES[tabId];
     if (target) router.push(target);
   };
 
-  // Dukungan tautan lama /pengelola?tab=pengeluaran
+  // Dukungan tautan lama /pengelola?tab=pengeluaran → halaman tersendiri.
   useEffect(() => {
     if (searchParams.get('tab') === 'pengeluaran') {
-      document
-        .getElementById('section-pengeluaran')
-        ?.scrollIntoView({ behavior: 'smooth' });
+      router.replace('/pengelola/pengeluaran');
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   return (
     <div className="bg-[#F7F9FC] min-h-screen flex items-start w-full relative">
