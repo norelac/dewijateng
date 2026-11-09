@@ -4,67 +4,24 @@ import React, { useState } from 'react';
 import { CheckCircle2, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { ExpenseItem } from './types';
 
-const EXPENSE_ITEMS: ExpenseItem[] = [
-  {
-    id: 'exp-1',
-    date: '16 Okt 2026',
-    title: 'Perbaikan jalur pejalan kaki',
-    subtitle: 'Akses wisata & pagar pengaman',
-    amount: 320000000,
-    formattedAmount: '320.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/curug-sesudah.png',
-  },
-  {
-    id: 'exp-2',
-    date: '12 Okt 2026',
-    title: 'Penataan area parkir wisata',
-    subtitle: 'Permukaan & marka area parkir',
-    amount: 240000000,
-    formattedAmount: '240.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/aduan-parkir.png',
-  },
-  {
-    id: 'exp-3',
-    date: '08 Okt 2026',
-    title: 'Pengelolaan kebersihan desa',
-    subtitle: 'Tempat sampah & sarana kebersihan',
-    amount: 180000000,
-    formattedAmount: '180.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/aduan-sampah.png',
-  },
-  {
-    id: 'exp-4',
-    date: '05 Okt 2026',
-    title: 'Pemeliharaan toilet wisata',
-    subtitle: 'Sanitasi & perbaikan fasilitas',
-    amount: 100000000,
-    formattedAmount: '100.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/toilet-sesudah.png',
-  },
-];
-
-export default function PengeluaranSection() {
+export default function PengeluaranSection({
+  expenses = [],
+  periodLabel = 'Periode berjalan',
+  realisasiPercent,
+}: {
+  expenses?: ExpenseItem[];
+  periodLabel?: string;
+  realisasiPercent?: number;
+}) {
   const [selectedProof, setSelectedProof] = useState<{
     title: string;
     type: 'nota' | 'foto';
     url: string;
   } | null>(null);
+
+  const totalTercatat = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totalFormatted = new Intl.NumberFormat('id-ID').format(totalTercatat);
+  const completeCount = expenses.filter((e) => e.hasReceipt || e.hasPhoto).length;
 
   return (
     <div className="bg-white border border-[#E6ECF5] rounded-[18px] p-6 flex flex-col gap-5 shadow-xs w-full">
@@ -75,11 +32,11 @@ export default function PengeluaranSection() {
             Pengeluaran &amp; kelengkapan publikasi
           </h2>
           <p className="text-[#64748B] text-[12px] font-normal leading-relaxed">
-            Oktober 2026 · Seluruh pengeluaran telah dilengkapi bukti.
+            {periodLabel} · {completeCount} dari {expenses.length} pos dilengkapi bukti.
           </p>
         </div>
         <a
-          href="/transparansi"
+          href="/pengelola/pengeluaran"
           className="text-[#0D2453] text-[12px] font-semibold hover:underline self-start sm:self-auto"
         >
           Buka buku kas →
@@ -99,7 +56,12 @@ export default function PengeluaranSection() {
           </div>
 
           {/* Baris Pengeluaran */}
-          {EXPENSE_ITEMS.map((item) => (
+          {expenses.length === 0 ? (
+            <div className="border-b border-[#E6ECF5] px-4 py-6 text-center text-[#64748B] text-[12px]">
+              Belum ada pos belanja terpublikasi pada periode ini.
+            </div>
+          ) : (
+          expenses.map((item) => (
             <div
               key={item.id}
               className="border-b border-[#E6ECF5] px-4 py-3.5 flex items-center gap-5 text-[12px] hover:bg-slate-50/70 transition-colors"
@@ -126,41 +88,49 @@ export default function PengeluaranSection() {
 
               {/* Bukti (Nota + Foto) */}
               <div className="w-[205px] shrink-0 flex items-center gap-3.5">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedProof({
-                      title: `Nota Bukti: ${item.title}`,
-                      type: 'nota',
-                      url: item.receiptUrl || '/documents/lpj-candirejo-2026.pdf',
-                    })
-                  }
-                  className="flex items-center gap-1.5 text-[#0D2453] hover:text-blue-700 transition-colors cursor-pointer group"
-                  title="Lihat salinan nota kuitansi"
-                >
-                  <CheckCircle2 className="w-[13px] h-[13px] text-emerald-600 shrink-0" />
-                  <span className="text-[11px] font-normal group-hover:underline">
-                    Nota ↗
-                  </span>
-                </button>
+                {item.hasReceipt && item.receiptUrl ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedProof({
+                        title: `Nota Bukti: ${item.title}`,
+                        type: 'nota',
+                        url: item.receiptUrl as string,
+                      })
+                    }
+                    className="flex items-center gap-1.5 text-[#0D2453] hover:text-blue-700 transition-colors cursor-pointer group"
+                    title="Lihat salinan nota kuitansi"
+                  >
+                    <CheckCircle2 className="w-[13px] h-[13px] text-emerald-600 shrink-0" />
+                    <span className="text-[11px] font-normal group-hover:underline">
+                      Nota ↗
+                    </span>
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-[#94a3b8]">Nota —</span>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedProof({
-                      title: `Foto Bukti Fisik: ${item.title}`,
-                      type: 'foto',
-                      url: item.photoUrl || '/img/figma/toilet-sesudah.png',
-                    })
-                  }
-                  className="flex items-center gap-1.5 text-[#0D2453] hover:text-blue-700 transition-colors cursor-pointer group"
-                  title="Lihat foto bukti fisik"
-                >
-                  <CheckCircle2 className="w-[13px] h-[13px] text-emerald-600 shrink-0" />
-                  <span className="text-[11px] font-normal group-hover:underline">
-                    Foto fisik ↗
-                  </span>
-                </button>
+                {item.hasPhoto && item.photoUrl ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedProof({
+                        title: `Foto Bukti Fisik: ${item.title}`,
+                        type: 'foto',
+                        url: item.photoUrl as string,
+                      })
+                    }
+                    className="flex items-center gap-1.5 text-[#0D2453] hover:text-blue-700 transition-colors cursor-pointer group"
+                    title="Lihat foto bukti fisik"
+                  >
+                    <CheckCircle2 className="w-[13px] h-[13px] text-emerald-600 shrink-0" />
+                    <span className="text-[11px] font-normal group-hover:underline">
+                      Foto fisik ↗
+                    </span>
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-[#94a3b8]">Foto fisik —</span>
+                )}
               </div>
 
               {/* Status Publikasi */}
@@ -170,7 +140,8 @@ export default function PengeluaranSection() {
                 </span>
               </div>
             </div>
-          ))}
+          ))
+          )}
 
           {/* Baris Total Belanja Tercatat */}
           <div className="bg-[#F3F5F8] p-4 rounded-[6px] flex items-center justify-between text-[#0D2453] mt-2">
@@ -178,10 +149,12 @@ export default function PengeluaranSection() {
               Total belanja tercatat
             </span>
             <span className="text-[16px] font-semibold tracking-tight">
-              Rp 840.000.000
+              Rp {totalFormatted}
             </span>
             <span className="text-[#64748B] text-[11px] font-normal">
-              Sesuai realisasi anggaran · 70%
+              {typeof realisasiPercent === 'number'
+                ? `Sesuai realisasi anggaran · ${realisasiPercent}%`
+                : 'Sesuai realisasi anggaran terpublikasi'}
             </span>
           </div>
         </div>

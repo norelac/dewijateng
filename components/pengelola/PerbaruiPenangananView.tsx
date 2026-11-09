@@ -21,8 +21,8 @@ interface PerbaruiPenangananViewProps {
     ticketId: string,
     notes: string,
     markCompleted: boolean,
-    resolvedImage?: string
-  ) => void;
+    resolvedFile?: File | null
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 export default function PerbaruiPenangananView({
@@ -41,9 +41,11 @@ export default function PerbaruiPenangananView({
   const [resolvedImage, setResolvedImage] = useState<string | null>(
     ticket.resolvedImage || null
   );
+  const [resolvedFile, setResolvedFile] = useState<File | null>(null);
   const [showBeforeModal, setShowBeforeModal] = useState(false);
   const [showAfterModal, setShowAfterModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,8 +60,9 @@ export default function PerbaruiPenangananView({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setResolvedImage(url);
+      setResolvedFile(file);
+      setResolvedImage(URL.createObjectURL(file));
+      setErrorMessage(null);
     }
   };
 
@@ -73,14 +76,29 @@ export default function PerbaruiPenangananView({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSaveProgress(
+    setErrorMessage(null);
+
+    if (markCompleted && !resolvedFile) {
+      setErrorMessage(
+        'Lampirkan foto sesudah penanganan agar laporan dapat ditandai selesai.'
+      );
+      return;
+    }
+
+    const res = await onSaveProgress(
       ticket.id,
       notes,
       markCompleted,
-      resolvedImage || undefined
+      resolvedFile
     );
+
+    if (!res.success) {
+      setErrorMessage(res.error || 'Gagal menyimpan progres penanganan.');
+      return;
+    }
+
     setSaveSuccess(true);
     setTimeout(() => {
       onBack();
@@ -293,7 +311,10 @@ export default function PerbaruiPenangananView({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setResolvedImage(null)}
+                      onClick={() => {
+                        setResolvedImage(null);
+                        setResolvedFile(null);
+                      }}
                       className="text-red-500 hover:text-red-700 p-1"
                       title="Hapus foto sesudah"
                     >
@@ -426,6 +447,12 @@ export default function PerbaruiPenangananView({
             <p className="text-[#64748b] text-[11px] leading-[1.5]">
               Untuk menyelesaikan: lampirkan foto sesudah, isi hasil penanganan, dan pastikan masalah sudah tertangani. Perubahan status berlaku hanya setelah Simpan progres.
             </p>
+
+            {errorMessage && (
+              <p className="text-red-600 text-[11px] bg-red-50 border border-red-200 rounded-lg p-2.5">
+                {errorMessage}
+              </p>
+            )}
 
             {/* Tindakan Formulir */}
             <div className="flex items-center gap-[10px] pt-[6px]">

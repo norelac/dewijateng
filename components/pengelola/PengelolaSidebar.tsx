@@ -8,7 +8,6 @@ import {
   MessagesSquare,
   Wallet,
   ReceiptText,
-  Landmark,
   ScrollText,
   ExternalLink,
   HelpCircle,
@@ -16,12 +15,17 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
+import { useDashboardTickets, useBudgetData } from './usePengelolaData';
 
 interface PengelolaSidebarProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  /** Jumlah laporan perlu ditangani; kosong = dihitung dari hook laporan. */
+  pendingReportCount?: number;
+  /** Nama desa pada kartu cakupan akses; kosong = diambil dari data transparansi. */
+  villageName?: string;
 }
 
 export default function PengelolaSidebar({
@@ -29,13 +33,31 @@ export default function PengelolaSidebar({
   onTabChange,
   mobileOpen = false,
   onCloseMobile,
+  pendingReportCount,
+  villageName,
 }: PengelolaSidebarProps) {
+  // ponytail: badge & nama desa dihitung di sini agar konsisten di semua halaman
+  // pengelola; tukar ke prop dari halaman bila fetch ganda jadi beban.
+  const { tickets } = useDashboardTickets();
+  const { village } = useBudgetData();
+  const activeVillage = villageName ?? village?.name ?? 'Desa Candirejo';
+  const pendingCount =
+    pendingReportCount ??
+    tickets.filter((t) => t.status === 'Masuk' || t.status === 'Diverifikasi')
+      .length;
+
   const mainMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'laporan', label: 'Kelola laporan', icon: MessagesSquare, badge: '3' },
+    {
+      id: 'laporan',
+      label: 'Kelola laporan',
+      icon: MessagesSquare,
+      badge: pendingCount > 0 ? String(pendingCount) : undefined,
+    },
+    { id: 'penanganan', label: 'Penanganan lapangan', icon: ShieldCheck },
     { id: 'anggaran', label: 'Anggaran desa', icon: Wallet },
+    { id: 'lpj', label: 'Unggah LPJ', icon: ScrollText },
     { id: 'pengeluaran', label: 'Pengeluaran & bukti', icon: ReceiptText },
-    { id: 'profil', label: 'Profil desa', icon: Landmark },
     { id: 'aktivitas', label: 'Aktivitas', icon: ScrollText },
   ];
 
@@ -81,7 +103,7 @@ export default function PengelolaSidebar({
             ADMIN PENGELOLA DESA
           </span>
           <span className="text-[#0D2453] text-[13px] font-semibold">
-            Desa Candirejo
+            {activeVillage}
           </span>
         </div>
 
@@ -135,30 +157,50 @@ export default function PengelolaSidebar({
         <div className="h-px bg-[#E6ECF5] w-full" />
 
         {/* Menu Pendukung */}
-        <div className="flex flex-col gap-5 px-3">
+        <div className="flex flex-col gap-1.5">
           <Link
             href="/"
-            className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors text-[12px]"
+            className="h-10 px-3 rounded-[10px] flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] hover:bg-slate-50 transition-colors text-[12px]"
           >
             <ExternalLink className="w-[17px] h-[17px] shrink-0" />
             <span>Lihat situs publik</span>
           </Link>
-          <Link
-            href="/edukasi"
-            className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors text-[12px]"
+          <button
+            type="button"
+            onClick={() => {
+              if (onTabChange) onTabChange('pusat-bantuan');
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-2.5 transition-colors text-[12px] text-left ${
+              activeTab === 'pusat-bantuan'
+                ? 'bg-[#0D2453] text-white font-semibold'
+                : 'text-[#64748B] hover:text-[#0D2453] hover:bg-slate-50'
+            }`}
           >
-            <HelpCircle className="w-[17px] h-[17px] shrink-0" />
+            <HelpCircle
+              className={`w-[17px] h-[17px] shrink-0 ${
+                activeTab === 'pusat-bantuan' ? 'text-white' : 'text-[#64748B]'
+              }`}
+            />
             <span>Pusat bantuan</span>
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => {
               if (onTabChange) onTabChange('pengaturan');
               if (onCloseMobile) onCloseMobile();
             }}
-            className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors text-[12px] text-left"
+            className={`w-full h-10 px-3 rounded-[10px] flex items-center gap-2.5 transition-colors text-[12px] text-left ${
+              activeTab === 'pengaturan'
+                ? 'bg-[#0D2453] text-white font-semibold'
+                : 'text-[#64748B] hover:text-[#0D2453] hover:bg-slate-50'
+            }`}
           >
-            <Settings className="w-[17px] h-[17px] shrink-0" />
+            <Settings
+              className={`w-[17px] h-[17px] shrink-0 ${
+                activeTab === 'pengaturan' ? 'text-white' : 'text-[#64748B]'
+              }`}
+            />
             <span>Pengaturan</span>
           </button>
         </div>

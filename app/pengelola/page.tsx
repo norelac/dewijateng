@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import DashboardKpis from '@/components/pengelola/DashboardKpis';
@@ -9,169 +9,80 @@ import AntreanLaporanTable from '@/components/pengelola/AntreanLaporanTable';
 import AnggaranSection from '@/components/pengelola/AnggaranSection';
 import PengeluaranSection from '@/components/pengelola/PengeluaranSection';
 import AktivitasPanduanSection from '@/components/pengelola/AktivitasPanduanSection';
-import KelolaLaporanListView from '@/components/pengelola/KelolaLaporanListView';
-import VerifikasiLaporanView from '@/components/pengelola/VerifikasiLaporanView';
-import PerbaruiPenangananView from '@/components/pengelola/PerbaruiPenangananView';
-import AnggaranDesaView from '@/components/pengelola/AnggaranDesaView';
-import UbahAnggaranView from '@/components/pengelola/UbahAnggaranView';
+import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
 import {
-  DashboardTicket,
-  TicketStatus,
-  INITIAL_TICKETS_DATA,
-  VillageBudgetData,
-  INITIAL_BUDGET_DATA,
-} from '@/components/pengelola/types';
+  useBudgetData,
+  useDashboardTickets,
+} from '@/components/pengelola/usePengelolaData';
+import { mapGrantExpenseToExpenseItem } from '@/components/pengelola/mapReports';
+import type { ActivityItem } from '@/components/pengelola/types';
 
 function PengelolaDashboardContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'dashboard';
-
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
-  const [tickets, setTickets] = useState<DashboardTicket[]>(INITIAL_TICKETS_DATA);
+  const { tickets } = useDashboardTickets();
+  const { budget, village, grant, expenses } = useBudgetData();
 
-  // Sub-view in 'laporan' tab: 'list' | 'detail' | 'progres'
-  const [laporanSubView, setLaporanSubView] = useState<'list' | 'detail' | 'progres'>(
-    'list'
-  );
-  const [selectedTicketId, setSelectedTicketId] = useState<string>('t-1');
-
-  // Budget data & sub-view in 'anggaran' tab: 'view' | 'edit'
-  const [budget, setBudget] = useState<VillageBudgetData>(INITIAL_BUDGET_DATA);
-  const [anggaranSubView, setAnggaranSubView] = useState<'view' | 'edit'>('view');
-
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
-      if (tab === 'anggaran') setAnggaranSubView('view');
-      if (tab === 'laporan') setLaporanSubView('list');
-    }
-  }, [searchParams]);
-
-  const selectedTicket =
-    tickets.find((t) => t.id === selectedTicketId) || tickets[0];
-
-  const getTabTitle = (tab: string) => {
-    switch (tab) {
-      case 'laporan':
-        return 'Kelola laporan';
-      case 'anggaran':
-        return 'Anggaran desa';
-      case 'pengeluaran':
-        return 'Pengeluaran & bukti';
-      case 'profil':
-        return 'Profil desa';
-      case 'aktivitas':
-        return 'Aktivitas';
-      case 'pengaturan':
-        return 'Pengaturan';
-      default:
-        return 'Dashboard';
-    }
+  const reportCounts = {
+    total: tickets.length,
+    perluDitangani: tickets.filter((t) => t.status !== 'Selesai').length,
+    masuk: tickets.filter((t) => t.status === 'Masuk').length,
+    diverifikasi: tickets.filter((t) => t.status === 'Diverifikasi').length,
+    diproses: tickets.filter((t) => t.status === 'Diproses').length,
+    selesai: tickets.filter((t) => t.status === 'Selesai').length,
   };
+
+  const totalFunding = budget.apbdes + budget.banprov + budget.pades;
+  const realisasiPercent =
+    totalFunding > 0 ? Math.round((budget.usedAmount / totalFunding) * 100) : undefined;
+
+  const expenseItems = expenses.map((exp) =>
+    mapGrantExpenseToExpenseItem(exp, grant?.lpj_document_url || undefined)
+  );
+
+  const evidence = {
+    complete: expenseItems.filter((e) => e.hasReceipt || e.hasPhoto).length,
+    total: expenseItems.length,
+  };
+
+  const activities: ActivityItem[] = tickets.slice(0, 3).map((t) => ({
+    id: `act-${t.id}`,
+    date: t.date,
+    title:
+      t.status === 'Selesai'
+        ? 'Penanganan laporan selesai'
+        : t.status === 'Diproses'
+        ? 'Penanganan laporan dimulai'
+        : 'Laporan baru diterima',
+    subtitle: `${t.code} · ${t.status}`,
+  }));
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    if (tabId === 'laporan') {
-      setLaporanSubView('list');
+    if (tabId === 'dashboard') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tabId === 'anggaran') {
-      setAnggaranSubView('view');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tabId === 'dashboard') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tabId === 'pengeluaran') {
-      const el = document.getElementById('section-pengeluaran');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    } else if (tabId === 'aktivitas') {
-      const el = document.getElementById('section-aktivitas');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
     }
+    const target = TAB_ROUTES[tabId];
+    if (target) router.push(target);
   };
 
-  const handleSelectTicketFromList = (
-    ticket: DashboardTicket,
-    action: 'detail' | 'progres'
-  ) => {
-    setSelectedTicketId(ticket.id);
-    setLaporanSubView(action);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleConfirmVerification = (
-    ticketId: string,
-    result: string,
-    notes: string
-  ) => {
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id === ticketId) {
-          return {
-            ...t,
-            status: 'Diverifikasi' as TicketStatus,
-            actionLabel: 'Mulai penanganan',
-            notes: notes || t.notes,
-            timeline: [
-              {
-                status: 'Diverifikasi',
-                date: '28 Okt 2026',
-                title: 'Laporan diverifikasi',
-                description: `Pemeriksaan selesai: ${result}. Rencana tindak lanjut dicatat.`,
-              },
-              ...(t.timeline || []),
-            ],
-          };
-        }
-        return t;
-      })
-    );
-  };
-
-  const handleSaveProgress = (
-    ticketId: string,
-    notes: string,
-    markCompleted: boolean,
-    resolvedImage?: string
-  ) => {
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id === ticketId) {
-          const newStatus: TicketStatus = markCompleted
-            ? 'Selesai'
-            : 'Diproses';
-          return {
-            ...t,
-            status: newStatus,
-            actionLabel: markCompleted ? 'Lihat detail' : 'Perbarui progres',
-            notes: notes || t.notes,
-            resolvedImage: resolvedImage || t.resolvedImage,
-            timeline: [
-              {
-                status: newStatus,
-                date: '28 Okt 2026',
-                title: markCompleted
-                  ? 'Penanganan laporan selesai'
-                  : 'Progres penanganan diperbarui',
-                description: notes || 'Pekerjaan fisik dan dokumentasi diperbarui.',
-              },
-              ...(t.timeline || []),
-            ],
-          };
-        }
-        return t;
-      })
-    );
-  };
+  // Dukungan tautan lama /pengelola?tab=pengeluaran → halaman tersendiri.
+  useEffect(() => {
+    if (searchParams.get('tab') === 'pengeluaran') {
+      router.replace('/pengelola/pengeluaran');
+    }
+  }, [searchParams, router]);
 
   return (
     <div className="bg-[#F7F9FC] min-h-screen flex items-start w-full relative">
       {/* 1. Sidebar Navigasi Pengelola (Desktop + Mobile Drawer) */}
       <PengelolaSidebar
-        activeTab={activeTab}
+        activeTab="dashboard"
         onTabChange={handleTabChange}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
+        pendingReportCount={reportCounts.perluDitangani}
       />
 
       {/* 2. Area Kerja Konten */}
@@ -179,137 +90,63 @@ function PengelolaDashboardContent() {
         {/* Bilah Akun Top Header */}
         <PengelolaHeader
           onOpenMobile={() => setMobileSidebarOpen(true)}
-          activeTabTitle={getTabTitle(activeTab)}
+          activeTabTitle="Dashboard"
         />
 
         {/* Konten Halaman */}
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">
-          {activeTab === 'dashboard' ? (
-            <>
-              {/* KPI Indikator & Identitas Desa */}
-              <section id="section-kpi" className="w-full">
-                <DashboardKpis
-                  villageName="Desa Candirejo"
-                  regency="Borobudur, Kabupaten Magelang · Jawa Tengah"
-                  updatedAt="Per 28 Oktober 2026 · 10.00 WIB"
-                  periodYear="TA 2026"
-                />
-              </section>
+          {/* KPI Indikator & Identitas Desa */}
+          <section id="section-kpi" className="w-full">
+            <DashboardKpis
+              villageName={village?.name || 'Desa Candirejo'}
+              regency={
+                village
+                  ? `${village.district}, Kabupaten ${village.regency} · Jawa Tengah`
+                  : 'Borobudur, Kabupaten Magelang · Jawa Tengah'
+              }
+              updatedAt={`Per ${budget.dateStr} · 10.00 WIB`}
+              periodYear={`TA ${budget.year}`}
+              totalFunding={totalFunding}
+              reportCounts={reportCounts}
+              evidence={evidence}
+            />
+          </section>
 
-              {/* Antrean Aduan / Laporan Desa */}
-              <section id="section-antrean-laporan" className="w-full">
-                <AntreanLaporanTable
-                  tickets={tickets}
-                  onOpenKelolaLaporan={() => {
-                    setActiveTab('laporan');
-                    setLaporanSubView('list');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  onOpenTicketView={(ticket, action) => {
-                    setActiveTab('laporan');
-                    setSelectedTicketId(ticket.id);
-                    setLaporanSubView(action);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              </section>
+          {/* Antrean Aduan / Laporan Desa */}
+          <section id="section-antrean-laporan" className="w-full">
+            <AntreanLaporanTable
+              tickets={tickets}
+              onOpenKelolaLaporan={() => router.push('/pengelola/laporan')}
+              onOpenTicketView={(ticket, action) =>
+                router.push(`/pengelola/laporan?view=${action}&id=${ticket.id}`)
+              }
+            />
+          </section>
 
-              {/* Ringkasan Anggaran (Sumber Dana Donut + Realisasi Bar) */}
-              <section id="section-anggaran" className="w-full">
-                <AnggaranSection
-                  budget={budget}
-                  onManageBudget={() => handleTabChange('anggaran')}
-                />
-              </section>
+          {/* Ringkasan Anggaran (Sumber Dana Donut + Realisasi Bar) */}
+          <section id="section-anggaran" className="w-full">
+            <AnggaranSection
+              budget={budget}
+              onManageBudget={() => router.push('/pengelola/anggaran')}
+            />
+          </section>
 
-              {/* Pengeluaran & Kelengkapan Publikasi */}
-              <section id="section-pengeluaran" className="w-full">
-                <PengeluaranSection />
-              </section>
+          {/* Pengeluaran & Kelengkapan Publikasi */}
+          <section id="section-pengeluaran" className="w-full">
+            <PengeluaranSection
+              expenses={expenseItems}
+              periodLabel={budget.dateStr}
+              realisasiPercent={realisasiPercent}
+            />
+          </section>
 
-              {/* Aktivitas Terbaru & Panduan Transparan */}
-              <section id="section-aktivitas" className="w-full">
-                <AktivitasPanduanSection />
-              </section>
-            </>
-          ) : activeTab === 'laporan' ? (
-            <>
-              {laporanSubView === 'list' && (
-                <KelolaLaporanListView
-                  tickets={tickets}
-                  onSelectTicket={handleSelectTicketFromList}
-                />
-              )}
-
-              {laporanSubView === 'detail' && selectedTicket && (
-                <VerifikasiLaporanView
-                  ticket={selectedTicket}
-                  onBack={() => {
-                    setLaporanSubView('list');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  onConfirmVerification={handleConfirmVerification}
-                  onSwitchToProgres={() => {
-                    setLaporanSubView('progres');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              )}
-
-              {laporanSubView === 'progres' && selectedTicket && (
-                <PerbaruiPenangananView
-                  ticket={selectedTicket}
-                  onBack={() => {
-                    setLaporanSubView('list');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  onSaveProgress={handleSaveProgress}
-                />
-              )}
-            </>
-          ) : activeTab === 'anggaran' ? (
-            anggaranSubView === 'view' ? (
-              <AnggaranDesaView
-                budget={budget}
-                onOpenEdit={() => {
-                  setAnggaranSubView('edit');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                onNavigateToPengeluaran={() => {
-                  setActiveTab('pengeluaran');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              />
-            ) : (
-              <UbahAnggaranView
-                budget={budget}
-                onBack={() => {
-                  setAnggaranSubView('view');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                onSaveBudget={(updated) => {
-                  setBudget((prev) => ({ ...prev, ...updated }));
-                }}
-              />
-            )
-          ) : (
-            /* Fallback for other sidebar items */
-            <div className="bg-white rounded-[16px] border border-[#e6ecf5] p-8 text-center flex flex-col items-center gap-3">
-              <h2 className="text-[#0d2453] text-lg font-semibold">
-                {getTabTitle(activeTab)}
-              </h2>
-              <p className="text-sm text-[#64748b]">
-                Halaman {getTabTitle(activeTab)} sedang aktif.
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveTab('dashboard')}
-                className="mt-2 text-xs font-semibold px-4 py-2 rounded-full bg-[#0d2453] text-white hover:bg-[#132d66]"
-              >
-                Kembali ke Dashboard
-              </button>
-            </div>
-          )}
+          {/* Aktivitas Terbaru & Panduan Transparan */}
+          <section id="section-aktivitas" className="w-full">
+            <AktivitasPanduanSection
+              activities={activities.length > 0 ? activities : undefined}
+              onViewHistory={() => router.push('/pengelola/aktivitas')}
+            />
+          </section>
         </div>
       </div>
     </div>

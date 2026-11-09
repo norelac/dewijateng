@@ -306,11 +306,33 @@ export default function HomeReportForm() {
   };
 
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files);
-      setRawFiles((prev) => [...prev, ...filesArray]);
-      setUploadedFiles((prev) => [...prev, ...filesArray.map((f) => f.name)]);
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const MAX_FILE_BYTES = 5 * 1024 * 1024;
+    const MAX_FILES = 3;
+    const incoming = Array.from(e.target.files);
+
+    const tooBig = incoming.find((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig) {
+      setErrorMessage(`Berkas "${tooBig.name}" melebihi batas 5 MB per file.`);
+      e.target.value = '';
+      return;
     }
+
+    const room = MAX_FILES - rawFiles.length;
+    if (room <= 0) {
+      setErrorMessage(`Maksimal ${MAX_FILES} berkas bukti.`);
+      e.target.value = '';
+      return;
+    }
+
+    const accepted = incoming.slice(0, room);
+    if (incoming.length > room) {
+      setErrorMessage(`Hanya ${room} berkas lagi yang dapat ditambahkan (maks ${MAX_FILES}).`);
+    }
+    setRawFiles((prev) => [...prev, ...accepted]);
+    setUploadedFiles((prev) => [...prev, ...accepted.map((f) => f.name)]);
+    e.target.value = '';
   };
 
   const handleRemoveFile = (indexToRemove: number) => {
@@ -480,7 +502,7 @@ export default function HomeReportForm() {
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-xs font-semibold border border-blue-200 transition-all active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-xs font-semibold border border-blue-200 transition-colors cursor-pointer"
                 title="Gunakan lokasi GPS saya saat ini"
               >
                 <Navigation className="w-3.5 h-3.5 text-blue-700" />
@@ -606,7 +628,7 @@ export default function HomeReportForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -621,7 +643,7 @@ export default function HomeReportForm() {
               <button
                 type="button"
                 onClick={handleCancelSubmit}
-                className="px-5 py-3 rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-all"
+                className="px-5 py-3 rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors"
               >
                 Batal
               </button>

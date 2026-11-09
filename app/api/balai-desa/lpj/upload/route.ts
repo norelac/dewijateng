@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
       10
     );
     const file = formData.get('file') as File | null;
-    const rawItems = formData.get('items') as string | null;
 
     if (!villageId) {
       return NextResponse.json(
@@ -47,15 +46,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let itemsOverride: any[] | undefined;
-    if (rawItems) {
-      try {
-        itemsOverride = JSON.parse(rawItems);
-      } catch {
-        itemsOverride = undefined;
-      }
+    if (file.size > 25 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: 'Ukuran berkas PDF melebihi batas 25 MB' },
+        { status: 413 }
+      );
     }
 
+    let itemsOverride: any[] | undefined;
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
 
@@ -66,7 +64,6 @@ export async function POST(req: NextRequest) {
       totalAllocated,
       pdfBuffer,
       fileName: file.name,
-      itemsOverride,
     });
 
     return NextResponse.json({
@@ -88,15 +85,21 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('[API /api/balai-desa/lpj/upload error]:', error);
-    const message = error.message || 'Gagal mengunggah dan mengekstrak dokumen LPJ';
+    const message = error.message || '';
     const statusCode = message.includes('tidak terdaftar')
       ? 404
       : message.includes('wajib') || message.includes('bukan format')
       ? 422
       : 500;
+    const safeMessage =
+      statusCode === 404
+        ? 'Desa wisata tidak terdaftar'
+        : statusCode === 422
+        ? message
+        : 'Gagal mengunggah dan mengekstrak dokumen LPJ';
 
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: safeMessage },
       { status: statusCode }
     );
   }

@@ -19,7 +19,7 @@ interface VerifikasiLaporanViewProps {
     ticketId: string,
     result: string,
     notes: string
-  ) => void;
+  ) => Promise<{ success: boolean; error?: string }>;
   onSwitchToProgres?: () => void;
 }
 
@@ -35,6 +35,7 @@ export default function VerifikasiLaporanView({
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isAlreadyVerified = ticket.status !== 'Masuk';
 
@@ -44,14 +45,19 @@ export default function VerifikasiLaporanView({
     'Bukan kewenangan desa / Dialihkan',
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isConfirmed) return;
-    onConfirmVerification(
+    setErrorMessage(null);
+    const res = await onConfirmVerification(
       ticket.id,
       selectedResult || 'Sesuai fakta lapangan (Diverifikasi)',
       notes
     );
+    if (!res.success) {
+      setErrorMessage(res.error || 'Gagal memverifikasi laporan.');
+      return;
+    }
     setVerifiedSuccess(true);
     setTimeout(() => {
       if (onSwitchToProgres) {
@@ -277,6 +283,12 @@ export default function VerifikasiLaporanView({
                 <p className="text-[#64748b] text-[11px] leading-[1.5]">
                   Setelah diverifikasi, status berubah menjadi Diverifikasi. Penanganan dicatat pada tahap berikutnya.
                 </p>
+
+                {errorMessage && (
+                  <p className="text-red-600 text-[11px] bg-red-50 border border-red-200 rounded-lg p-2.5">
+                    {errorMessage}
+                  </p>
+                )}
 
                 {/* Tindakan Formulir */}
                 <div className="flex items-center gap-[10px] pt-[6px]">

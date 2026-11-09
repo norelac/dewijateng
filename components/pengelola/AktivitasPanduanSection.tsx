@@ -26,7 +26,13 @@ const ACTIVITIES: ActivityItem[] = [
   },
 ];
 
-export default function AktivitasPanduanSection() {
+export default function AktivitasPanduanSection({
+  activities = ACTIVITIES,
+  onViewHistory,
+}: {
+  activities?: ActivityItem[];
+  onViewHistory?: () => void;
+} = {}) {
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* 2 Cards Grid */}
@@ -39,6 +45,7 @@ export default function AktivitasPanduanSection() {
             </h2>
             <button
               type="button"
+              onClick={onViewHistory}
               className="text-[#0D2453] text-[12px] font-semibold hover:underline"
             >
               Lihat riwayat →
@@ -46,21 +53,27 @@ export default function AktivitasPanduanSection() {
           </div>
 
           <div className="flex flex-col gap-4 w-full">
-            {ACTIVITIES.map((act) => (
-              <div key={act.id} className="flex items-start gap-4 w-full">
-                <span className="text-[#64748B] text-[10px] font-normal w-12 shrink-0 pt-0.5">
-                  {act.date}
-                </span>
-                <div className="flex flex-col gap-1 flex-1 leading-tight min-w-0">
-                  <span className="text-[#0D2453] text-[12px] font-medium truncate">
-                    {act.title}
+            {activities.length === 0 ? (
+              <p className="text-[#64748B] text-[11px] font-normal">
+                Belum ada aktivitas tercatat.
+              </p>
+            ) : (
+              activities.map((act) => (
+                <div key={act.id} className="flex items-start gap-4 w-full">
+                  <span className="text-[#64748B] text-[10px] font-normal w-12 shrink-0 pt-0.5">
+                    {act.date}
                   </span>
-                  <span className="text-[#64748B] text-[10px] font-normal">
-                    {act.subtitle}
-                  </span>
+                  <div className="flex flex-col gap-1 flex-1 leading-tight min-w-0">
+                    <span className="text-[#0D2453] text-[12px] font-medium truncate">
+                      {act.title}
+                    </span>
+                    <span className="text-[#64748B] text-[10px] font-normal">
+                      {act.subtitle}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

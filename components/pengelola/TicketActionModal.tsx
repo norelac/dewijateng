@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   X,
@@ -29,12 +29,18 @@ export default function TicketActionModal({
   onClose,
   onUpdateStatus,
 }: TicketActionModalProps) {
-  if (!isOpen || !ticket) return null;
-
   const [notes, setNotes] = useState('');
   const [selectedProofPhoto, setSelectedProofPhoto] = useState<string | null>(
-    ticket.resolvedImage || null
+    null
   );
+
+  // Reset form tiap tiket berganti.
+  useEffect(() => {
+    setNotes('');
+    setSelectedProofPhoto(ticket?.resolvedImage || null);
+  }, [ticket?.id, ticket?.resolvedImage]);
+
+  if (!isOpen || !ticket) return null;
 
   const getNextStatus = (current: TicketStatus): TicketStatus | null => {
     switch (current) {

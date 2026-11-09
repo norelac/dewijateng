@@ -63,15 +63,21 @@ export async function POST(
     });
   } catch (error: any) {
     console.error('[API /api/pokdarwis/reports/resolve error]:', error);
-    const message = error.message || 'Gagal menyelesaikan aduan';
+    const message = error.message || '';
     const statusCode = message.includes('tidak ditemukan')
       ? 404
       : message.includes('wajib') || message.includes('minimal') || message.includes('terdeteksi')
       ? 422
       : 500;
+    const safeMessage =
+      statusCode === 404
+        ? 'Laporan tidak ditemukan'
+        : statusCode === 422
+        ? message
+        : 'Gagal menyelesaikan aduan';
 
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: safeMessage },
       { status: statusCode }
     );
   }
