@@ -16,12 +16,15 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
+import { useDashboardTickets } from './usePengelolaData';
 
 interface PengelolaSidebarProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  /** Jumlah laporan perlu ditangani; kosong = dihitung dari hook laporan. */
+  pendingReportCount?: number;
 }
 
 export default function PengelolaSidebar({
@@ -29,10 +32,24 @@ export default function PengelolaSidebar({
   onTabChange,
   mobileOpen = false,
   onCloseMobile,
+  pendingReportCount,
 }: PengelolaSidebarProps) {
+  // ponytail: badge dihitung di sini agar konsisten di semua halaman pengelola;
+  // tukar ke prop dari halaman bila fetch ganda jadi beban.
+  const { tickets } = useDashboardTickets();
+  const pendingCount =
+    pendingReportCount ??
+    tickets.filter((t) => t.status === 'Masuk' || t.status === 'Diverifikasi')
+      .length;
+
   const mainMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'laporan', label: 'Kelola laporan', icon: MessagesSquare, badge: '3' },
+    {
+      id: 'laporan',
+      label: 'Kelola laporan',
+      icon: MessagesSquare,
+      badge: pendingCount > 0 ? String(pendingCount) : undefined,
+    },
     { id: 'penanganan', label: 'Penanganan lapangan', icon: ShieldCheck },
     { id: 'anggaran', label: 'Anggaran desa', icon: Wallet },
     { id: 'lpj', label: 'Unggah LPJ', icon: ScrollText },

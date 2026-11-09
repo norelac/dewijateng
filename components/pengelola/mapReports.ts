@@ -1,6 +1,9 @@
 import type { IncidentReportDetail } from '@/lib/services/reportService';
 import type {
+  ActivityHistoryEvent,
   DashboardTicket,
+  ExpenseItem,
+  HandlingStage,
   TimelineEvent,
   TicketStatus,
   VillageBudgetData,
@@ -88,6 +91,7 @@ export interface TransparansiGrant {
   funding_source: string;
   total_allocated: number;
   total_realized: number;
+  lpj_document_url?: string | null;
   uploaded_at?: string;
 }
 
@@ -115,4 +119,113 @@ export function mapGrantToBudget(
     usedActivitiesCount: expensesCount,
     lastUpdatedStr: `${grant.funding_source || 'Bantuan Keuangan'} · ${dateStr}`,
   };
+}
+
+export interface TransparansiExpense {
+  id: string;
+  activity_name: string;
+  category?: string | null;
+  volume?: number | string | null;
+  unit?: string | null;
+  budget_allocated?: number | string | null;
+  amount_realized?: number | string | null;
+  ai_anomaly_flag?: boolean | null;
+  created_at?: string | null;
+}
+
+function toNumber(value: number | string | null | undefined): number {
+  if (value == null) return 0;
+  const n = typeof value === 'string' ? Number(value) : value;
+  return isNaN(n) ? 0 : n;
+}
+
+/**
+ * Map pos belanja grant_expenses → ExpenseItem.
+ * ponytail: tidak ada kolom URL nota/foto per pos; tautan nota memakai LPJ grant.
+ * Tambah kolom bukti per pos di BE saat tersedia.
+ */
+export function mapGrantExpenseToExpenseItem(
+  exp: TransparansiExpense,
+  receiptUrl?: string
+): ExpenseItem {
+  const amount = toNumber(exp.amount_realized) || toNumber(exp.budget_allocated);
+  const date = exp.created_at
+    ? fmt(exp.created_at, { day: 'numeric', month: 'short', year: 'numeric' })
+    : '-';
+  const subtitle = [exp.category, exp.volume ? `${exp.volume} ${exp.unit || ''}`.trim() : null]
+    .filter(Boolean)
+    .join(' · ');
+
+  return {
+    id: exp.id,
+    date,
+    title: exp.activity_name || 'Pos belanja',
+    subtitle: subtitle || 'Pos belanja modal',
+    amount,
+    formattedAmount: new Intl.NumberFormat('id-ID').format(amount),
+    hasReceipt: Boolean(receiptUrl),
+    hasPhoto: false,
+    status: 'Terpublikasi',
+    receiptUrl,
+    photoUrl: undefined,
+  };
+}
+
+/** Bangun feed aktivitas turunan dari tiket aduan (+ grant bila ada). */
+export function buildActivityEvents(
+  tickets: DashboardTicket[],
+  grant?: TransparansiGrant | null
+): ActivityHistoryEvent[] {
+  const events: ActivityHistoryEvent[] = tickets.map((t) => ({
+    id: `lap-${t.id}`,
+    date: t.date,
+    type: 'Laporan',
+    title:
+      t.status === 'Selesai'
+        ? 'Penanganan laporan selesai'
+        : t.status === 'Diproses'
+        ? 'Penanganan laporan dimulai'
+        : 'Laporan baru diterima',
+    subject: `${t.title} · ${t.code}`,
+    desc:
+      t.status === 'Selesai'
+        ? 'Dokumentasi perbaikan tersedia.'
+        : t.status === 'Diproses'
+        ? 'Sedang ditangani pengelola desa.'
+        : 'Menunggu verifikasi pengelola desa.',
+    actionLabel: 'Lihat detail laporan →',
+    actionTab: 'laporan',
+    ticketId: t.id,
+  }));
+
+  if (grant) {
+    const d = grant.uploaded_at ? toDate(grant.uploaded_at) : new Date();
+    const date = isNaN(d.getTime())
+      ? '-'
+      : fmt(d, { day: 'numeric', month: 'short', year: 'numeric' });
+    events.push({
+      id: `ang-${grant.fiscal_year}-${grant.funding_source || 'grant'}`,
+      date,
+      type: 'Anggaran',
+      title: 'Ringkasan anggaran dipublikasikan',
+      subject: `${grant.funding_source || 'Bantuan Keuangan'} · Rp${new Intl.NumberFormat('id-ID').format(grant.total_allocated || 0)}`,
+      desc: 'Realisasi belanja dan dokumen LPJ diperbarui.',
+      actionLabel: 'Lihat anggaran →',
+      actionTab: 'anggaran',
+    });
+  }
+
+  return events;
+}
+
+/** Bangun jejak tahapan penanganan dari timeline tiket selesai. */
+export function mapTicketToHandlingStages(ticket: DashboardTicket): HandlingStage[] {
+  const timeline = ticket.timeline || [];
+  if (timeline.length === 0) {
+    return [{ date: ticket.date, label: ticket.status }];
+  }
+  return [...timeline].reverse().map((ev) => ({
+    date: ev.date,
+    label: ev.status,
+  }));
 }

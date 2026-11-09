@@ -6,10 +6,27 @@ import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import AktivitasPengelolaanView from '@/components/pengelola/AktivitasPengelolaanView';
 import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
+import {
+  useBudgetData,
+  useDashboardTickets,
+} from '@/components/pengelola/usePengelolaData';
+import {
+  buildActivityEvents,
+  mapTicketToHandlingStages,
+} from '@/components/pengelola/mapReports';
 
 function AktivitasContent() {
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  const { tickets } = useDashboardTickets();
+  const { grant } = useBudgetData();
+
+  const events = buildActivityEvents(tickets, grant);
+  const completed = tickets.find((t) => t.status === 'Selesai');
+  const stages = completed ? mapTicketToHandlingStages(completed) : undefined;
+  const traceSubject = completed
+    ? `${completed.title} · ${completed.code}`
+    : undefined;
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'aktivitas') {
@@ -49,7 +66,12 @@ function AktivitasContent() {
 
         {/* Konten Halaman */}
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">
-          <AktivitasPengelolaanView onNavigate={handleNavigate} />
+          <AktivitasPengelolaanView
+            events={events}
+            stages={stages}
+            traceSubject={traceSubject}
+            onNavigate={handleNavigate}
+          />
         </div>
       </div>
     </div>

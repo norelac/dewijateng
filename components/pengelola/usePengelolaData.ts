@@ -2,8 +2,24 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getPublicReportsAction } from '@/app/actions/reportActions';
-import { mapIncidentToDashboardTicket, mapGrantToBudget } from './mapReports';
+import {
+  mapIncidentToDashboardTicket,
+  mapGrantToBudget,
+  type TransparansiExpense,
+  type TransparansiGrant,
+} from './mapReports';
 import { DashboardTicket, VillageBudgetData, INITIAL_BUDGET_DATA } from './types';
+
+export interface TransparansiVillage {
+  id: string;
+  slug: string;
+  name: string;
+  regency: string;
+  district: string;
+  category: string;
+  pokdarwis_name: string;
+  trust_score: number;
+}
 
 /** Ambil tiket aduan riil dari DB via Server Action (pola sama dengan app/lapor). */
 export function useDashboardTickets() {
@@ -32,21 +48,30 @@ export function useDashboardTickets() {
   return { tickets, loading, isLive, reload };
 }
 
-/** Ambil ringkasan anggaran dari GET /api/transparansi; fallback ke data contoh. */
-export function useBudgetData(fiscalYear = 2026) {
+/**
+ * Ambil data transparansi desa (village, grant, expenses) dari GET /api/transparansi.
+ * ponytail: tanpa sesi/auth, default desa = desa-wisata-candirejo; ganti ke sesi setelah auth ada.
+ */
+export function useBudgetData(fiscalYear = 2026, villageSlug = 'desa-wisata-candirejo') {
   const [budget, setBudget] = useState<VillageBudgetData>(INITIAL_BUDGET_DATA);
+  const [village, setVillage] = useState<TransparansiVillage | null>(null);
+  const [grant, setGrant] = useState<TransparansiGrant | null>(null);
+  const [expenses, setExpenses] = useState<TransparansiExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/transparansi?fiscal_year=${fiscalYear}`)
+    fetch(`/api/transparansi?fiscal_year=${fiscalYear}&slug=${villageSlug}`)
       .then((r) => r.json())
       .then((json) => {
         if (cancelled) return;
-        const grant = json?.data?.grant;
-        if (json?.success && grant) {
-          setBudget(mapGrantToBudget(grant, json.data.expenses?.length || 0));
+        if (json?.success && json.data) {
+          const g = json.data.grant;
+          setVillage(json.data.village || null);
+          setGrant(g || null);
+          setExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
+          if (g) setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
           setIsLive(true);
         }
       })
@@ -57,7 +82,7 @@ export function useBudgetData(fiscalYear = 2026) {
     return () => {
       cancelled = true;
     };
-  }, [fiscalYear]);
+  }, [fiscalYear, villageSlug]);
 
-  return { budget, loading, isLive };
+  return { budget, village, grant, expenses, loading, isLive };
 }

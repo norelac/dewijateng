@@ -14,13 +14,49 @@ import {
   useBudgetData,
   useDashboardTickets,
 } from '@/components/pengelola/usePengelolaData';
+import { mapGrantExpenseToExpenseItem } from '@/components/pengelola/mapReports';
+import type { ActivityItem } from '@/components/pengelola/types';
 
 function PengelolaDashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const { tickets } = useDashboardTickets();
-  const { budget } = useBudgetData();
+  const { budget, village, grant, expenses } = useBudgetData();
+
+  const reportCounts = {
+    total: tickets.length,
+    perluDitangani: tickets.filter((t) => t.status !== 'Selesai').length,
+    masuk: tickets.filter((t) => t.status === 'Masuk').length,
+    diverifikasi: tickets.filter((t) => t.status === 'Diverifikasi').length,
+    diproses: tickets.filter((t) => t.status === 'Diproses').length,
+    selesai: tickets.filter((t) => t.status === 'Selesai').length,
+  };
+
+  const totalFunding = budget.apbdes + budget.banprov + budget.pades;
+  const realisasiPercent =
+    totalFunding > 0 ? Math.round((budget.usedAmount / totalFunding) * 100) : undefined;
+
+  const expenseItems = expenses.map((exp) =>
+    mapGrantExpenseToExpenseItem(exp, grant?.lpj_document_url || undefined)
+  );
+
+  const evidence = {
+    complete: expenseItems.filter((e) => e.hasReceipt || e.hasPhoto).length,
+    total: expenseItems.length,
+  };
+
+  const activities: ActivityItem[] = tickets.slice(0, 3).map((t) => ({
+    id: `act-${t.id}`,
+    date: t.date,
+    title:
+      t.status === 'Selesai'
+        ? 'Penanganan laporan selesai'
+        : t.status === 'Diproses'
+        ? 'Penanganan laporan dimulai'
+        : 'Laporan baru diterima',
+    subtitle: `${t.code} · ${t.status}`,
+  }));
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'dashboard') {
@@ -54,6 +90,7 @@ function PengelolaDashboardContent() {
         onTabChange={handleTabChange}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
+        pendingReportCount={reportCounts.perluDitangani}
       />
 
       {/* 2. Area Kerja Konten */}
@@ -69,10 +106,17 @@ function PengelolaDashboardContent() {
           {/* KPI Indikator & Identitas Desa */}
           <section id="section-kpi" className="w-full">
             <DashboardKpis
-              villageName="Desa Candirejo"
-              regency="Borobudur, Kabupaten Magelang · Jawa Tengah"
-              updatedAt="Per 28 Oktober 2026 · 10.00 WIB"
-              periodYear="TA 2026"
+              villageName={village?.name || 'Desa Candirejo'}
+              regency={
+                village
+                  ? `${village.district}, Kabupaten ${village.regency} · Jawa Tengah`
+                  : 'Borobudur, Kabupaten Magelang · Jawa Tengah'
+              }
+              updatedAt={`Per ${budget.dateStr} · 10.00 WIB`}
+              periodYear={`TA ${budget.year}`}
+              totalFunding={totalFunding}
+              reportCounts={reportCounts}
+              evidence={evidence}
             />
           </section>
 
@@ -97,12 +141,19 @@ function PengelolaDashboardContent() {
 
           {/* Pengeluaran & Kelengkapan Publikasi */}
           <section id="section-pengeluaran" className="w-full">
-            <PengeluaranSection />
+            <PengeluaranSection
+              expenses={expenseItems.length > 0 ? expenseItems : undefined}
+              periodLabel={budget.dateStr}
+              realisasiPercent={realisasiPercent}
+            />
           </section>
 
           {/* Aktivitas Terbaru & Panduan Transparan */}
           <section id="section-aktivitas" className="w-full">
-            <AktivitasPanduanSection />
+            <AktivitasPanduanSection
+              activities={activities.length > 0 ? activities : undefined}
+              onViewHistory={() => router.push('/pengelola/aktivitas')}
+            />
           </section>
         </div>
       </div>
