@@ -2,49 +2,66 @@
 
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ShieldCheck } from 'lucide-react';
-import {
-  ActivityHistoryEvent,
-  ActivityType,
-  HandlingStage,
-  INITIAL_ACTIVITY_HISTORY,
-  INITIAL_HANDLING_STAGES,
-} from './types';
+import { ActivityHistoryEvent, ActivityType, HandlingStage } from './types';
 
 interface AktivitasPengelolaanViewProps {
   events?: ActivityHistoryEvent[];
   stages?: HandlingStage[];
   traceSubject?: string;
+  villageName?: string;
   /** Navigasi ke tab laporan (opsional membawa id tiket) atau anggaran. */
   onNavigate?: (tab: 'laporan' | 'anggaran', ticketId?: string) => void;
 }
 
-const PERIOD_OPTIONS = [
-  { label: '1–28 Oktober 2026', month: 'Okt' },
-  { label: '1–30 September 2026', month: 'Sep' },
-  { label: '1–31 Agustus 2026', month: 'Ags' },
+const MONTHS_ID = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
 ];
 
 const TYPE_OPTIONS: ActivityType[] = ['Semua', 'Laporan', 'Anggaran'];
 
+/** '7 Nov 2026' → '2026-10' (indeks bulan 0-based) untuk filter periode. */
+function periodKeyOf(date: string): string | null {
+  const m = date.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+  if (!m) return null;
+  const idx = MONTHS_ID.findIndex((mon) => mon.toLowerCase() === m[2].toLowerCase());
+  if (idx < 0) return null;
+  return `${m[3]}-${String(idx).padStart(2, '0')}`;
+}
+
+function periodLabelOf(key: string): string {
+  const [year, month] = key.split('-');
+  return `${MONTHS_ID[Number(month)]} ${year}`;
+}
+
 export default function AktivitasPengelolaanView({
-  events = INITIAL_ACTIVITY_HISTORY,
-  stages = INITIAL_HANDLING_STAGES,
-  traceSubject = 'Akses ke curug buruk · DS-JTG-2026-0891',
+  events = [],
+  stages = [],
+  traceSubject,
+  villageName = 'desa',
   onNavigate,
 }: AktivitasPengelolaanViewProps) {
-  const [period, setPeriod] = useState(PERIOD_OPTIONS[0]);
+  const [periodKey, setPeriodKey] = useState<string>('all');
   const [type, setType] = useState<ActivityType>('Semua');
   const [periodOpen, setPeriodOpen] = useState(false);
   const [typeOpen, setTypeOpen] = useState(false);
+
+  // ponytail: periode diturunkan dari data riil, bukan daftar bulan statis.
+  const periodOptions = useMemo(() => {
+    const keys = Array.from(
+      new Set(events.map((ev) => periodKeyOf(ev.date)).filter((k): k is string => Boolean(k)))
+    ).sort((a, b) => b.localeCompare(a));
+    return keys;
+  }, [events]);
 
   const filtered = useMemo(
     () =>
       events.filter(
         (ev) =>
-          ev.date.includes(period.month) &&
+          (periodKey === 'all' || periodKeyOf(ev.date) === periodKey) &&
           (type === 'Semua' || ev.type === type)
       ),
-    [events, period.month, type]
+    [events, periodKey, type]
   );
 
   return (
@@ -59,7 +76,7 @@ export default function AktivitasPengelolaanView({
             Aktivitas pengelolaan
           </h1>
           <p className="text-[#64748b] text-[13px] font-normal leading-[1.5] w-full">
-            Riwayat pembaruan laporan dan anggaran Desa Candirejo.
+            Riwayat pembaruan laporan dan anggaran {villageName}.
           </p>
         </div>
       </div>
@@ -74,7 +91,7 @@ export default function AktivitasPengelolaanView({
               onClick={() => setPeriodOpen((v) => !v)}
               className="bg-white border-2 border-[#e6ecf5] rounded-full h-[40px] flex gap-[10px] items-center justify-center px-[10px] text-[#0d2453] text-[12px] font-semibold whitespace-nowrap hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              <span>{period.label}</span>
+              <span>{periodKey === 'all' ? 'Semua periode' : periodLabelOf(periodKey)}</span>
               <ChevronDown className="w-[16px] h-[16px] text-[#64748b] shrink-0" />
             </button>
             {periodOpen && (
@@ -84,23 +101,25 @@ export default function AktivitasPengelolaanView({
                   onClick={() => setPeriodOpen(false)}
                 />
                 <div className="absolute left-0 top-[46px] bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 w-[220px]">
-                  {PERIOD_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.label}
-                      type="button"
-                      onClick={() => {
-                        setPeriod(opt);
-                        setPeriodOpen(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left text-[12px] hover:bg-slate-50 cursor-pointer ${
-                        period.label === opt.label
-                          ? 'text-[#0d2453] font-semibold bg-slate-50'
-                          : 'text-[#64748b]'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                  {[{ key: 'all', label: 'Semua periode' }, ...periodOptions.map((key) => ({ key, label: periodLabelOf(key) }))].map(
+                    (opt) => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => {
+                          setPeriodKey(opt.key);
+                          setPeriodOpen(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-[12px] hover:bg-slate-50 cursor-pointer ${
+                          periodKey === opt.key
+                            ? 'text-[#0d2453] font-semibold bg-slate-50'
+                            : 'text-[#64748b]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  )}
                 </div>
               </>
             )}
@@ -209,24 +228,34 @@ export default function AktivitasPengelolaanView({
         <p className="text-[#0d2453] text-[17px] font-semibold leading-[1.5] w-full">
           Jejak penanganan laporan selesai
         </p>
-        <p className="text-[#0d2453] text-[13px] font-semibold leading-[1.5] w-full">
-          {traceSubject}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-[14px] sm:gap-[20px] items-stretch w-full">
-          {stages.map((stage, idx) => (
-            <div
-              key={`${stage.label}-${idx}`}
-              className="bg-[#f3f5f8] flex flex-1 flex-col gap-[5px] items-start p-[14px] rounded-[8px] min-w-0"
-            >
-              <p className="text-[#64748b] text-[11px] font-normal leading-normal w-full">
-                {stage.date}
+        {stages.length === 0 ? (
+          <p className="text-[#64748b] text-[13px] font-normal leading-[1.5] w-full">
+            Belum ada laporan berstatus selesai untuk ditampilkan.
+          </p>
+        ) : (
+          <>
+            {traceSubject && (
+              <p className="text-[#0d2453] text-[13px] font-semibold leading-[1.5] w-full">
+                {traceSubject}
               </p>
-              <p className="text-[#0d2453] text-[13px] font-semibold leading-normal w-full">
-                {stage.label}
-              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-[14px] sm:gap-[20px] items-stretch w-full">
+              {stages.map((stage, idx) => (
+                <div
+                  key={`${stage.label}-${idx}`}
+                  className="bg-[#f3f5f8] flex flex-1 flex-col gap-[5px] items-start p-[14px] rounded-[8px] min-w-0"
+                >
+                  <p className="text-[#64748b] text-[11px] font-normal leading-normal w-full">
+                    {stage.date}
+                  </p>
+                  <p className="text-[#0d2453] text-[13px] font-semibold leading-normal w-full">
+                    {stage.label}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
 
       {/* 5. Catatan informasi */}
@@ -241,7 +270,7 @@ export default function AktivitasPengelolaanView({
       {/* 6. Catatan layanan */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] font-normal leading-[1.5] w-full">
         <p>© 2026 DEWI JATENG</p>
-        <p>Desa Candirejo · Per 28 Oktober 2026</p>
+        <p>{villageName}</p>
       </div>
     </div>
   );

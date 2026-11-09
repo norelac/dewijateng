@@ -19,7 +19,7 @@ function AktivitasContent() {
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const { tickets } = useDashboardTickets();
-  const { grant } = useBudgetData();
+  const { grant, village } = useBudgetData();
 
   const events = buildActivityEvents(tickets, grant);
   const completed = tickets.find((t) => t.status === 'Selesai');
@@ -70,6 +70,7 @@ function AktivitasContent() {
             events={events}
             stages={stages}
             traceSubject={traceSubject}
+            villageName={village?.name || 'Desa Candirejo'}
             onNavigate={handleNavigate}
           />
         </div>

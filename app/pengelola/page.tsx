@@ -134,7 +134,7 @@ function PengelolaDashboardContent() {
           {/* Pengeluaran & Kelengkapan Publikasi */}
           <section id="section-pengeluaran" className="w-full">
             <PengeluaranSection
-              expenses={expenseItems.length > 0 ? expenseItems : undefined}
+              expenses={expenseItems}
               periodLabel={budget.dateStr}
               realisasiPercent={realisasiPercent}
             />

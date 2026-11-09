@@ -244,7 +244,7 @@ export default function HomeReportFeed() {
             className="flex flex-col lg:flex-row items-stretch justify-between gap-4 w-full"
           >
             {/* Left Card: Evidence Photos with Slider Option */}
-            <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.07)] transition-all flex-1 flex flex-col justify-between">
+            <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.07)] transition-colors flex-1 flex flex-col justify-between">
               <div>
                 {/* Header: Title + Mode Toggle + Status Badge */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
@@ -266,7 +266,7 @@ export default function HomeReportFeed() {
                     <button
                       type="button"
                       onClick={() => toggleMode(item.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[#0D2453] transition-all cursor-pointer shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[#0D2453] transition-colors cursor-pointer shadow-2xs"
                       title={isSlider ? 'Ganti ke tampilan berdampingan' : 'Ganti ke tampilan interaktif slider'}
                     >
                       {isSlider ? (
@@ -430,7 +430,7 @@ export default function HomeReportFeed() {
             </div>
 
             {/* Right Card: Catatan Dari Desa */}
-            <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.07)] transition-all lg:w-[480px] xl:w-[520px] shrink-0 flex flex-col justify-between">
+            <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.07)] transition-colors lg:w-[480px] xl:w-[520px] shrink-0 flex flex-col justify-between">
               <div>
                 <div className="text-[12px] font-bold tracking-wider text-[#0D2453] uppercase mb-4">
                   CATATAN DARI DESA

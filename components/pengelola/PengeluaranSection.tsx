@@ -4,64 +4,9 @@ import React, { useState } from 'react';
 import { CheckCircle2, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { ExpenseItem } from './types';
 
-const EXPENSE_ITEMS: ExpenseItem[] = [
-  {
-    id: 'exp-1',
-    date: '16 Okt 2026',
-    title: 'Perbaikan jalur pejalan kaki',
-    subtitle: 'Akses wisata & pagar pengaman',
-    amount: 320000000,
-    formattedAmount: '320.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/curug-sesudah.png',
-  },
-  {
-    id: 'exp-2',
-    date: '12 Okt 2026',
-    title: 'Penataan area parkir wisata',
-    subtitle: 'Permukaan & marka area parkir',
-    amount: 240000000,
-    formattedAmount: '240.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/aduan-parkir.png',
-  },
-  {
-    id: 'exp-3',
-    date: '08 Okt 2026',
-    title: 'Pengelolaan kebersihan desa',
-    subtitle: 'Tempat sampah & sarana kebersihan',
-    amount: 180000000,
-    formattedAmount: '180.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/aduan-sampah.png',
-  },
-  {
-    id: 'exp-4',
-    date: '05 Okt 2026',
-    title: 'Pemeliharaan toilet wisata',
-    subtitle: 'Sanitasi & perbaikan fasilitas',
-    amount: 100000000,
-    formattedAmount: '100.000.000',
-    hasReceipt: true,
-    hasPhoto: true,
-    status: 'Terpublikasi',
-    receiptUrl: '/documents/lpj-candirejo-2026.pdf',
-    photoUrl: '/img/figma/toilet-sesudah.png',
-  },
-];
-
 export default function PengeluaranSection({
-  expenses = EXPENSE_ITEMS,
-  periodLabel = 'Oktober 2026',
+  expenses = [],
+  periodLabel = 'Periode berjalan',
   realisasiPercent,
 }: {
   expenses?: ExpenseItem[];
@@ -76,6 +21,7 @@ export default function PengeluaranSection({
 
   const totalTercatat = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
   const totalFormatted = new Intl.NumberFormat('id-ID').format(totalTercatat);
+  const completeCount = expenses.filter((e) => e.hasReceipt || e.hasPhoto).length;
 
   return (
     <div className="bg-white border border-[#E6ECF5] rounded-[18px] p-6 flex flex-col gap-5 shadow-xs w-full">
@@ -86,11 +32,11 @@ export default function PengeluaranSection({
             Pengeluaran &amp; kelengkapan publikasi
           </h2>
           <p className="text-[#64748B] text-[12px] font-normal leading-relaxed">
-            {periodLabel} · Seluruh pengeluaran telah dilengkapi bukti.
+            {periodLabel} · {completeCount} dari {expenses.length} pos dilengkapi bukti.
           </p>
         </div>
         <a
-          href="/transparansi"
+          href="/pengelola/pengeluaran"
           className="text-[#0D2453] text-[12px] font-semibold hover:underline self-start sm:self-auto"
         >
           Buka buku kas →

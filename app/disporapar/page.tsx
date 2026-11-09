@@ -110,7 +110,7 @@ export default function DisporaparCommandCenterPage() {
               type="button"
               onClick={fetchOverview}
               disabled={loading}
-              className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-2 transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-2 transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>Sinkronisasi Data</span>
@@ -132,18 +132,21 @@ export default function DisporaparCommandCenterPage() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-[#0D2453]">
-              {data?.macro_metrics.total_villages || 776}
+              {data?.macro_metrics.total_villages ?? 0}
             </span>
             <span className="text-xs text-[#767676] font-medium">/ 1.000 target</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-[#0D2453] h-1.5 rounded-full"
-              style={{ width: `${Math.min(((data?.macro_metrics.total_villages || 776) / 1000) * 100, 100)}%` }}
+              style={{ width: `${Math.min(((data?.macro_metrics.total_villages ?? 0) / 1000) * 100, 100)}%` }}
             />
           </div>
           <span className="text-[11px] text-slate-500 block">
-            77,6% capaian target RPJMD Pemprov Jateng
+            {(((data?.macro_metrics.total_villages ?? 0) / 1000) * 100)
+              .toFixed(1)
+              .replace('.', ',')}
+            % capaian target RPJMD Pemprov Jateng
           </span>
         </div>
 
@@ -155,18 +158,20 @@ export default function DisporaparCommandCenterPage() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-emerald-600">
-              {data?.macro_metrics.lpj_compliance_rate ?? 100}%
+              {data?.macro_metrics.lpj_compliance_rate ?? 0}%
             </span>
             <span className="text-xs text-emerald-700 font-semibold">Tervalidasi SSH</span>
           </div>
           <div className="w-full bg-emerald-100 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-emerald-500 h-1.5 rounded-full"
-              style={{ width: `${data?.macro_metrics.lpj_compliance_rate ?? 100}%` }}
+              style={{ width: `${data?.macro_metrics.lpj_compliance_rate ?? 0}%` }}
             />
           </div>
           <span className="text-[11px] text-slate-500 block">
-            Tidak ada temuan markup harga tak wajar
+            {data?.macro_metrics.lpj_compliance_rate == null
+              ? 'Data kepatuhan LPJ belum tersedia.'
+              : 'Rasio dokumen LPJ yang lolos pemeriksaan SSH.'}
           </span>
         </div>
 
@@ -178,7 +183,7 @@ export default function DisporaparCommandCenterPage() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-[#0D2453]">
-              {data?.macro_metrics.resolution_rate ?? 100}%
+              {data?.macro_metrics.resolution_rate ?? 0}%
             </span>
             <span className="text-xs text-slate-500">
               ({data?.macro_metrics.resolved_complaints ?? 0} dari {data?.macro_metrics.total_complaints ?? 0})
@@ -187,7 +192,7 @@ export default function DisporaparCommandCenterPage() {
           <div className="w-full bg-blue-100 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-blue-600 h-1.5 rounded-full"
-              style={{ width: `${data?.macro_metrics.resolution_rate ?? 100}%` }}
+              style={{ width: `${data?.macro_metrics.resolution_rate ?? 0}%` }}
             />
           </div>
           <span className="text-[11px] text-slate-500 block">
@@ -203,14 +208,24 @@ export default function DisporaparCommandCenterPage() {
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-[#0D2453]">
-              {data?.macro_metrics.average_trust_score || 86.5}
+              {data?.macro_metrics.average_trust_score ?? 0}
             </span>
-            <span className="text-xs text-emerald-600 font-bold">Kategori: A (Sangat Patuh)</span>
+            <span className="text-xs text-emerald-600 font-bold">
+              {data?.macro_metrics.average_trust_score == null
+                ? 'Belum ada data'
+                : `Kategori: ${
+                    data.macro_metrics.average_trust_score >= 85
+                      ? 'A'
+                      : data.macro_metrics.average_trust_score >= 70
+                      ? 'B'
+                      : 'C'
+                  }`}
+            </span>
           </div>
           <div className="w-full bg-amber-100 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-amber-500 h-1.5 rounded-full"
-              style={{ width: `${data?.macro_metrics.average_trust_score || 86.5}%` }}
+              style={{ width: `${data?.macro_metrics.average_trust_score ?? 0}%` }}
             />
           </div>
           <span className="text-[11px] text-slate-500 block">
@@ -240,7 +255,7 @@ export default function DisporaparCommandCenterPage() {
                   key={st}
                   type="button"
                   onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                     statusFilter === st
                       ? 'bg-[#0D2453] text-white'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -270,7 +285,7 @@ export default function DisporaparCommandCenterPage() {
               filteredRegencies.map((reg) => (
                 <div
                   key={reg.regency}
-                  className="p-4 rounded-2xl border border-slate-200 hover:border-[#0D2453] bg-slate-50/50 hover:bg-white transition-all flex items-center justify-between gap-4"
+                  className="p-4 rounded-2xl border border-slate-200 hover:border-[#0D2453] bg-slate-50/50 hover:bg-white transition-colors flex items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-3">
                     <span
@@ -284,7 +299,7 @@ export default function DisporaparCommandCenterPage() {
                     />
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">
-                        Kabupaten {reg.regency}
+                        {reg.regency}
                       </h4>
                       <span className="text-[11px] text-slate-500">
                         {reg.total_villages} Desa Wisata Terdata
@@ -349,7 +364,7 @@ export default function DisporaparCommandCenterPage() {
                           {item.name}
                         </h4>
                         <span className="text-[11px] text-slate-500">
-                          Kab. {item.regency} • Kategori {item.category}
+                          {item.regency} • Kategori {item.category}
                         </span>
                       </div>
                     </div>
@@ -377,7 +392,9 @@ export default function DisporaparCommandCenterPage() {
               ))
             ) : (
               <div className="p-8 text-center text-xs text-slate-400">
-                Memuat rekomendasi prioritas bantuan dana...
+                {loading
+                  ? 'Memuat rekomendasi prioritas bantuan dana…'
+                  : 'Belum ada rekomendasi prioritas dari data yang tersedia.'}
               </div>
             )}
           </div>

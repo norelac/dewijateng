@@ -6,9 +6,11 @@ import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import PusatBantuanView from '@/components/pengelola/PusatBantuanView';
 import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
+import { useBudgetData } from '@/components/pengelola/usePengelolaData';
 
 function PusatBantuanContent() {
   const router = useRouter();
+  const { village } = useBudgetData();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   const handleTabChange = (tabId: string) => {
@@ -40,7 +42,7 @@ function PusatBantuanContent() {
 
         {/* Konten Halaman */}
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">
-          <PusatBantuanView />
+          <PusatBantuanView villageName={village?.name || 'Desa'} />
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
-import { useDashboardTickets } from './usePengelolaData';
+import { useDashboardTickets, useBudgetData } from './usePengelolaData';
 
 interface PengelolaSidebarProps {
   activeTab?: string;
@@ -24,6 +24,8 @@ interface PengelolaSidebarProps {
   onCloseMobile?: () => void;
   /** Jumlah laporan perlu ditangani; kosong = dihitung dari hook laporan. */
   pendingReportCount?: number;
+  /** Nama desa pada kartu cakupan akses; kosong = diambil dari data transparansi. */
+  villageName?: string;
 }
 
 export default function PengelolaSidebar({
@@ -32,10 +34,13 @@ export default function PengelolaSidebar({
   mobileOpen = false,
   onCloseMobile,
   pendingReportCount,
+  villageName,
 }: PengelolaSidebarProps) {
-  // ponytail: badge dihitung di sini agar konsisten di semua halaman pengelola;
-  // tukar ke prop dari halaman bila fetch ganda jadi beban.
+  // ponytail: badge & nama desa dihitung di sini agar konsisten di semua halaman
+  // pengelola; tukar ke prop dari halaman bila fetch ganda jadi beban.
   const { tickets } = useDashboardTickets();
+  const { village } = useBudgetData();
+  const activeVillage = villageName ?? village?.name ?? 'Desa Candirejo';
   const pendingCount =
     pendingReportCount ??
     tickets.filter((t) => t.status === 'Masuk' || t.status === 'Diverifikasi')
@@ -98,7 +103,7 @@ export default function PengelolaSidebar({
             ADMIN PENGELOLA DESA
           </span>
           <span className="text-[#0D2453] text-[13px] font-semibold">
-            Desa Candirejo
+            {activeVillage}
           </span>
         </div>
 

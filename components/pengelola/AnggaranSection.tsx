@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { VillageBudgetData, INITIAL_BUDGET_DATA } from './types';
+import { VillageBudgetData } from './types';
 
 interface AnggaranSectionProps {
-  budget?: VillageBudgetData;
+  budget: VillageBudgetData;
   onManageBudget?: () => void;
 }
 
@@ -33,7 +33,7 @@ function formatShortMiliar(num: number): string {
 }
 
 export default function AnggaranSection({
-  budget = INITIAL_BUDGET_DATA,
+  budget,
   onManageBudget,
 }: AnggaranSectionProps) {
   const total = budget.apbdes + budget.banprov + budget.pades;
@@ -217,12 +217,12 @@ export default function AnggaranSection({
         {/* Progress Bar (Dual Color usedPct vs sisaPct) */}
         <div className="h-[16px] w-full rounded-[5px] overflow-hidden flex bg-slate-100">
           <div
-            className="bg-[#0D2453] h-full transition-all duration-500"
+            className="bg-[#0D2453] h-full"
             style={{ width: `${Math.min(100, Math.max(0, usedPct))}%` }}
             title={`Dana terpakai: ${usedPct}%`}
           />
           <div
-            className="bg-[#CBE2FF] h-full transition-all duration-500 flex-1"
+            className="bg-[#CBE2FF] h-full flex-1"
             title={`Sisa kas: ${sisaPct}%`}
           />
         </div>

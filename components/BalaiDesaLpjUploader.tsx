@@ -230,7 +230,7 @@ export default function BalaiDesaLpjUploader() {
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-300 hover:border-[#0D2453] rounded-2xl p-6 text-center bg-slate-50/50 hover:bg-blue-50/20 cursor-pointer transition-all"
+            className="border-2 border-dashed border-slate-300 hover:border-[#0D2453] rounded-2xl p-6 text-center bg-slate-50/50 hover:bg-blue-50/20 cursor-pointer transition-colors"
           >
             <div className="w-12 h-12 rounded-2xl bg-blue-100 text-[#0D2453] flex items-center justify-center mx-auto mb-2">
               <FileText className="w-6 h-6" />
@@ -266,7 +266,7 @@ export default function BalaiDesaLpjUploader() {
           <button
             type="submit"
             disabled={uploading || !file}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs shadow-xs hover:shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0D2453] hover:bg-[#132d66] text-white font-bold text-xs shadow-xs hover:shadow transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
           >
             <Upload className="w-4 h-4" />
             <span>{uploading ? 'Memproses Ekstraksi...' : 'Unggah & Ekstrak Pos Belanja LPJ'}</span>

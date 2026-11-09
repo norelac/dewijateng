@@ -16,19 +16,23 @@ interface FaqItem {
 const GUIDE_ITEMS: GuideItem[] = [
   {
     title: 'Verifikasi laporan',
-    body: 'Buka Kelola aduan → Lihat detail. Periksa lokasi, uraian, dan lampiran. Isi catatan, konfirmasi pemeriksaan, lalu pilih Verifikasi laporan.',
+    body: 'Buka Kelola laporan → pilih laporan berstatus Masuk. Periksa lokasi, uraian, dan lampiran. Isi catatan, centang konfirmasi pemeriksaan, lalu pilih Verifikasi laporan.',
   },
   {
     title: 'Progres & penyelesaian',
-    body: 'Buka Perbarui progres pada laporan Diproses. Catat pekerjaan dan unggah foto sesudah. Tandai selesai hanya jika masalah tertangani, lalu Simpan progres.',
+    body: 'Buka Perbarui progres pada laporan yang sedang ditangani. Lampirkan foto sesudah penanganan dan tandai selesai agar laporan tertutup dengan bukti. Catatan progres bertahap belum tersimpan sampai endpoint catatan tersedia di backend.',
   },
   {
     title: 'Anggaran desa',
-    body: 'Buka Anggaran desa → Ubah anggaran. Periksa tahun dan nominal ketiga sumber. Total dihitung otomatis; Simpan perubahan memperbarui informasi publik.',
+    body: 'Buka Anggaran desa untuk melihat alokasi dan realisasi. Form ubah anggaran sudah mengikuti desain, tetapi tombol simpan belum aktif karena endpoint tulis anggaran belum ada.',
   },
   {
-    title: 'Bukti & publikasi',
-    body: 'Buka Pengeluaran & bukti. Tambah atau ubah kegiatan, isi nominal dan tanggal, lalu lampirkan nota serta foto fisik. Pilih Draf atau Terpublikasi sebelum menyimpan.',
+    title: 'Pengeluaran & bukti',
+    body: 'Buka Pengeluaran & bukti untuk melihat buku kas dari pos belanja LPJ yang diunggah. Form tambah dan ubah pengeluaran menunggu endpoint tulis; nota dan foto per pos tampil setelah kolom lampiran tersedia.',
+  },
+  {
+    title: 'Unggah LPJ',
+    body: 'Buka Unggah LPJ, pilih berkas PDF resmi, lalu unggah. Pos belanja hasil ekstraksi langsung mengisi buku kas dan ringkasan anggaran desa.',
   },
   {
     title: 'Privasi pelapor',
@@ -39,23 +43,27 @@ const GUIDE_ITEMS: GuideItem[] = [
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Kapan laporan boleh diselesaikan?',
-    answer: 'Setelah masalah tertangani, catatan hasil diisi, dan dokumentasi sesudah tersedia. Status berubah setelah Simpan progres.',
+    answer:
+      'Setelah masalah tertangani, ringkasan tindakan diisi, dan foto sesudah penanganan dilampirkan. Status berubah setelah bukti disimpan.',
   },
   {
-    question: 'Apakah Draf tampil di situs publik?',
-    answer: 'Tidak. Draf tetap tersimpan untuk pengelola. Pilih Terpublikasi dan simpan setelah bukti diperiksa serta aman dibagikan.',
+    question: 'Mengapa tombol simpan pengeluaran belum aktif?',
+    answer:
+      'Endpoint tulis pengeluaran belum tersedia. Selama itu, buku kas hanya membaca pos belanja yang masuk dari unggahan LPJ.',
   },
   {
     question: 'Mengapa total belanja belum berubah?',
-    answer: 'Formulir yang belum disimpan tidak masuk buku kas. Mengubah kegiatan yang sudah ada memperbarui data tersebut, bukan menambah salinan.',
+    answer:
+      'Buku kas mengikuti pos belanja yang tersimpan di basis data. Perubahan baru terlihat setelah pos belanja tersimpan, bukan saat form masih diisi.',
   },
   {
     question: 'Apakah identitas pelapor boleh dicantumkan?',
-    answer: 'Tidak. Gunakan kode DS-JTG pada komunikasi dan catatan. Identitas serta kontak pelapor harus tetap dilindungi.',
+    answer:
+      'Tidak. Gunakan kode DS-JTG pada komunikasi dan catatan. Identitas serta kontak pelapor harus tetap dilindungi.',
   },
 ];
 
-export default function PusatBantuanView() {
+export default function PusatBantuanView({ villageName = 'desa' }: { villageName?: string }) {
   return (
     <div
       className="flex flex-col gap-[24px] w-full"
@@ -68,7 +76,7 @@ export default function PusatBantuanView() {
             Pusat bantuan
           </h1>
           <p className="text-[#64748b] text-[13px] font-normal leading-[1.5] w-full">
-            Panduan singkat untuk mengelola layanan Desa Candirejo dengan aman.
+            Panduan singkat untuk mengelola layanan {villageName} dengan aman.
           </p>
         </div>
       </div>
@@ -124,7 +132,7 @@ export default function PusatBantuanView() {
           <div className="bg-[#edf3fc] flex gap-[10px] items-start p-[16px] rounded-[10px] w-full">
             <ShieldCheck className="w-[18px] h-[18px] text-[#0d2453] shrink-0 mt-0.5" />
             <p className="flex-1 min-w-px text-[#0d2453] text-[13px] font-normal leading-[1.5]">
-              Akses Anda hanya untuk Desa Candirejo. Pengaturan ini tidak mencakup
+              Akses Anda hanya untuk {villageName}. Pengaturan ini tidak mencakup
               pengelolaan pengguna tingkat provinsi.
             </p>
           </div>
@@ -134,7 +142,7 @@ export default function PusatBantuanView() {
       {/* 3. Catatan layanan */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] font-normal leading-[1.5] w-full">
         <p>© 2026 DEWI JATENG</p>
-        <p>Desa Candirejo · Per 28 Oktober 2026</p>
+        <p>{villageName}</p>
       </div>
     </div>
   );

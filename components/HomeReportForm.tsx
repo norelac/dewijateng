@@ -480,7 +480,7 @@ export default function HomeReportForm() {
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-xs font-semibold border border-blue-200 transition-all active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-[#0D2453] text-xs font-semibold border border-blue-200 transition-colors cursor-pointer"
                 title="Gunakan lokasi GPS saya saat ini"
               >
                 <Navigation className="w-3.5 h-3.5 text-blue-700" />
@@ -606,7 +606,7 @@ export default function HomeReportForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-[14px] bg-[#0D2453] hover:bg-[#132d66] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors shadow-xs active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -621,7 +621,7 @@ export default function HomeReportForm() {
               <button
                 type="button"
                 onClick={handleCancelSubmit}
-                className="px-5 py-3 rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-all"
+                className="px-5 py-3 rounded-[14px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors"
               >
                 Batal
               </button>

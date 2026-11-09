@@ -57,7 +57,7 @@ export default function AnggaranDesaView({
         <button
           type="button"
           onClick={onOpenEdit}
-          className="bg-[#0d2453] border-2 border-[#0d2453] text-white text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-[#132d66] transition-all active:scale-95 shadow-2xs whitespace-nowrap cursor-pointer self-start sm:self-auto"
+          className="bg-[#0d2453] border-2 border-[#0d2453] text-white text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-[#132d66] transition-colors shadow-2xs whitespace-nowrap cursor-pointer self-start sm:self-auto"
         >
           Ubah anggaran
         </button>
@@ -211,7 +211,7 @@ export default function AnggaranDesaView({
         {/* Bar Realisasi */}
         <div className="h-[12px] rounded-[6px] overflow-hidden flex w-full bg-[#cbe2ff]">
           <div
-            className="h-full bg-[#0d2453] transition-all duration-500"
+            className="h-full bg-[#0d2453]"
             style={{ width: `${Math.min(100, Math.max(0, usedPercentage))}%` }}
           />
         </div>
@@ -225,7 +225,7 @@ export default function AnggaranDesaView({
           <button
             type="button"
             onClick={onNavigateToPengeluaran}
-            className="bg-white border-2 border-[#e6ecf5] rounded-full h-[40px] px-[16px] flex items-center gap-[8px] text-[#0d2453] text-[12px] font-semibold hover:bg-slate-50 transition-all active:scale-95 shadow-2xs whitespace-nowrap cursor-pointer self-start sm:self-auto"
+            className="bg-white border-2 border-[#e6ecf5] rounded-full h-[40px] px-[16px] flex items-center gap-[8px] text-[#0d2453] text-[12px] font-semibold hover:bg-slate-50 transition-colors shadow-2xs whitespace-nowrap cursor-pointer self-start sm:self-auto"
           >
             <span>Lihat pengeluaran &amp; bukti</span>
             <ArrowRight className="w-3.5 h-3.5" />
