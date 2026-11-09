@@ -91,10 +91,45 @@ export default function PengaturanView() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [notifications, setNotifications] =
     useState<NotificationPrefs>(INITIAL_NOTIFICATIONS);
+  const [saveMessage, setSaveMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   const handleReset = () => {
     setForm(INITIAL_FORM);
     setNotifications(INITIAL_NOTIFICATIONS);
+    setSaveMessage(null);
+  };
+
+  // Tidak ada endpoint tulis pengaturan akun; simpan menahan nilai di sesi + validasi sandi.
+  const handleSave = () => {
+    if (form.newPassword || form.confirmPassword) {
+      if (form.newPassword.length < 12) {
+        setSaveMessage({
+          type: 'error',
+          text: 'Kata sandi baru minimal 12 karakter.',
+        });
+        return;
+      }
+      if (form.newPassword !== form.confirmPassword) {
+        setSaveMessage({
+          type: 'error',
+          text: 'Konfirmasi kata sandi baru tidak cocok.',
+        });
+        return;
+      }
+    }
+    setForm((prev) => ({
+      ...prev,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    }));
+    setSaveMessage({
+      type: 'success',
+      text: 'Perubahan nama tampilan dan preferensi notifikasi diterapkan untuk sesi ini.',
+    });
   };
 
   const inputClass =
@@ -237,10 +272,20 @@ export default function PengaturanView() {
           </div>
 
           {/* Tindakan formulir */}
-          <div className="flex gap-[10px] items-start w-full">
+          <div className="flex flex-col gap-[10px] items-start w-full">
+            {saveMessage && (
+              <p
+                className={`text-[11px] font-medium leading-[1.5] ${
+                  saveMessage.type === 'success' ? 'text-[#16725c]' : 'text-red-600'
+                }`}
+              >
+                {saveMessage.text}
+              </p>
+            )}
+            <div className="flex gap-[10px] items-start w-full">
             <button
               type="button"
-              onClick={handleReset}
+              onClick={handleSave}
               className="bg-[#0d2453] border-2 border-[#0d2453] h-[40px] px-[10px] rounded-full text-white text-[12px] font-semibold whitespace-nowrap hover:bg-[#132d66] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D68FE]"
             >
               Simpan pengaturan
@@ -252,6 +297,7 @@ export default function PengaturanView() {
             >
               Batal
             </button>
+            </div>
           </div>
         </div>
 

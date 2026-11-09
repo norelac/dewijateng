@@ -33,7 +33,9 @@ export default function PengelolaSidebar({
   const mainMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'laporan', label: 'Kelola laporan', icon: MessagesSquare, badge: '3' },
+    { id: 'penanganan', label: 'Penanganan lapangan', icon: ShieldCheck },
     { id: 'anggaran', label: 'Anggaran desa', icon: Wallet },
+    { id: 'lpj', label: 'Unggah LPJ', icon: ScrollText },
     { id: 'pengeluaran', label: 'Pengeluaran & bukti', icon: ReceiptText },
     { id: 'profil', label: 'Profil desa', icon: Landmark },
     { id: 'aktivitas', label: 'Aktivitas', icon: ScrollText },

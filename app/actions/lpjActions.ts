@@ -48,7 +48,6 @@ export async function processLpjUploadAction(
       10
     );
     const file = formData.get('file') as File | null;
-    const rawItems = formData.get('items') as string | null;
 
     if (!villageId) {
       return {
@@ -73,18 +72,8 @@ export async function processLpjUploadAction(
       };
     }
 
-    // Konversi file ke buffer
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
-
-    let itemsOverride: any[] | undefined;
-    if (rawItems) {
-      try {
-        itemsOverride = JSON.parse(rawItems);
-      } catch {
-        itemsOverride = undefined;
-      }
-    }
 
     const result = await saveLpjSubmission({
       villageId,
@@ -93,7 +82,6 @@ export async function processLpjUploadAction(
       totalAllocated,
       pdfBuffer,
       fileName: file.name,
-      itemsOverride,
     });
 
     // Revalidasi jalur halaman portal aparatur, transparansi publik, dan beranda

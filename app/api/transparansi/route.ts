@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('[API /api/transparansi error]:', error);
     return NextResponse.json(
-      { success: false, error: 'Gagal mengambil data transparansi', details: error.message },
+      { success: false, error: 'Gagal mengambil data transparansi' },
       { status: 500 }
     );
   }

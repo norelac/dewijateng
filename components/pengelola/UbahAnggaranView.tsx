@@ -8,6 +8,8 @@ interface UbahAnggaranViewProps {
   budget: VillageBudgetData;
   onBack: () => void;
   onSaveBudget: (updated: Partial<VillageBudgetData>) => void;
+  /** Belum ada endpoint tulis anggaran di BE; nonaktifkan simpan sampai tersedia. */
+  saveEnabled?: boolean;
 }
 
 function formatRupiah(num: number): string {
@@ -33,6 +35,7 @@ export default function UbahAnggaranView({
   budget,
   onBack,
   onSaveBudget,
+  saveEnabled = false,
 }: UbahAnggaranViewProps) {
   const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
@@ -73,6 +76,7 @@ export default function UbahAnggaranView({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!saveEnabled) return;
     onSaveBudget({
       year: selectedYear,
       apbdes: apbdesNum,
@@ -227,9 +231,15 @@ export default function UbahAnggaranView({
             <div className="flex items-center gap-[10px] pt-[6px]">
               <button
                 type="submit"
-                className="bg-[#0d2453] border-2 border-[#0d2453] text-white text-[12px] font-semibold rounded-full h-[40px] px-[18px] hover:bg-[#132d66] transition-all active:scale-95 shadow-2xs cursor-pointer"
+                disabled={!saveEnabled}
+                title={saveEnabled ? undefined : 'Penyimpanan anggaran belum tersedia'}
+                className={`border-2 rounded-full h-[40px] px-[18px] text-[12px] font-semibold transition-all shadow-2xs ${
+                  saveEnabled
+                    ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer'
+                    : 'bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
               >
-                {isSaved ? 'Tersimpan!' : 'Simpan perubahan'}
+                {saveEnabled ? (isSaved ? 'Tersimpan!' : 'Simpan perubahan') : 'Belum tersedia'}
               </button>
 
               <button
@@ -240,6 +250,11 @@ export default function UbahAnggaranView({
                 Batal
               </button>
             </div>
+            {!saveEnabled && (
+              <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
+                Penyimpanan perubahan anggaran belum tersedia sampai endpoint tulis anggaran disiapkan di backend.
+              </p>
+            )}
           </div>
         </div>
 

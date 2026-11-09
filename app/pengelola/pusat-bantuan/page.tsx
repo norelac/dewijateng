@@ -5,27 +5,19 @@ import { useRouter } from 'next/navigation';
 import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import PusatBantuanView from '@/components/pengelola/PusatBantuanView';
+import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
 
 function PusatBantuanContent() {
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   const handleTabChange = (tabId: string) => {
-    if (tabId === 'dashboard') {
-      router.push('/pengelola');
-    } else if (tabId === 'laporan') {
-      router.push('/pengelola/laporan');
-    } else if (tabId === 'anggaran') {
-      router.push('/pengelola/anggaran');
-    } else if (tabId === 'aktivitas') {
-      router.push('/pengelola/aktivitas');
-    } else if (tabId === 'pusat-bantuan') {
+    if (tabId === 'pusat-bantuan') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tabId === 'pengaturan') {
-      router.push('/pengelola/pengaturan');
-    } else {
-      router.push(`/pengelola?tab=${tabId}`);
+      return;
     }
+    const target = TAB_ROUTES[tabId];
+    if (target) router.push(target);
   };
 
   return (

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Search, ShieldCheck } from 'lucide-react';
-import { DashboardTicket, TicketStatus, INITIAL_TICKETS_DATA } from './types';
+import { DashboardTicket, TicketStatus } from './types';
 import TicketActionModal from './TicketActionModal';
 
 interface AntreanLaporanTableProps {
@@ -19,9 +19,7 @@ export default function AntreanLaporanTable({
   onOpenTicketView,
   onUpdateStatus: propUpdateStatus,
 }: AntreanLaporanTableProps) {
-  const [internalTickets, setInternalTickets] = useState<DashboardTicket[]>(
-    INITIAL_TICKETS_DATA
-  );
+  const [internalTickets, setInternalTickets] = useState<DashboardTicket[]>([]);
 
   const tickets = propTickets || internalTickets;
 

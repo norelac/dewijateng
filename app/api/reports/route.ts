@@ -40,7 +40,6 @@ export async function GET(req: NextRequest) {
       {
         success: false,
         error: 'Gagal mengambil data laporan aduan',
-        details: error.message,
       },
       { status: 500 }
     );
