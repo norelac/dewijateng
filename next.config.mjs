@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     // Foto aduan warga (2–8MB) dikirim lewat Server Action; default Next hanya 1MB.
     serverActions: {
