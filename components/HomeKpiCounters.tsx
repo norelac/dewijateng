@@ -141,7 +141,6 @@ function Counter({
   suffix,
   decimals = 0,
   fallback,
-  holdDuration = 6000,
 }: {
   isInView: boolean;
   target: number;
@@ -149,64 +148,39 @@ function Counter({
   suffix: string;
   decimals?: number;
   fallback: string;
-  holdDuration?: number;
 }) {
   const [current, setCurrent] = useState(0);
-  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    // ponytail: repeating rolling count-up loop with gentle fade reset. Upgrade to Framer Motion animate() if spring dampening needed.
+    // Naik sekali ke target lalu berhenti; tidak ada reset/fade berulang.
     if (!isInView || target === 0) return;
 
-    let timer: NodeJS.Timeout;
-    let frameTimer: NodeJS.Timeout;
-    let isActive = true;
+    const duration = 2800;
+    const frameRate = 1000 / 60;
+    const totalFrames = Math.max(1, Math.round(duration / frameRate));
+    let frame = 0;
+    let cancelled = false;
 
-    const runCount = () => {
-      setIsFading(false);
-      const duration = 2800;
-      const frameRate = 1000 / 60;
-      const totalFrames = Math.round(duration / frameRate);
-      let frame = 0;
+    const frameTimer = setInterval(() => {
+      if (cancelled) return;
+      frame++;
+      const progress = frame / totalFrames;
+      // Smooth cubic ease-out
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-      frameTimer = setInterval(() => {
-        if (!isActive) return;
-        frame++;
-        const progress = frame / totalFrames;
-        // Smooth cubic ease-out
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-        const val = target * easeProgress;
-
-        if (frame >= totalFrames) {
-          setCurrent(target);
-          clearInterval(frameTimer);
-          timer = setTimeout(() => {
-            if (!isActive) return;
-            // Soft fade-out before resetting number
-            setIsFading(true);
-            timer = setTimeout(() => {
-              if (!isActive) return;
-              setCurrent(0);
-              timer = setTimeout(() => {
-                if (!isActive) return;
-                runCount();
-              }, 200);
-            }, 350);
-          }, holdDuration);
-        } else {
-          setCurrent(val);
-        }
-      }, frameRate);
-    };
-
-    runCount();
+      if (frame >= totalFrames) {
+        setCurrent(target);
+        clearInterval(frameTimer);
+      } else {
+        setCurrent(target * easeProgress);
+      }
+    }, frameRate);
 
     return () => {
-      isActive = false;
+      cancelled = true;
       clearInterval(frameTimer);
-      clearTimeout(timer);
     };
-  }, [isInView, target, holdDuration]);
+  }, [isInView, target]);
 
   if (!isInView) return <span>{fallback}</span>;
 
@@ -216,11 +190,7 @@ function Counter({
       : Math.floor(current).toLocaleString('id-ID');
 
   return (
-    <span
-      className={`inline-block transition-opacity duration-300 ease-in-out ${
-        isFading ? 'opacity-0' : 'opacity-100'
-      }`}
-    >
+    <span className="inline-block">
       {prefix}
       {formatted}
       {suffix}

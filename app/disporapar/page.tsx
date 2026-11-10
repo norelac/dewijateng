@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import LogoutButton from '@/components/LogoutButton';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -95,7 +96,7 @@ export default function DisporaparCommandCenterPage() {
           <div>
             <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-900/60 border border-blue-500/30 text-blue-300 text-xs font-semibold w-fit mb-3">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Pusat Kendali Eksekutif Disporapar Pemprov Jateng</span>
+              <span>Pusat Kendali Eksekutif Disbudparekraf Pemprov Jateng</span>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
               Command Center Evaluasi 1.000 Desa Wisata 2027
@@ -118,6 +119,7 @@ export default function DisporaparCommandCenterPage() {
             <div className="px-4 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/30 text-xs text-emerald-300 font-bold">
               Target 2027: 1.000 Desa
             </div>
+            <LogoutButton />
           </div>
         </div>
       </section>

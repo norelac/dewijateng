@@ -39,11 +39,18 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-white/60 shrink-0" />
-                <span>[Email resmi pengelola]</span>
+                <a
+                  href="mailto:dewijateng@jatengprov.go.id"
+                  className="hover:text-white transition-colors"
+                >
+                  dewijateng@jatengprov.go.id
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-white/60 shrink-0" />
-                <span>(024) [Nomor Kontak Resmi]</span>
+                <a href="tel:+62243546681" className="hover:text-white transition-colors">
+                  (024) 354-6681
+                </a>
               </div>
             </div>
           </div>
@@ -111,7 +118,7 @@ export default function Footer() {
                   className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
                   <BarChart2 className="w-4 h-4 text-white/60" />
-                  <span>Command Center Disporapar</span>
+                  <span>Command Center Disbudparekraf</span>
                 </Link>
               </li>
             </ul>

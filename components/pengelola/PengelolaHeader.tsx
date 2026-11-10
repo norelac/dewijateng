@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, ChevronDown, Menu, LogOut, User, Shield } from 'lucide-react';
+import { logoutAction } from '@/app/actions/authActions';
 
 interface PengelolaHeaderProps {
   onOpenMobile?: () => void;
@@ -12,8 +14,16 @@ export default function PengelolaHeader({
   onOpenMobile,
   activeTabTitle = 'Dashboard',
 }: PengelolaHeaderProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasUnread] = useState(true);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logoutAction();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <header className="w-full h-[72px] sm:h-[80px] bg-white border-b border-[#E6ECF5] px-4 sm:px-8 flex items-center justify-between shrink-0 sticky top-0 z-20">
@@ -102,13 +112,14 @@ export default function PengelolaHeader({
                   <span>Profil Balai Desa</span>
                 </a>
                 <div className="h-px bg-slate-100 my-1" />
-                <a
-                  href="/"
-                  className="flex items-center gap-2 px-4 py-2 text-xs text-red-600 hover:bg-red-50"
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs text-red-600 hover:bg-red-50 text-left"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Keluar ke Beranda</span>
-                </a>
+                  <span>Keluar dari sesi</span>
+                </button>
               </div>
             </>
           )}
