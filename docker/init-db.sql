@@ -187,6 +187,7 @@ CREATE TABLE users (
     approval_status VARCHAR(20) CHECK (approval_status IN ('MENUNGGU', 'DISETUJUI', 'DITOLAK')) DEFAULT 'DISETUJUI',
     email_verified_at TIMESTAMP WITH TIME ZONE NULL,
     activated_at TIMESTAMP WITH TIME ZONE NULL,
+    deactivated_at TIMESTAMP WITH TIME ZONE NULL,
     must_change_password BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP WITH TIME ZONE NULL,
     created_by UUID NULL,

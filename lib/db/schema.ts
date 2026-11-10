@@ -221,6 +221,7 @@ export const users = pgTable('users', {
   approvalStatus: varchar('approval_status', { length: 20 }).default('DISETUJUI').notNull(),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   activatedAt: timestamp('activated_at', { withTimezone: true }),
+  deactivatedAt: timestamp('deactivated_at', { withTimezone: true }),
   mustChangePassword: boolean('must_change_password').default(true).notNull(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdBy: uuid('created_by'),

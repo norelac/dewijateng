@@ -158,6 +158,124 @@ UPDATE village_grants SET lpj_status = 'VERIFIED', uploaded_at = CURRENT_TIMESTA
  WHERE id = 'b0000006-0000-0000-0000-000000000000'; -- Dieng Kulon
 
 -- ------------------------------------------------------------------------------
+-- 4d. Akun pengelola desa wisata contoh (Fase 3 — layar "Akun desa wisata")
+--
+-- Lima akun tambahan supaya tabel, filter status, dan layar detail akun
+-- menampilkan campuran status seperti desain. Kata sandi semua akun di bawah:
+--   desa2026!aman
+-- Status diturunkan dari kolom, bukan kolom baru:
+--   Aktif               -> status='AKTIF'
+--   Menunggu aktivasi   -> status='NONAKTIF' & email_verified_at IS NULL
+--   Nonaktif            -> email_verified_at terisi & deactivated_at terisi
+-- ------------------------------------------------------------------------------
+INSERT INTO users (id, username, email, password_hash, role, village_id, full_name, phone, status, approval_status, email_verified_at, activated_at, deactivated_at, must_change_password, created_at) VALUES
+(
+    'e0000000-0000-0000-0000-000000000003',
+    'desa-lerep',
+    'pengelola@lerep.desa.id',
+    'pbkdf2$10000$422e27a0e4b9052d03b094209dd9101e$dad28a744cabc33c33bfa6de18d61d2e8f15a09866363c5e9704f3d8a24f5094766b12844e1887d23601269d68176dbffbbe70bb937cc88a725a305da030c32e',
+    'desa',
+    'a0000000-0000-0000-0000-000000000007',
+    'Budi Santoso',
+    '081234567803',
+    'AKTIF',
+    'DISETUJUI',
+    CURRENT_TIMESTAMP - INTERVAL '42 days',
+    CURRENT_TIMESTAMP - INTERVAL '42 days',
+    NULL,
+    false,
+    CURRENT_TIMESTAMP - INTERVAL '45 days'
+),
+(
+    'e0000000-0000-0000-0000-000000000004',
+    'desa-karangrejo',
+    'pengelola@karangrejo.desa.id',
+    'pbkdf2$10000$b84ff5281c182d294cd146d43a830a7a$3c548633566be7cbb5f6576ed95619d897f3ff3f44ac0e2a0622f4302d700ee52243bfdea128ce110f05e174eaaa65cdb1dfe65ce0f2b920ac9e33178270eb77',
+    'desa',
+    'fb31d4cf-36c1-5897-b7c3-673ce2f38a76',
+    'Dewi Lestari',
+    '081234567804',
+    'NONAKTIF',
+    'DISETUJUI',
+    NULL,
+    NULL,
+    NULL,
+    false,
+    CURRENT_TIMESTAMP - INTERVAL '2 days'
+),
+(
+    'e0000000-0000-0000-0000-000000000005',
+    'desa-ponggok',
+    'pengelola@ponggok.desa.id',
+    'pbkdf2$10000$442ecb089f2b54592bba977b15a1488c$0a8b9aabd160df0a556c8572721627422bee6ac46a19320b15bfd090b1190ad0202f420004278076ba8d914eed70530b05543ba6b285c774c56533d94099dcfe',
+    'desa',
+    'd2f136db-5c76-51df-bfa7-09f7de9b0089',
+    'Agus Prasetyo',
+    '081234567805',
+    'AKTIF',
+    'DISETUJUI',
+    CURRENT_TIMESTAMP - INTERVAL '30 days',
+    CURRENT_TIMESTAMP - INTERVAL '30 days',
+    NULL,
+    false,
+    CURRENT_TIMESTAMP - INTERVAL '33 days'
+),
+(
+    'e0000000-0000-0000-0000-000000000006',
+    'desa-sembungan',
+    'pengelola@sembungan.desa.id',
+    'pbkdf2$10000$e15dd669a51db3bcc31a452f533205fe$2c7450c74b66d1ed167ece418bef9dce4f193dffb100776895235c80ba64801e5a6c809a6ed5a24e73bccef3218f60e0b491a795f2f958b2c9bcbb07b6623c4e',
+    'desa',
+    '5e866292-3b7d-50ff-b749-a24211a67add',
+    'Rina Wulandari',
+    '081234567806',
+    'AKTIF',
+    'DISETUJUI',
+    CURRENT_TIMESTAMP - INTERVAL '21 days',
+    CURRENT_TIMESTAMP - INTERVAL '21 days',
+    NULL,
+    false,
+    CURRENT_TIMESTAMP - INTERVAL '24 days'
+),
+(
+    'e0000000-0000-0000-0000-000000000007',
+    'desa-kandri',
+    'pengelola@kandri.desa.id',
+    'pbkdf2$10000$2f048891119b86422e098be74657de07$7b1d3b1bf12e27c269d1f9b7792839a0249e42f24ae052d9e5ae05f2ae592f65c649b6c2b08d8299ff9faca4ec21ab0cb63d3b96798ea3ee98eedb68e1160f41',
+    'desa',
+    'a1d88acf-d3ee-5dda-a913-2a28bba3aafc',
+    'Wahyu Hidayat',
+    '081234567807',
+    'NONAKTIF',
+    'DISETUJUI',
+    CURRENT_TIMESTAMP - INTERVAL '60 days',
+    CURRENT_TIMESTAMP - INTERVAL '60 days',
+    CURRENT_TIMESTAMP - INTERVAL '9 days',
+    false,
+    CURRENT_TIMESTAMP - INTERVAL '64 days'
+)
+ON CONFLICT (username) DO NOTHING;
+
+-- ------------------------------------------------------------------------------
+-- 4e. Undangan aktivasi yang masih menggantung untuk Karangrejo
+--
+-- Supaya layar detail akun menampilkan "Undangan dikirim" + masa berlaku seperti
+-- desain. Hash di bawah sengaja tidak bisa dipakai (token asli tidak disimpan);
+-- tombol "Kirim ulang undangan" akan menerbitkan tautan yang benar-benar jalan.
+-- ------------------------------------------------------------------------------
+INSERT INTO auth_tokens (id, user_id, type, token_hash, expires_at, used_at, created_at) VALUES
+(
+    'f0000000-0000-0000-0000-000000000001',
+    'e0000000-0000-0000-0000-000000000004',
+    'UNDANGAN_AKTIVASI',
+    '00000000000000000000000000000000000000000000000000000000000000a1',
+    CURRENT_TIMESTAMP + INTERVAL '22 hours',
+    NULL,
+    CURRENT_TIMESTAMP - INTERVAL '2 hours'
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ------------------------------------------------------------------------------
 -- 5. Ringkasan hasil seed
 -- ------------------------------------------------------------------------------
 DO $$

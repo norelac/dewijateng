@@ -15,7 +15,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     pathname === '/lupa-kata-sandi' ||
     Boolean(pathname?.startsWith('/lupa-kata-sandi/')) ||
     pathname === '/reset-sandi' ||
-    Boolean(pathname?.startsWith('/reset-sandi/'));
+    Boolean(pathname?.startsWith('/reset-sandi/')) ||
+    pathname === '/aktivasi';
 
   const isDashboardOrAuth =
     pathname?.startsWith('/pengelola') ||

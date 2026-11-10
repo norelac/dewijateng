@@ -110,6 +110,16 @@ export async function loginAction(
             };
           }
           if (!u.emailVerifiedAt) {
+            // Akun pengelola desa dibuat + diundang oleh Disbudparekraf (bukan
+            // pendaftaran mandiri), jadi pesannya soal undangan, bukan verifikasi.
+            if (u.role === 'desa') {
+              return {
+                success: false,
+                message:
+                  'Akun Anda belum diaktifkan. Buka tautan undangan aktivasi pada email, ' +
+                  'atau minta Disbudparekraf mengirim ulang undangan.',
+              };
+            }
             return {
               success: false,
               message:
