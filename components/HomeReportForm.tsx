@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { submitReportAction } from '@/app/actions/reportActions';
+import { convertImageToWebP } from '@/lib/utils/imageOptimizer';
 
 interface LocationCoord {
   lat: number;
@@ -305,16 +306,16 @@ export default function HomeReportForm() {
     );
   };
 
-  const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileDrop = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    const MAX_FILE_BYTES = 5 * 1024 * 1024;
+    const MAX_FILE_BYTES = 15 * 1024 * 1024; // Mendukung foto kamera resolusi tinggi (akan otomatis dikompresi ke WebP)
     const MAX_FILES = 3;
     const incoming = Array.from(e.target.files);
 
     const tooBig = incoming.find((f) => f.size > MAX_FILE_BYTES);
     if (tooBig) {
-      setErrorMessage(`Berkas "${tooBig.name}" melebihi batas 5 MB per file.`);
+      setErrorMessage(`Berkas "${tooBig.name}" melebihi batas 15 MB per file.`);
       e.target.value = '';
       return;
     }
@@ -330,8 +331,18 @@ export default function HomeReportForm() {
     if (incoming.length > room) {
       setErrorMessage(`Hanya ${room} berkas lagi yang dapat ditambahkan (maks ${MAX_FILES}).`);
     }
-    setRawFiles((prev) => [...prev, ...accepted]);
-    setUploadedFiles((prev) => [...prev, ...accepted.map((f) => f.name)]);
+
+    // Auto-convert gambar ke format WebP ringan sebelum submit
+    const optimizedPromises = accepted.map(async (f) => {
+      if (f.type.startsWith('image/')) {
+        return await convertImageToWebP(f);
+      }
+      return f;
+    });
+
+    const optimizedFiles = await Promise.all(optimizedPromises);
+    setRawFiles((prev) => [...prev, ...optimizedFiles]);
+    setUploadedFiles((prev) => [...prev, ...optimizedFiles.map((f) => f.name)]);
     e.target.value = '';
   };
 
