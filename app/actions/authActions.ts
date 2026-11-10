@@ -91,7 +91,43 @@ export async function loginAction(
       console.warn('[loginAction] Database query fallback:', dbErr);
     }
 
-    // 2. Fallback akun demo jika DB offline atau belum di-seed
+    // 2. Coba cari di local file fallback data/demo-users.json (menyimpan akun yang baru saja diterbitkan)
+    if (!sessionUser) {
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const usersFilePath = path.join(process.cwd(), 'data', 'demo-users.json');
+        if (fs.existsSync(usersFilePath)) {
+          const list: any[] = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+          const found = list.find((u) => u.username?.toLowerCase() === username);
+          if (found) {
+            if (found.status !== 'AKTIF') {
+              return { success: false, message: 'Akun Anda sedang dinonaktifkan. Hubungi Disbudparekraf.' };
+            }
+            // Validasi kecocokan kata sandi
+            const isMatch =
+              (found.password && found.password === password) ||
+              (found.passwordHash && verifyPassword(password, found.passwordHash));
+
+            if (isMatch) {
+              sessionUser = {
+                id: found.id,
+                username: found.username,
+                fullName: found.fullName,
+                role: found.role,
+                villageId: found.villageId,
+                mustChangePassword: Boolean(found.mustChangePassword),
+              };
+              mustChange = Boolean(found.mustChangePassword);
+            }
+          }
+        }
+      } catch (fsErr) {
+        console.warn('[loginAction] Fallback file read warning:', fsErr);
+      }
+    }
+
+    // 3. Fallback akun demo statis jika DB offline atau belum di-seed
     if (!sessionUser && FALLBACK_USERS[username]) {
       const fb = FALLBACK_USERS[username];
       if (fb.password === password) {
@@ -111,7 +147,11 @@ export async function loginAction(
     }
 
     // Simpan ke session cookie
-    await setSessionCookie(sessionUser);
+    try {
+      await setSessionCookie(sessionUser);
+    } catch (cookieErr) {
+      console.warn('[loginAction] setSessionCookie warning (misal di luar request context):', cookieErr);
+    }
 
     const redirectTo = sessionUser.role === 'disbudparekraf' ? '/disbudparekraf' : '/pengelola';
     return {

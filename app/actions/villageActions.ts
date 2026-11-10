@@ -41,7 +41,12 @@ export interface RegisterVillageResult {
 export async function registerVillageAction(
   input: RegisterVillageInput
 ): Promise<RegisterVillageResult> {
-  const session = await getSession();
+  let session = null;
+  try {
+    session = await getSession();
+  } catch {
+    // Sesi tidak tersedia atau dijalankan di luar context HTTP request
+  }
   // Validasi sesi: Hanya Disbudparekraf yang berhak mendaftarkan desa
   if (session && session.role !== 'disbudparekraf') {
     return {
@@ -73,7 +78,8 @@ export async function registerVillageAction(
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-  const username = `desa-${rawSlug.slice(0, 40)}`;
+  const cleanSlugPart = rawSlug.replace(/^desa-+/i, '');
+  const username = `desa-${cleanSlugPart.slice(0, 35)}`;
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = hashPassword(temporaryPassword);
 
@@ -93,8 +99,8 @@ export async function registerVillageAction(
           latitude: Number(latitude) || -7.15,
           longitude: Number(longitude) || 110.14,
           category,
-          pokdarwisName: pokdarwisName.trim() || `Pengelola ${name.trim()}`,
-          contactPhone: contactPhone.trim(),
+          pokdarwisName: (pokdarwisName || '').trim() || `Pengelola ${name.trim()}`,
+          contactPhone: (contactPhone || '').trim() || '-',
           trustScore: '80.00',
         })
         .returning({ id: touristVillages.id, slug: touristVillages.slug, name: touristVillages.name });
@@ -108,7 +114,7 @@ export async function registerVillageAction(
         role: 'desa',
         villageId: newVillage.id,
         fullName: `Pemerintah & Pengelola ${name.trim()}`,
-        phone: contactPhone.trim(),
+        phone: (contactPhone || '').trim() || null,
         status: 'AKTIF',
         mustChangePassword: true,
         createdBy: session?.id || null,
@@ -119,8 +125,70 @@ export async function registerVillageAction(
       console.warn('[registerVillageAction] DB save warning, generating fallback response:', dbErr?.message);
     }
 
-    revalidatePath('/disbudparekraf');
-    revalidatePath('/transparansi');
+    // Persistensi Akun ke data/demo-users.json agar login instan berhasil (baik saat DB online maupun offline)
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const usersFilePath = path.join(process.cwd(), 'data', 'demo-users.json');
+      let existingUsers: any[] = [];
+      if (fs.existsSync(usersFilePath)) {
+        try {
+          existingUsers = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+        } catch {}
+      }
+      // Hapus jika username sudah ada sebelumnya
+      existingUsers = existingUsers.filter((u: any) => u.username?.toLowerCase() !== username.toLowerCase());
+      existingUsers.push({
+        id: crypto.randomUUID(),
+        username,
+        password: temporaryPassword,
+        passwordHash,
+        role: 'desa',
+        fullName: `Pemerintah & Pengelola ${name.trim()}`,
+        phone: (contactPhone || '').trim() || null,
+        villageId,
+        villageName: name.trim(),
+        status: 'AKTIF',
+        mustChangePassword: true,
+      });
+      fs.writeFileSync(usersFilePath, JSON.stringify(existingUsers, null, 2), 'utf-8');
+
+      // Sinkronkan juga desa baru ke data/master-desa-867.json agar halaman pengelola & transparansi langsung mengenali desa ini
+      const villagesFilePath = path.join(process.cwd(), 'data', 'master-desa-867.json');
+      if (fs.existsSync(villagesFilePath)) {
+        try {
+          const vList = JSON.parse(fs.readFileSync(villagesFilePath, 'utf-8'));
+          if (!vList.some((item: any) => item.slug === rawSlug || item.id === villageId)) {
+            vList.unshift({
+              id: villageId,
+              code: `DSW-${vList.length + 1}`,
+              name: `Desa Wisata ${name.trim()}`,
+              slug: rawSlug,
+              regency: regency.trim(),
+              district: district.trim(),
+              latitude: Number(latitude) || -7.15,
+              longitude: Number(longitude) || 110.14,
+              category,
+              pokdarwis_name: pokdarwisName.trim() || `Pengelola ${name.trim()}`,
+              contact_phone: contactPhone.trim(),
+              trust_score: 80.0,
+              penerima_bankeu: false,
+              nominal_bankeu: 0,
+            });
+            fs.writeFileSync(villagesFilePath, JSON.stringify(vList, null, 2), 'utf-8');
+          }
+        } catch {}
+      }
+    } catch (saveErr) {
+      console.warn('[registerVillageAction] File persistence warning:', saveErr);
+    }
+
+    try {
+      revalidatePath('/disbudparekraf');
+      revalidatePath('/transparansi');
+    } catch {
+      // Ignore when running outside of Next request store
+    }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -175,8 +243,12 @@ export async function reviewLpjAction(params: {
       })
       .where(eq(villageGrants.id, grantId));
 
-    revalidatePath('/disbudparekraf');
-    revalidatePath('/transparansi');
+    try {
+      revalidatePath('/disbudparekraf');
+      revalidatePath('/transparansi');
+    } catch {
+      // Ignore when running outside of Next request store
+    }
     revalidatePath('/pengelola/anggaran');
 
     return {

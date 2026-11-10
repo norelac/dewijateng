@@ -1,0 +1,24 @@
+[
+  {
+    "id": "e0000000-0000-0000-0000-000000000001",
+    "username": "disbudparekraf",
+    "password": "disbudparekraf2026",
+    "passwordHash": "pbkdf2$10000$e8393b3b6dd5c7a1d54ff785fe602a15$29a96fc31b11b546e7bd1f4d4a76ea09e9b7fd5725e5ba7482e68399c0fd9d100d631542bd772a89a98165781c457c40af01f984f7b486b8ce5d620a6492a9f2",
+    "role": "disbudparekraf",
+    "fullName": "Admin Eksekutif Disbudparekraf Jateng",
+    "villageId": null,
+    "status": "AKTIF",
+    "mustChangePassword": false
+  },
+  {
+    "id": "e0000000-0000-0000-0000-000000000002",
+    "username": "desa-candirejo",
+    "password": "candirejo2026",
+    "passwordHash": "pbkdf2$10000$6cff3c501f59dfe02a2379ec35bb5e8b$675ca8fa45b9f676a5ec2ae35a9243ec35c351e9de1c9ef579ae65234d465b1855877166e6b7956e9cfae3b9db2ec4965d3f2b3c13ff56e32c1d41ce4595357e",
+    "role": "desa",
+    "fullName": "Pengelola Desa Wisata Candirejo",
+    "villageId": "a0000000-0000-0000-0000-000000000002",
+    "status": "AKTIF",
+    "mustChangePassword": false
+  }
+]

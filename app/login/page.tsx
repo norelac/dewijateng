@@ -12,14 +12,18 @@ import {
   Lock,
   AlertCircle,
   ArrowLeft,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from 'lucide-react';
 import { loginAction } from '@/app/actions/authActions';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<'disbudparekraf' | 'desa'>('disbudparekraf');
+  const [selectedRole, setSelectedRole] = useState<'disbudparekraf' | 'desa' | 'custom'>('disbudparekraf');
   const [username, setUsername] = useState('disbudparekraf');
   const [password, setPassword] = useState('disbudparekraf2026');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +37,20 @@ export default function LoginPage() {
       setPassword('candirejo2026');
     }
     setError(null);
+  };
+
+  const handleUsernameChange = (val: string) => {
+    setUsername(val);
+    if (val !== 'disbudparekraf' && val !== 'desa-candirejo') {
+      setSelectedRole('custom');
+    }
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (username !== 'disbudparekraf' && username !== 'desa-candirejo') {
+      setSelectedRole('custom');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,31 +112,40 @@ export default function LoginPage() {
         </div>
 
         {/* Segmented Quick-Fill Switch */}
-        <div className="bg-[#F1F5F9] p-1 rounded-xl grid grid-cols-2 gap-1">
-          <button
-            type="button"
-            onClick={() => handleRoleSelect('disbudparekraf')}
-            className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              selectedRole === 'disbudparekraf'
-                ? 'bg-[#0D2453] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#0D2453]'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Disbudparekraf</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleRoleSelect('desa')}
-            className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              selectedRole === 'desa'
-                ? 'bg-[#0D2453] text-white shadow-xs'
-                : 'text-[#64748B] hover:text-[#0D2453]'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Desa Candirejo</span>
-          </button>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[11px] font-semibold text-[#64748B] flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-500" />
+              Pilih Akun Demo (1-Klik):
+            </span>
+            <span className="text-[10px] text-[#94A3B8]">atau ketik manual akun baru</span>
+          </div>
+          <div className="bg-[#F1F5F9] p-1 rounded-xl grid grid-cols-2 gap-1">
+            <button
+              type="button"
+              onClick={() => handleRoleSelect('disbudparekraf')}
+              className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                selectedRole === 'disbudparekraf'
+                  ? 'bg-[#0D2453] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0D2453]'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Disbudparekraf</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleRoleSelect('desa')}
+              className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                selectedRole === 'desa'
+                  ? 'bg-[#0D2453] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0D2453]'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Desa Candirejo</span>
+            </button>
+          </div>
         </div>
 
         {/* Error Alert */}
@@ -140,8 +167,8 @@ export default function LoginPage() {
                 type="text"
                 required
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. disbudparekraf atau desa-candirejo"
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                placeholder="e.g. desa-nama-desa atau disbudparekraf"
                 className="w-full h-11 px-3.5 pl-10 rounded-xl bg-white border border-[#E6ECF5] text-xs text-[#0D2453] placeholder-slate-400 focus:outline-none focus:border-[#0D2453] focus:ring-1 focus:ring-[#0D2453] transition-all"
               />
               <UserCheck className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
@@ -149,19 +176,30 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-[#0D2453] uppercase tracking-wider mb-1.5">
-              Kata Sandi
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[11px] font-semibold text-[#0D2453] uppercase tracking-wider">
+                Kata Sandi
+              </label>
+            </div>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handlePasswordChange(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full h-11 px-3.5 pl-10 rounded-xl bg-white border border-[#E6ECF5] text-xs text-[#0D2453] placeholder-slate-400 focus:outline-none focus:border-[#0D2453] focus:ring-1 focus:ring-[#0D2453] transition-all"
+                className="w-full h-11 px-3.5 pl-10 pr-10 rounded-xl bg-white border border-[#E6ECF5] text-xs text-[#0D2453] placeholder-slate-400 focus:outline-none focus:border-[#0D2453] focus:ring-1 focus:ring-[#0D2453] transition-all"
               />
               <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                className="absolute right-3 top-3 text-[#94A3B8] hover:text-[#0D2453] transition-colors cursor-pointer"
+                aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
