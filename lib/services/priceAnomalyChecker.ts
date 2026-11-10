@@ -186,9 +186,9 @@ async function matchWithLlmSemantic(
   itemName: string,
   catalog: SshCatalogItem[]
 ): Promise<SshCatalogItem | null> {
-  const baseUrl = process.env.LLM_BASE_URL;
-  const apiKey = process.env.LLM_API_KEY;
-  const model = process.env.LLM_MODEL || 'ag/gemini-3.8-flash';
+  const baseUrl = process.env.LLM_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai';
+  const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
+  const model = process.env.LLM_MODEL || 'gemini-2.5-flash';
 
   if (!baseUrl || !apiKey || catalog.length === 0) {
     return null;
