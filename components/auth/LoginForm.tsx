@@ -55,15 +55,19 @@ export default function LoginForm() {
   return (
     <AuthShell
       headerRight={
-        <div className="flex items-center gap-[14px]">
-          <span className="hidden sm:inline text-[13px] text-[#64748B]">Belum punya akun?</span>
-          <Link
-            href="/daftar"
-            className="h-[40px] px-[20px] inline-flex items-center justify-center rounded-[999px] border border-[#E6ECF5] bg-white text-[12px] font-semibold text-[#0D2453]"
-          >
-            Daftar
-          </Link>
-        </div>
+        isDesaEntry ? undefined : (
+          <div className="flex items-center gap-[14px]">
+            <span className="hidden sm:inline text-[13px] text-[#64748B]">
+              Belum punya akun?
+            </span>
+            <Link
+              href="/daftar"
+              className="h-[40px] px-[20px] inline-flex items-center justify-center rounded-[999px] border border-[#E6ECF5] bg-white text-[12px] font-semibold text-[#0D2453]"
+            >
+              Daftar
+            </Link>
+          </div>
+        )
       }
     >
       <AuthCard
@@ -125,23 +129,40 @@ export default function LoginForm() {
           </AuthButton>
         </form>
 
-        <p className="text-[12px] font-medium text-[#0D2453] text-center">
-          Belum memiliki akun dinas?{' '}
-          <Link href="/daftar" className="font-semibold">
-            Daftar akun
-          </Link>
-        </p>
+        {!isDesaEntry && (
+          <p className="text-[12px] font-medium text-[#0D2453] text-center">
+            Belum memiliki akun dinas?{' '}
+            <Link href="/daftar" className="font-semibold">
+              Daftar akun
+            </Link>
+          </p>
+        )}
 
         <div className="h-px w-full bg-[#E6ECF5]" />
 
         <p className="text-[12px] font-semibold text-[#0D2453] text-center">
-          Anda pengelola desa?{' '}
-          <Link href="/login?peran=desa" className="font-semibold">
-            Masuk pengelola desa
-          </Link>
+          {isDesaEntry ? (
+            <>
+              Anda admin dinas?{' '}
+              <Link href="/login" className="font-semibold">
+                Masuk Disbudparekraf
+              </Link>
+            </>
+          ) : (
+            <>
+              Anda pengelola desa?{' '}
+              <Link href="/login?peran=desa" className="font-semibold">
+                Masuk pengelola desa
+              </Link>
+            </>
+          )}
         </p>
 
-        <AuthNote>Akses dinas diberikan kepada petugas resmi yang telah diverifikasi.</AuthNote>
+        <AuthNote>
+          {isDesaEntry
+            ? 'Akun pengelola desa diterbitkan oleh Disbudparekraf.'
+            : 'Akses dinas diberikan kepada petugas resmi yang telah diverifikasi.'}
+        </AuthNote>
       </AuthCard>
     </AuthShell>
   );
