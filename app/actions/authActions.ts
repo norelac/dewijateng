@@ -48,6 +48,23 @@ const FALLBACK_USERS: Record<
   },
 };
 
+type LoginPeran = 'desa' | 'admin';
+
+/**
+ * Halaman masuk punya dua "porch": Disbudparekraf (admin) dan pengelola desa.
+ * Jika kredensial valid tetapi peran akun tidak sesuai porch yang dibuka,
+ * tolak masuk dengan pesan yang jelas (bukan diam-diam mendarat di dashboard lain).
+ */
+function peranMismatchMessage(role: string, peran: LoginPeran): string | null {
+  if (peran === 'desa' && role !== 'desa') {
+    return 'Akun ini terdaftar sebagai admin dinas. Silakan masuk lewat halaman Disbudparekraf.';
+  }
+  if (peran === 'admin' && role !== 'disbudparekraf') {
+    return 'Akun ini terdaftar sebagai pengelola desa. Silakan masuk lewat halaman pengelola desa.';
+  }
+  return null;
+}
+
 export async function loginAction(
   _prevState: any,
   formData: FormData
@@ -61,6 +78,7 @@ export async function loginAction(
     .toLowerCase();
   const password = String(formData.get('password') || '');
   const remember = formData.get('remember') === 'on' || formData.get('remember') === 'true';
+  const peran: LoginPeran = formData.get('peran') === 'desa' ? 'desa' : 'admin';
 
   if (!identifier || !password) {
     return { success: false, message: 'Email dan kata sandi wajib diisi' };
@@ -69,6 +87,7 @@ export async function loginAction(
   try {
     let sessionUser: SessionUser | null = null;
     let mustChange = false;
+    let dbUserId: string | null = null;
 
     // 1. Cari di PostgreSQL (email atau username).
     try {
@@ -122,11 +141,7 @@ export async function loginAction(
             mustChangePassword: Boolean(u.mustChangePassword),
           };
           mustChange = Boolean(u.mustChangePassword);
-
-          await db
-            .update(users)
-            .set({ lastLoginAt: new Date() })
-            .where(eq(users.id, u.id));
+          dbUserId = u.id;
         }
       }
     } catch (dbErr) {
@@ -197,6 +212,22 @@ export async function loginAction(
 
     if (!sessionUser) {
       return { success: false, message: 'Email atau kata sandi tidak sesuai' };
+    }
+
+    const mismatch = peranMismatchMessage(sessionUser.role, peran);
+    if (mismatch) {
+      return { success: false, message: mismatch };
+    }
+
+    if (dbUserId) {
+      try {
+        await db
+          .update(users)
+          .set({ lastLoginAt: new Date() })
+          .where(eq(users.id, dbUserId));
+      } catch (touchErr) {
+        console.warn('[loginAction] lastLoginAt warning:', touchErr);
+      }
     }
 
     try {

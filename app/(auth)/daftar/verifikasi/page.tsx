@@ -2,6 +2,8 @@ import React, { Suspense } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
 import VerifyEmailClient from '@/components/auth/VerifyEmailClient';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Verifikasi email',
 };
