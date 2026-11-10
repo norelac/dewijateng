@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { changePasswordAction } from '@/app/actions/authActions';
 
 interface NotificationPrefs {
   newReport: boolean;
@@ -102,13 +103,12 @@ export default function PengaturanView() {
     setSaveMessage(null);
   };
 
-  // Tidak ada endpoint tulis pengaturan akun; simpan menahan nilai di sesi + validasi sandi.
-  const handleSave = () => {
+  const handleSave = async () => {
     if (form.newPassword || form.confirmPassword) {
-      if (form.newPassword.length < 12) {
+      if (form.newPassword.length < 8) {
         setSaveMessage({
           type: 'error',
-          text: 'Kata sandi baru minimal 12 karakter.',
+          text: 'Kata sandi baru minimal 8 karakter.',
         });
         return;
       }
@@ -116,6 +116,19 @@ export default function PengaturanView() {
         setSaveMessage({
           type: 'error',
           text: 'Konfirmasi kata sandi baru tidak cocok.',
+        });
+        return;
+      }
+
+      const fd = new FormData();
+      fd.set('oldPassword', form.currentPassword);
+      fd.set('newPassword', form.newPassword);
+      fd.set('confirmPassword', form.confirmPassword);
+      const res = await changePasswordAction(null, fd);
+      if (!res.success) {
+        setSaveMessage({
+          type: 'error',
+          text: res.message || 'Gagal mengubah kata sandi.',
         });
         return;
       }
@@ -128,7 +141,7 @@ export default function PengaturanView() {
     }));
     setSaveMessage({
       type: 'success',
-      text: 'Perubahan nama tampilan dan preferensi notifikasi diterapkan untuk sesi ini.',
+      text: 'Perubahan pengaturan dan kata sandi berhasil disimpan ke sistem.',
     });
   };
 

@@ -96,7 +96,29 @@ export async function getSshCatalog(): Promise<SshCatalogItem[]> {
 
     return sshCatalogCache;
   } catch (err: any) {
-    console.error('[Price Anomaly Checker]: Gagal memuat katalog SSH dari database:', err.message);
+    console.warn('[Price Anomaly Checker]: Database offline, memuat 1.061 HSD MAS PETRUK 2026 fallback JSON:', err?.message);
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const filePath = path.join(process.cwd(), 'data', 'hsd-maspetruk-1061.json');
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        const items = JSON.parse(raw);
+        sshCatalogCache = items.map((item: any, idx: number) => ({
+          id: idx + 1,
+          item_code: item.item_code,
+          item_name: item.item_name,
+          category: item.category,
+          unit: item.unit,
+          standard_price: Number(item.standard_price) || 0,
+          regency: item.regency,
+        }));
+        cacheTimestamp = now;
+        return sshCatalogCache || [];
+      }
+    } catch (fsErr) {
+      console.error('[Price Anomaly Checker]: Gagal memuat fallback JSON:', fsErr);
+    }
     return sshCatalogCache || [];
   }
 }
@@ -164,9 +186,9 @@ async function matchWithLlmSemantic(
   itemName: string,
   catalog: SshCatalogItem[]
 ): Promise<SshCatalogItem | null> {
-  const baseUrl = process.env.LLM_BASE_URL;
-  const apiKey = process.env.LLM_API_KEY;
-  const model = process.env.LLM_MODEL || 'ag/gemini-3.8-flash';
+  const baseUrl = process.env.LLM_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai';
+  const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
+  const model = process.env.LLM_MODEL || 'gemini-2.5-flash';
 
   if (!baseUrl || !apiKey || catalog.length === 0) {
     return null;
@@ -305,6 +327,11 @@ export async function matchAndCheckSSH(
           score += 5;
         }
       }
+    }
+
+    // C. Prioritas harga spesifik wilayah/kabupaten jika cocok (+25 poin)
+    if (regency && item.regency && (item.regency.toLowerCase().includes(regency.toLowerCase()) || regency.toLowerCase().includes(item.regency.toLowerCase()))) {
+      score += 25;
     }
 
     if (score > highestScore) {

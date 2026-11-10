@@ -96,6 +96,7 @@ export const villageGrants = pgTable('village_grants', {
   lpjStatus: varchar('lpj_status', { length: 30 })
     .default('PENDING_UPLOAD')
     .notNull(),
+  lpjReviewNotes: text('lpj_review_notes'),
   uploadedAt: timestamp('uploaded_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
@@ -201,12 +202,40 @@ export const reportResolutions = pgTable('report_resolutions', {
 });
 
 // ------------------------------------------------------------------------------
+// 8. Tabel Pengguna Sistem (users) - Akun Disbudparekraf & Desa
+// ------------------------------------------------------------------------------
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  username: varchar('username', { length: 60 }).notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  role: varchar('role', { length: 20 }).notNull(), // 'desa' | 'disbudparekraf'
+  villageId: uuid('village_id').references(() => touristVillages.id, { onDelete: 'cascade' }),
+  fullName: varchar('full_name', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 30 }),
+  status: varchar('status', { length: 20 }).default('AKTIF').notNull(),
+  mustChangePassword: boolean('must_change_password').default(true).notNull(),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdBy: uuid('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ------------------------------------------------------------------------------
 // Drizzle Relations Mapping
 // ------------------------------------------------------------------------------
 export const touristVillagesRelations = relations(touristVillages, ({ many }) => ({
   tariffs: many(officialTariffs),
   grants: many(villageGrants),
   reports: many(incidentReports),
+  users: many(users),
+}));
+
+export const usersRelations = relations(users, ({ one }) => ({
+  village: one(touristVillages, {
+    fields: [users.villageId],
+    references: [touristVillages.id],
+  }),
 }));
 
 export const officialTariffsRelations = relations(officialTariffs, ({ one }) => ({

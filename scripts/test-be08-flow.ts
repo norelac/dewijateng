@@ -1,6 +1,6 @@
 // ==============================================================================
-// DEWI JATENG - Automated Test Suite: BE-08 (Trust Score & Disporapar Overview)
-// Pengujian kalkulasi Trust Score 50/50 dan API Command Center Disporapar
+// DEWI JATENG - Automated Test Suite: BE-08 (Trust Score & Disbudparekraf Overview)
+// Pengujian kalkulasi Trust Score 50/50 dan API Command Center Disbudparekraf
 // ==============================================================================
 
 import {
@@ -11,7 +11,7 @@ import {
 import { query } from '../lib/db';
 
 async function runBe08Tests() {
-  console.log('🧪 Memulai Pengujian Otomatis BE-08: Kalkulator Trust Score & API Disporapar...\n');
+  console.log('🧪 Memulai Pengujian Otomatis BE-08: Kalkulator Trust Score & API Disbudparekraf...\n');
   let passed = 0;
   let total = 0;
 
@@ -100,7 +100,7 @@ async function runBe08Tests() {
     );
 
     // --------------------------------------------------------------------------
-    // Test 6: Verifikasi Ketersediaan Data Macro Metrics untuk API Disporapar
+    // Test 6: Verifikasi Ketersediaan Data Macro Metrics untuk API Disbudparekraf
     // --------------------------------------------------------------------------
     const macroCheck = await query<{
       total_villages: string;
@@ -117,7 +117,7 @@ async function runBe08Tests() {
 
     assert(
       totalV >= 5 && avgScore > 0 && avgScore <= 100,
-      'Test 6: Agregasi Macro Metrics Disporapar valid',
+      'Test 6: Agregasi Macro Metrics Disbudparekraf valid',
       `Total Desa: ${totalV}, Rata-rata Skor: ${avgScore.toFixed(2)}`
     );
 

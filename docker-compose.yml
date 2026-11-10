@@ -13,6 +13,8 @@ services:
       - dewijateng_pgdata:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
       - ./docker/seed-demo.sql:/docker-entrypoint-initdb.d/02-seed-demo.sql:ro
+      - ./docker/seed-villages-867.sql:/docker-entrypoint-initdb.d/03-seed-villages-867.sql:ro
+      - ./docker/seed-hsd-2026.sql:/docker-entrypoint-initdb.d/04-seed-hsd-2026.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dewijateng}"]
       interval: 3s

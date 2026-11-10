@@ -11,6 +11,7 @@ import {
   type SaveLpjResult,
 } from '@/lib/services/lpjService';
 import { revalidatePath } from 'next/cache';
+import { getSession } from '@/lib/auth';
 
 export interface ActionResponse<T = any> {
   success: boolean;
@@ -27,10 +28,20 @@ export async function processLpjUploadAction(
   formData: FormData
 ): Promise<ActionResponse<SaveLpjResult>> {
   try {
-    const villageId =
+    let session = null;
+    try {
+      session = await getSession();
+    } catch {}
+
+    let villageId =
       (formData.get('village_id') as string) ||
       (formData.get('villageId') as string) ||
       '';
+
+    // Otoritas ketat: Jika pengguna adalah akun pengelola desa, kunci LPJ ke desa miliknya
+    if (session?.role === 'desa' && session.villageId) {
+      villageId = session.villageId;
+    }
     const fiscalYear = parseInt(
       (formData.get('fiscal_year') as string) ||
         (formData.get('fiscalYear') as string) ||

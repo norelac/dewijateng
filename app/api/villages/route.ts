@@ -71,7 +71,38 @@ export async function GET(req: NextRequest) {
       data: result.rows,
     });
   } catch (error: any) {
-    console.error('[API /api/villages error]:', error);
+    console.error('[API /api/villages error]:', error?.message);
+
+    // Fallback data riil 867 desa wisata jika DB offline
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const filePath = path.join(process.cwd(), 'data', 'master-desa-867.json');
+
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        let list: any[] = JSON.parse(raw);
+
+        const { searchParams } = new URL(req.url);
+        const regency = searchParams.get('regency');
+        const limit = parseInt(searchParams.get('limit') || '50', 10);
+
+        if (regency) {
+          list = list.filter((v) => v.regency && v.regency.toLowerCase().includes(regency.toLowerCase()));
+        }
+
+        const data = list.slice(0, limit);
+
+        return NextResponse.json({
+          success: true,
+          count: data.length,
+          data,
+        });
+      }
+    } catch (fallbackErr) {
+      console.error('[API Fallback Error]:', fallbackErr);
+    }
+
     return NextResponse.json(
       { success: false, error: 'Gagal mengambil data desa wisata', details: error.message },
       { status: 500 }

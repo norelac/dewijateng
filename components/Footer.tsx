@@ -114,7 +114,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/disporapar"
+                  href="/disbudparekraf"
                   className="flex items-center gap-2.5 hover:text-white transition-colors"
                 >
                   <BarChart2 className="w-4 h-4 text-white/60" />

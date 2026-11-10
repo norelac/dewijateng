@@ -104,7 +104,7 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/pengelola"
+                href="/login"
                 className="inline-flex items-center px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all shadow-xs active:scale-95 cursor-pointer"
               >
                 Masuk
@@ -157,18 +157,18 @@ export default function Navbar() {
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
                 <Link
-                  href="/pengelola"
+                  href="/login"
                   onClick={() => setMobileOpen(false)}
                   className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all"
                 >
-                  Portal Pengelola
+                  Portal Masuk
                 </Link>
                 <Link
-                  href="/disporapar"
+                  href="/disbudparekraf"
                   onClick={() => setMobileOpen(false)}
                   className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all"
                 >
-                  Command Center
+                  Command Center Disbudparekraf
                 </Link>
               </div>
             </div>

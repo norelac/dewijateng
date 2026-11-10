@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     'Pusat kendali eksekutif pengawasan target 1.000 desa wisata 2027, radar kepatuhan 35 kab/kota, dan rekomendasi hibah sarpras APBD 2027.',
 };
 
-export default function DisporaparLayout({
+export default function DisbudparekrafLayout({
   children,
 }: {
   children: React.ReactNode;

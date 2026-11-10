@@ -27,7 +27,7 @@ Repository ini dikembangkan oleh Tim sotodiensracing (Universitas Dian Nuswantor
 - **AI Document Table Extractor**: Ekstraksi otomatis tabel dokumen LPJ bantuan sarpras (PDF) menjadi tabel web interaktif (Pagu, Belanja Modal, Realisasi, Sisa Saldo).
 - **AI Anomaly Price Checker**: Pembanding otomatis nilai pos belanja fisik terhadap data acuan Standar Satuan Harga (SSH) Pemprov Jateng (penanda anomali jika deviasi >+40%).
 - **AI Metadata & Timestamp Validator**: Validasi metadata tanggal pemotretan asli (EXIF DateTimeOriginal) pada foto hasil perbaikan (*Proof-of-Fix*) untuk mencegah penggunaan foto arsip lama.
-- **Dynamic Trust Score Engine**: Formula matematis transparan 50/50 (50% Kepatuhan Unggah LPJ + 50% Rasio Ketuntasan Aduan Berbukti) pada Peta Kendali Disporapar.
+- **Dynamic Trust Score Engine**: Formula matematis transparan 50/50 (50% Kepatuhan Unggah LPJ + 50% Rasio Ketuntasan Aduan Berbukti) pada Peta Kendali Disbudparekraf.
 
 ---
 
@@ -38,7 +38,7 @@ dewi-jateng/
 ├── app/                  # Next.js 14 App Router
 │   ├── admin/            # Portal administrasi & pengawasan
 │   │   ├── balai-desa/   # Portal unggah & verifikasi dokumen LPJ PDF
-│   │   └── command-center/ # Peta kendali Disporapar 35 Kab/Kota & Trust Score
+│   │   └── command-center/ # Peta kendali Disbudparekraf 35 Kab/Kota & Trust Score
 │   ├── edukasi/          # Pilar 4: Literasi UU KIP, SOP Pokdarwis, K3 & kontak darurat
 │   ├── lapor/            # Pilar 3: Telusuri aduan warga, linimasa & slider Proof-of-Fix
 │   ├── pengelola/        # Papan kerja Pokdarwis & unggah foto perbaikan
@@ -141,10 +141,10 @@ npm run build
   - Modul literasi hak keterbukaan informasi publik (UU KIP No. 14/2008 & Permendagri No. 20/2018).
   - SOP tangga respon penanganan pengaduan Pokdarwis.
   - Panduan standar K3 sarana buatan dan direktori kontak darurat Jawa Tengah.
-- [ ] **Halaman Pengelola Desa & Disporapar**:
-  - Papan kerja Pokdarwis (`/pengelola`) dengan syarat wajib unggah foto *Proof-of-Fix* sebelum tiket ditutup.
-  - Portal Balai Desa (`/admin/balai-desa`) untuk unggah berkas dokumen LPJ bantuan (PDF).
-  - Peta Kendali Disporapar Pemprov Jateng (`/admin/command-center`) format Widescreen 16:9 Dark Mode dengan pemeringkatan Trust Score matematis.
+- [ ] **Halaman Pengelola Desa & Disbudparekraf**:
+  - Papan kerja Desa (`/pengelola`) dengan syarat wajib unggah foto *Proof-of-Fix* sebelum tiket ditutup.
+  - Portal Anggaran Desa (`/pengelola/anggaran`) untuk unggah berkas dokumen LPJ bantuan (PDF).
+  - Peta Kendali Disbudparekraf Pemprov Jateng (`/disbudparekraf`) format Widescreen 16:9 Dark Mode dengan pemeringkatan Trust Score matematis.
 
 ---
 

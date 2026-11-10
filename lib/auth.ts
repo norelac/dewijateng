@@ -1,98 +1,116 @@
-// ==============================================================================
-// DEWI JATENG - Autentikasi Sesi & Peran (Demo-grade)
-// Cookie HttpOnly bertanda tangan HMAC + kata sandi per peran dari env.
-// Catatan: ini auth tingkat demo (satu kata sandi per peran). Tabel pengguna
-// penuh + hash per akun adalah pengembangan lanjut.
-// ==============================================================================
-
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import crypto from 'crypto';
 import { cookies } from 'next/headers';
+import type { UserRole } from '@/types/database';
 
-export type Role = 'PENGELOLA' | 'PEMBINA';
-
-export interface Session {
-  role: Role;
-  issuedAt: number;
+export interface SessionUser {
+  id: string;
+  username: string;
+  fullName: string;
+  role: UserRole;
+  villageId: string | null;
+  mustChangePassword: boolean;
 }
 
 const COOKIE_NAME = 'dewi_session';
-const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 jam
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dewi-jateng-secret-session-key-2026';
 
-export const ROLE_LABELS: Record<Role, string> = {
-  PENGELOLA: 'Pengelola & Balai Desa',
-  PEMBINA: 'Pembina / Disbudparekraf',
-};
-
-/** Halaman beranda tiap peran setelah login. */
-export const ROLE_HOME: Record<Role, string> = {
-  PENGELOLA: '/pengelola',
-  PEMBINA: '/disporapar',
-};
-
-function getSecret(): string {
-  return process.env.AUTH_SECRET || 'dewi-jateng-dev-secret-change-me';
+// ------------------------------------------------------------------------------
+// Password Hashing & Verification (PBKDF2 SHA-512)
+// ------------------------------------------------------------------------------
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const iterations = 10000;
+  const hash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+  return `pbkdf2$${iterations}$${salt}$${hash}`;
 }
 
-function getPassword(role: Role): string {
-  if (role === 'PEMBINA') {
-    return process.env.AUTH_PEMBINA || 'pembina2026';
-  }
-  return process.env.AUTH_PENGELOLA || 'pengelola2026';
-}
-
-function sign(payload: string): string {
-  return createHmac('sha256', getSecret()).update(payload).digest('hex');
-}
-
-function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
-}
-
-export function isRole(value: unknown): value is Role {
-  return value === 'PENGELOLA' || value === 'PEMBINA';
-}
-
-/** Bandingkan kata sandi dengan konstan waktu. */
-export function verifyPassword(role: Role, password: string): boolean {
-  if (!password) return false;
-  return safeEqual(password, getPassword(role));
-}
-
-export function createSessionToken(role: Role): string {
-  const issuedAt = Date.now();
-  const payload = `${role}.${issuedAt}`;
-  return `${payload}.${sign(payload)}`;
-}
-
-export function verifySessionToken(token: string | undefined | null): Session | null {
-  if (!token) return null;
-  const parts = token.split('.');
-  if (parts.length !== 3) return null;
-
-  const [role, issuedAtRaw, signature] = parts;
-  const payload = `${role}.${issuedAtRaw}`;
-  if (!safeEqual(signature, sign(payload))) return null;
-
-  const issuedAt = Number(issuedAtRaw);
-  if (!Number.isFinite(issuedAt)) return null;
-  if (Date.now() - issuedAt > SESSION_TTL_MS) return null;
-  if (!isRole(role)) return null;
-
-  return { role, issuedAt };
-}
-
-/** Baca sesi dari cookie server-side. Null bila belum/tidak valid. */
-export function getSession(): Session | null {
+export function verifyPassword(password: string, storedHash: string): boolean {
+  if (!storedHash) return false;
+  const parts = storedHash.split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
+  const iterations = parseInt(parts[1], 10);
+  const salt = parts[2];
+  const originalHash = parts[3];
+  const verifyHash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
   try {
-    const token = cookies().get(COOKIE_NAME)?.value;
-    return verifySessionToken(token);
+    return crypto.timingSafeEqual(Buffer.from(originalHash, 'hex'), Buffer.from(verifyHash, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
+// ------------------------------------------------------------------------------
+// Generate Kredensial Acak (12 Karakter Aman)
+// ------------------------------------------------------------------------------
+export function generateTemporaryPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  const bytes = crypto.randomBytes(12);
+  for (let i = 0; i < 12; i++) {
+    password += chars[bytes[i] % chars.length];
+  }
+  return password;
+}
+
+// ------------------------------------------------------------------------------
+// Session Token & Cookie Handling (HMAC Signed JSON)
+// ------------------------------------------------------------------------------
+function signPayload(payloadStr: string): string {
+  const hmac = crypto.createHmac('sha256', SESSION_SECRET);
+  hmac.update(payloadStr);
+  return hmac.digest('hex');
+}
+
+export function serializeSession(user: SessionUser): string {
+  const payload = JSON.stringify({ ...user, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 });
+  const b64 = Buffer.from(payload).toString('base64url');
+  const sig = signPayload(b64);
+  return `${b64}.${sig}`;
+}
+
+export function parseSession(token: string): SessionUser | null {
+  try {
+    const [b64, sig] = token.split('.');
+    if (!b64 || !sig) return null;
+    const expectedSig = signPayload(b64);
+    if (sig !== expectedSig) return null;
+
+    const json = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
+    if (!json.exp || Date.now() > json.exp) return null;
+
+    return {
+      id: json.id,
+      username: json.username,
+      fullName: json.fullName,
+      role: json.role,
+      villageId: json.villageId,
+      mustChangePassword: Boolean(json.mustChangePassword),
+    };
   } catch {
     return null;
   }
 }
 
-export const SESSION_COOKIE = COOKIE_NAME;
-export const SESSION_MAX_AGE_SECONDS = SESSION_TTL_MS / 1000;
+export async function getSession(): Promise<SessionUser | null> {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) return null;
+  return parseSession(token);
+}
+
+export async function setSessionCookie(user: SessionUser): Promise<void> {
+  const cookieStore = cookies();
+  const token = serializeSession(user);
+  cookieStore.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60, // 7 hari
+  });
+}
+
+export async function clearSessionCookie(): Promise<void> {
+  const cookieStore = cookies();
+  cookieStore.delete(COOKIE_NAME);
+}

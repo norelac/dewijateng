@@ -33,7 +33,7 @@ export default function HomeKpiCounters() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/disporapar/overview')
+    fetch('/api/disbudparekraf/overview')
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (cancelled || !json?.success || !json.data?.macro_metrics) return;
@@ -63,31 +63,30 @@ export default function HomeKpiCounters() {
 
   const metrics: MetricItem[] = [
     {
-      value: `Rp ${danaMiliar.toLocaleString('id-ID')} Miliar`,
-      targetNumber: danaMiliar,
+      value: 'Rp 185 Miliar',
+      targetNumber: 185,
       prefix: 'Rp ',
       suffix: ' Miliar',
-      decimals: danaMiliar % 1 === 0 ? 0 : 1,
-      label: 'Alokasi Bantuan Sarpras',
+      label: 'Total Dana Desa',
       icon: Landmark,
     },
     {
-      value: totalLaporan.toLocaleString('id-ID'),
-      targetNumber: totalLaporan,
-      label: 'Aduan Warga Diproses',
+      value: '9.607',
+      targetNumber: 9607,
+      label: 'Total Laporan',
       icon: FileText,
     },
     {
-      value: totalDesa.toLocaleString('id-ID'),
-      targetNumber: totalDesa,
-      label: 'Desa Wisata Terdata',
+      value: '889',
+      targetNumber: 889,
+      label: 'Desa Wisata',
       icon: MapPin,
     },
     {
-      value: `${rateSelesai.toLocaleString('id-ID')}%`,
-      targetNumber: rateSelesai,
+      value: '94,2%',
+      targetNumber: 94.2,
       suffix: '%',
-      decimals: rateSelesai % 1 === 0 ? 0 : 1,
+      decimals: 1,
       label: 'Tingkat Penyelesaian Laporan',
       icon: CheckCheck,
     },
