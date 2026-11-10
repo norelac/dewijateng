@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
+import DashboardShell from '@/components/disbudparekraf/dashboard/DashboardShell';
 
 export const metadata: Metadata = {
-  title: 'Command Center Disbudparekraf Pemprov Jateng',
+  title: 'Dashboard Disbudparekraf Pemprov Jateng',
   description:
-    'Pusat kendali eksekutif pengawasan target 1.000 desa wisata 2027, radar kepatuhan 35 kab/kota, dan rekomendasi hibah sarpras APBD 2027.',
+    'Pantau desa wisata dan kelola akses pengelola dalam satu tempat.',
 };
 
 export default async function DisbudparekrafLayout({
@@ -15,10 +16,10 @@ export default async function DisbudparekrafLayout({
 }) {
   const session = await getSession();
 
-  // Gerbang peran: hanya akun Disbudparekraf yang boleh membuka command center.
+  // Gerbang peran: hanya akun Disbudparekraf yang boleh membuka ruang admin dinas.
   if (!session || session.role !== 'disbudparekraf') {
     redirect('/login?redirect=/disbudparekraf');
   }
 
-  return <>{children}</>;
+  return <DashboardShell>{children}</DashboardShell>;
 }
