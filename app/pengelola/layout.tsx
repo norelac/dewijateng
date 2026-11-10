@@ -8,12 +8,12 @@ export const metadata: Metadata = {
     'Ruang kerja pengelola desa wisata: verifikasi aduan warga, kelola anggaran, dan unggah bukti perbaikan fisik.',
 };
 
-export default function PengelolaLayout({ children }: { children: React.ReactNode }) {
-  const session = getSession();
+export default async function PengelolaLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
 
-  // Gerbang peran: tanpa sesi PENGELOLA, alihkan ke halaman masuk.
-  if (!session) {
-    redirect('/masuk?role=pengelola&next=/pengelola');
+  // Gerbang peran: hanya akun desa yang boleh membuka ruang pengelola.
+  if (!session || session.role !== 'desa') {
+    redirect('/login?redirect=/pengelola');
   }
 
   return <>{children}</>;

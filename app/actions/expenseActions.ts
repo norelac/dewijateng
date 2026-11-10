@@ -6,6 +6,7 @@
 'use server';
 
 import { pool, query } from '@/lib/db';
+import { assertVillageScope } from '@/lib/auth';
 import { matchAndCheckSSH } from '@/lib/services/priceAnomalyChecker';
 import { calculateVillageTrustScore } from '@/lib/services/trustScoreCalculator';
 import { revalidatePath } from 'next/cache';
@@ -134,6 +135,7 @@ export async function createExpenseAction(input: ExpenseInput): Promise<ActionRe
   try {
     const data = normalizeInput(input);
     const { villageId, regency } = await loadGrantContext(input.grantId);
+    await assertVillageScope(villageId);
 
     const evaluation = await matchAndCheckSSH(data.activityName, data.claimedUnitPrice, regency);
 
@@ -193,6 +195,7 @@ export async function updateExpenseAction(
     }
     const data = normalizeInput(input);
     const { villageId, regency } = await loadGrantContext(input.grantId);
+    await assertVillageScope(villageId);
 
     const evaluation = await matchAndCheckSSH(data.activityName, data.claimedUnitPrice, regency);
 
@@ -259,6 +262,7 @@ export async function deleteExpenseAction(expenseId: string): Promise<ActionResp
     }
     const grantId = ownerRes.rows[0].grant_id;
     const { villageId } = await loadGrantContext(grantId);
+    await assertVillageScope(villageId);
 
     const client = await pool.connect();
     try {

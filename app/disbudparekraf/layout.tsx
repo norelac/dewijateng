@@ -8,16 +8,16 @@ export const metadata: Metadata = {
     'Pusat kendali eksekutif pengawasan target 1.000 desa wisata 2027, radar kepatuhan 35 kab/kota, dan rekomendasi hibah sarpras APBD 2027.',
 };
 
-export default function DisbudparekrafLayout({
+export default async function DisbudparekrafLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = getSession();
+  const session = await getSession();
 
-  // Gerbang peran: hanya sesi PEMBINA yang boleh membuka command center.
-  if (!session || session.role !== 'PEMBINA') {
-    redirect('/masuk?role=pembina&next=/disporapar');
+  // Gerbang peran: hanya akun Disbudparekraf yang boleh membuka command center.
+  if (!session || session.role !== 'disbudparekraf') {
+    redirect('/login?redirect=/disbudparekraf');
   }
 
   return <>{children}</>;

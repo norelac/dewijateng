@@ -114,3 +114,22 @@ export async function clearSessionCookie(): Promise<void> {
   const cookieStore = cookies();
   cookieStore.delete(COOKIE_NAME);
 }
+
+// ------------------------------------------------------------------------------
+// Otorisasi Cakupan Desa (Server Actions)
+// ------------------------------------------------------------------------------
+/**
+ * Pastikan aktor berhak menulis data desa tertentu.
+ * - Akun desa: hanya boleh menyentuh villageId miliknya sendiri.
+ * - Akun disbudparekraf: boleh lintas desa.
+ * - Tanpa sesi: ditolak.
+ */
+export async function assertVillageScope(villageId: string): Promise<void> {
+  const session = await getSession();
+  if (!session) {
+    throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
+  }
+  if (session.role === 'desa' && session.villageId !== villageId) {
+    throw new Error('Akses ditolak: Anda hanya dapat mengelola data desa Anda sendiri.');
+  }
+}

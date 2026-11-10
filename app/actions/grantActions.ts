@@ -6,6 +6,7 @@
 'use server';
 
 import { query } from '@/lib/db';
+import { assertVillageScope } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export interface ActionResponse<T = any> {
@@ -70,6 +71,9 @@ export async function updateGrantAllocationAction(
     if (!villageId) {
       throw new Error('Desa wisata wajib dipilih');
     }
+
+    await assertVillageScope(villageId);
+
     if (!Number.isFinite(fiscalYear) || fiscalYear < 2000) {
       throw new Error('Tahun anggaran tidak valid');
     }
