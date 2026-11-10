@@ -139,6 +139,25 @@ INSERT INTO users (id, username, email, password_hash, role, village_id, full_na
 ON CONFLICT (username) DO NOTHING;
 
 -- ------------------------------------------------------------------------------
+-- 4b. Status LPJ contoh untuk antrean verifikasi Disbudparekraf
+--     (supaya layar "Aktivitas" menampilkan campuran status seperti desain)
+-- ------------------------------------------------------------------------------
+UPDATE village_grants SET lpj_status = 'SUBMITTED', uploaded_at = CURRENT_TIMESTAMP - INTERVAL '3 days',
+       lpj_review_notes = NULL
+ WHERE village_id = 'a0000000-0000-0000-0000-000000000002'; -- Candirejo
+
+UPDATE village_grants SET lpj_status = 'SUBMITTED', uploaded_at = CURRENT_TIMESTAMP - INTERVAL '2 days',
+       lpj_review_notes = NULL
+ WHERE id = 'b0000004-0000-0000-0000-000000000000'; -- Dawuhan
+
+UPDATE village_grants SET lpj_status = 'REVISION', uploaded_at = CURRENT_TIMESTAMP - INTERVAL '5 days',
+       lpj_review_notes = 'Realisasi upah kerja perlu dilampiri daftar hadir HOK dan foto progres.'
+ WHERE village_id = 'a0000000-0000-0000-0000-000000000001'; -- Getas
+
+UPDATE village_grants SET lpj_status = 'VERIFIED', uploaded_at = CURRENT_TIMESTAMP - INTERVAL '1 days'
+ WHERE id = 'b0000006-0000-0000-0000-000000000000'; -- Dieng Kulon
+
+-- ------------------------------------------------------------------------------
 -- 5. Ringkasan hasil seed
 -- ------------------------------------------------------------------------------
 DO $$

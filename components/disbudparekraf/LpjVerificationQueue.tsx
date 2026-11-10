@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   FileCheck2,
   FileText,
@@ -37,6 +36,13 @@ interface LpjVerificationQueueProps {
   onStatusChange?: () => void;
 }
 
+/**
+ * Data cadangan bila komponen dipakai tanpa `initialItems` (mis. pratinjau).
+ * Sumber utama antrean adalah `listLpjQueue()` di server (lihat
+ * `app/disbudparekraf/aktivitas/page.tsx`). ID grant di bawah harus cocok
+ * dengan baris nyata pada `village_grants` agar aksi Setujui/Revisi tidak
+ * diam-diam tidak mengubah apa pun.
+ */
 const DEFAULT_LPJ_ITEMS: LpjItem[] = [
   {
     grantId: 'b0000000-0000-0000-0000-000000000002',
@@ -46,40 +52,44 @@ const DEFAULT_LPJ_ITEMS: LpjItem[] = [
     totalAllocated: 150000000,
     totalRealized: 142000000,
     lpjStatus: 'SUBMITTED',
-    uploadedAt: '2026-10-28T10:30:00Z',
+    lpjDocumentUrl: '/documents/lpj-candirejo-magelang-2026.pdf',
+    uploadedAt: '2026-10-26T10:30:00Z',
     hasAnomaly: true,
   },
   {
-    grantId: 'b0000000-0000-0000-0000-000000000004',
+    grantId: 'b0000006-0000-0000-0000-000000000000',
     villageName: 'Desa Wisata Dieng Kulon',
     regency: 'Kabupaten Banjarnegara',
     fiscalYear: 2026,
     totalAllocated: 1000000000,
     totalRealized: 850000000,
     lpjStatus: 'VERIFIED',
-    uploadedAt: '2026-10-25T14:15:00Z',
+    lpjDocumentUrl: '/documents/lpj-dieng-kulon-banjarnegara-2026.pdf',
+    uploadedAt: '2026-11-05T14:15:00Z',
     hasAnomaly: false,
   },
   {
-    grantId: 'b0000000-0000-0000-0000-000000000007',
-    villageName: 'Desa Wisata Lerep',
-    regency: 'Kabupaten Semarang',
+    grantId: 'b0000004-0000-0000-0000-000000000000',
+    villageName: 'Desa Wisata Dawuhan',
+    regency: 'Kabupaten Banjarnegara',
     fiscalYear: 2026,
     totalAllocated: 500000000,
-    totalRealized: 435000000,
+    totalRealized: 425000000,
     lpjStatus: 'SUBMITTED',
+    lpjDocumentUrl: '/documents/lpj-dawuhan-banjarnegara-2026.pdf',
     uploadedAt: '2026-10-27T09:00:00Z',
     hasAnomaly: false,
   },
   {
     grantId: 'b0000000-0000-0000-0000-000000000001',
-    villageName: 'Desa Wisata Getas',
+    villageName: 'Desa Wisata Getas (Curug Kembar)',
     regency: 'Kabupaten Semarang',
     fiscalYear: 2026,
     totalAllocated: 100000000,
     totalRealized: 70500000,
     lpjStatus: 'REVISION',
-    uploadedAt: '2026-10-20T11:00:00Z',
+    lpjDocumentUrl: '/documents/lpj-getas-semarang-2026.pdf',
+    uploadedAt: '2026-10-31T11:00:00Z',
     hasAnomaly: true,
   },
 ];
@@ -176,7 +186,7 @@ export default function LpjVerificationQueue({
           <button
             type="button"
             onClick={() => setFilter('ALL')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'ALL'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -187,7 +197,7 @@ export default function LpjVerificationQueue({
           <button
             type="button"
             onClick={() => setFilter('SUBMITTED')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'SUBMITTED'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -198,7 +208,7 @@ export default function LpjVerificationQueue({
           <button
             type="button"
             onClick={() => setFilter('VERIFIED')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'VERIFIED'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -209,7 +219,7 @@ export default function LpjVerificationQueue({
           <button
             type="button"
             onClick={() => setFilter('REVISION')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'REVISION'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -346,14 +356,21 @@ export default function LpjVerificationQueue({
                           </button>
                         </>
                       )}
-                      <Link
-                        href={`/transparansi?slug=desa-wisata-candirejo`}
-                        target="_blank"
-                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#0D2453] font-semibold text-[11px] transition-colors inline-flex items-center gap-1"
-                      >
-                        <span>Berkas</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
+                      {item.lpjDocumentUrl ? (
+                        <a
+                          href={item.lpjDocumentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#0D2453] font-semibold text-[11px] transition-colors inline-flex items-center gap-1"
+                        >
+                          <span>Berkas</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-50 text-[#94A3B8] font-semibold text-[11px] inline-flex items-center gap-1 cursor-not-allowed">
+                          <span>Belum ada berkas</span>
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>

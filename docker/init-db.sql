@@ -299,8 +299,8 @@ INSERT INTO ssh_reference_rates (item_code, item_name, category, unit, standard_
 -- SEED DATA: Dokumen LPJ Bantuan Keuangan (Studi Kasus Desa Getas)
 -- ==============================================================================
 INSERT INTO village_grants (id, village_id, fiscal_year, funding_source, total_allocated, total_realized, remaining_balance, lpj_document_url, lpj_status, uploaded_at) VALUES
-('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 2026, 'Bantuan Keuangan Sarpras Pariwisata Pemprov Jateng', 100000000.00, 70500000.00, 29500000.00, '/documents/lpj-desa-getas-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '10 days'),
-('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 2026, 'Bantuan Keuangan Pemprov Jateng TA 2026', 150000000.00, 142000000.00, 8000000.00, '/documents/lpj-candirejo-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '15 days'),
+('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 2026, 'Bantuan Keuangan Sarpras Pariwisata Pemprov Jateng', 100000000.00, 70500000.00, 29500000.00, '/documents/lpj-getas-semarang-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '10 days'),
+('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 2026, 'Bantuan Keuangan Pemprov Jateng TA 2026', 150000000.00, 142000000.00, 8000000.00, '/documents/lpj-candirejo-magelang-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '15 days'),
 ('b0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000003', 2026, 'Bantuan Keuangan Sarpras Rintisan Wisata', 100000000.00, 0.00, 100000000.00, NULL, 'PENDING_UPLOAD', NULL);
 
 

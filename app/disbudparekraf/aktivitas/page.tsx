@@ -1,9 +1,13 @@
 import React from 'react';
 import LpjVerificationQueue from '@/components/disbudparekraf/LpjVerificationQueue';
+import { listLpjQueue } from '@/lib/services/lpjService';
 
 export const metadata = {
   title: 'Aktivitas · DEWI JATENG',
 };
+
+// Antrean dibaca langsung dari database setiap permintaan.
+export const dynamic = 'force-dynamic';
 
 /**
  * Layar "Aktivitas" — antrean verifikasi LPJ desa.
@@ -11,7 +15,9 @@ export const metadata = {
  * ponytail: desain `418:565` dkk. belum mencakup layar ini; antrean LPJ dari
  * Fase 1 dipindahkan ke sini agar fitur verifikasi tetap dapat diakses.
  */
-export default function AktivitasPage() {
+export default async function AktivitasPage() {
+  const items = await listLpjQueue(2026, 12);
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">
       <div className="flex flex-col gap-2">
@@ -23,7 +29,7 @@ export default function AktivitasPage() {
         </p>
       </div>
 
-      <LpjVerificationQueue />
+      <LpjVerificationQueue initialItems={items} />
     </div>
   );
 }
