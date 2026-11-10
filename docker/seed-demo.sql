@@ -107,27 +107,33 @@ SELECT setval(
 -- ------------------------------------------------------------------------------
 -- 4c. Akun Demo Awal: Admin Disbudparekraf & Pengelola Desa Wisata Candirejo
 -- ------------------------------------------------------------------------------
-INSERT INTO users (id, username, password_hash, role, village_id, full_name, phone, status, must_change_password) VALUES
+INSERT INTO users (id, username, email, password_hash, role, village_id, full_name, phone, status, approval_status, email_verified_at, must_change_password) VALUES
 (
     'e0000000-0000-0000-0000-000000000001',
     'disbudparekraf',
+    'disbudparekraf@jatengprov.go.id',
     'pbkdf2$10000$e8393b3b6dd5c7a1d54ff785fe602a15$29a96fc31b11b546e7bd1f4d4a76ea09e9b7fd5725e5ba7482e68399c0fd9d100d631542bd772a89a98165781c457c40af01f984f7b486b8ce5d620a6492a9f2',
     'disbudparekraf',
     NULL,
     'Admin Eksekutif Disbudparekraf Jateng',
     '081122334455',
     'AKTIF',
+    'DISETUJUI',
+    CURRENT_TIMESTAMP,
     false
 ),
 (
     'e0000000-0000-0000-0000-000000000002',
     'desa-candirejo',
+    'desa-candirejo@jatengprov.go.id',
     'pbkdf2$10000$6cff3c501f59dfe02a2379ec35bb5e8b$675ca8fa45b9f676a5ec2ae35a9243ec35c351e9de1c9ef579ae65234d465b1855877166e6b7956e9cfae3b9db2ec4965d3f2b3c13ff56e32c1d41ce4595357e',
     'desa',
     'a0000000-0000-0000-0000-000000000002',
     'Pengelola Desa Wisata Candirejo',
     '081234567802',
     'AKTIF',
+    'DISETUJUI',
+    CURRENT_TIMESTAMP,
     false
 )
 ON CONFLICT (username) DO NOTHING;

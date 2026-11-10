@@ -54,12 +54,16 @@ function decodePayload(b64: string): any | null {
   }
 }
 
+/** Halaman autentikasi: pengguna yang sudah masuk tidak perlu melihatnya lagi. */
+const AUTH_ENTRY_PATHS = ['/login', '/daftar', '/lupa-kata-sandi', '/reset-sandi'];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get('dewi_session')?.value;
 
   const isPengelola = pathname.startsWith('/pengelola');
   const isDisbudparekraf = pathname.startsWith('/disbudparekraf');
+  const isAuthEntry = AUTH_ENTRY_PATHS.includes(pathname);
 
   const toLogin = () => {
     const loginUrl = new URL('/login', req.url);
@@ -89,7 +93,7 @@ export async function middleware(req: NextRequest) {
       return toLogin();
     }
 
-    if (pathname === '/login') {
+    if (isAuthEntry) {
       const target = user.role === 'disbudparekraf' ? '/disbudparekraf' : '/pengelola';
       return NextResponse.redirect(new URL(target, req.url));
     }
@@ -107,5 +111,12 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/pengelola/:path*', '/disbudparekraf/:path*', '/login'],
+  matcher: [
+    '/pengelola/:path*',
+    '/disbudparekraf/:path*',
+    '/login',
+    '/daftar',
+    '/lupa-kata-sandi',
+    '/reset-sandi',
+  ],
 };

@@ -22,6 +22,7 @@ import DisbudparekrafSidebar from '@/components/disbudparekraf/DisbudparekrafSid
 import DisbudparekrafHeader from '@/components/disbudparekraf/DisbudparekrafHeader';
 import RegisterVillageModal from '@/components/disbudparekraf/RegisterVillageModal';
 import LpjVerificationQueue from '@/components/disbudparekraf/LpjVerificationQueue';
+import AccountApprovalPanel from '@/components/disbudparekraf/AccountApprovalPanel';
 
 interface MacroMetrics {
   total_villages: number;
@@ -242,6 +243,11 @@ export default function DisbudparekrafDashboardPage() {
           {/* Section 1: Antrean Verifikasi Dokumen LPJ Desa (Matching layout persis) */}
           <section id="section-lpj" className="w-full">
             <LpjVerificationQueue onStatusChange={fetchOverview} />
+          </section>
+
+          {/* Section: Persetujuan akun dinas hasil pendaftaran mandiri (panel sementara Fase 1) */}
+          <section id="section-akun" className="w-full">
+            <AccountApprovalPanel />
           </section>
 
           {/* Section 2: Dua Kartu (Sumber Pendanaan & Realisasi Anggaran) */}

@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- Drop existing tables jika migrasi ulang
+DROP TABLE IF EXISTS auth_tokens CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS report_resolutions CASCADE;
 DROP TABLE IF EXISTS incident_reports CASCADE;
@@ -173,12 +174,19 @@ CREATE INDEX idx_resolutions_report ON report_resolutions(report_id);
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(60) UNIQUE NOT NULL,
+    email VARCHAR(150) NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('desa', 'disbudparekraf')) NOT NULL,
     village_id UUID NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
     full_name VARCHAR(100) NOT NULL,
     phone VARCHAR(30) NULL,
+    nip VARCHAR(30) NULL,
+    institution VARCHAR(150) NULL,
+    regency VARCHAR(100) NULL,
     status VARCHAR(20) CHECK (status IN ('AKTIF', 'NONAKTIF')) DEFAULT 'AKTIF',
+    approval_status VARCHAR(20) CHECK (approval_status IN ('MENUNGGU', 'DISETUJUI', 'DITOLAK')) DEFAULT 'DISETUJUI',
+    email_verified_at TIMESTAMP WITH TIME ZONE NULL,
+    activated_at TIMESTAMP WITH TIME ZONE NULL,
     must_change_password BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP WITH TIME ZONE NULL,
     created_by UUID NULL,
@@ -191,6 +199,24 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_village ON users(village_id);
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+
+-- ==============================================================================
+-- TABEL 9: auth_tokens (Token verifikasi email, undangan aktivasi, reset sandi)
+-- Hanya hash token yang disimpan; token asli hanya ada pada tautan yang dikirim.
+-- ==============================================================================
+CREATE TABLE auth_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(30) CHECK (type IN ('VERIFIKASI_EMAIL', 'UNDANGAN_AKTIVASI', 'RESET_SANDI')) NOT NULL,
+    token_hash VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_auth_tokens_user ON auth_tokens(user_id);
+CREATE INDEX idx_auth_tokens_hash ON auth_tokens(token_hash);
 
 
 
@@ -200,7 +226,7 @@ CREATE INDEX idx_users_village ON users(village_id);
 CREATE OR REPLACE FUNCTION update_geom_point()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.geom = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326);
+    NEW.geom = ST_SetSRID(ST_MakePoint(NEW.longitude::float8, NEW.latitude::float8), 4326);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

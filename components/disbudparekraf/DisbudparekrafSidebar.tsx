@@ -12,6 +12,7 @@ import {
   LogOut,
   X,
   Building2,
+  UserCheck,
 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/authActions';
 
@@ -38,6 +39,7 @@ export default function DisbudparekrafSidebar({
       icon: FileCheck2,
       badge: pendingLpjCount > 0 ? String(pendingLpjCount) : undefined,
     },
+    { id: 'akun', label: 'Persetujuan Akun', icon: UserCheck },
     { id: 'radar', label: 'Radar 35 Wilayah', icon: MapPin },
     { id: 'hibah', label: 'Prioritas Hibah 2027', icon: Award },
   ];

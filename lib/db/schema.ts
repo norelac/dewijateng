@@ -207,15 +207,42 @@ export const reportResolutions = pgTable('report_resolutions', {
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   username: varchar('username', { length: 60 }).notNull().unique(),
+  email: varchar('email', { length: 150 }),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: varchar('role', { length: 20 }).notNull(), // 'desa' | 'disbudparekraf'
   villageId: uuid('village_id').references(() => touristVillages.id, { onDelete: 'cascade' }),
   fullName: varchar('full_name', { length: 100 }).notNull(),
-  phone: varchar('phone', { length: 30 }),
+  phone: varchar('phone', { length: 30 }), // dipakai sebagai Nomor WhatsApp
+  nip: varchar('nip', { length: 30 }),
+  institution: varchar('institution', { length: 150 }),
+  regency: varchar('regency', { length: 100 }), // wilayah tugas
   status: varchar('status', { length: 20 }).default('AKTIF').notNull(),
+  // MENUNGGU | DISETUJUI | DITOLAK — hanya berarti untuk akun hasil pendaftaran mandiri.
+  approvalStatus: varchar('approval_status', { length: 20 }).default('DISETUJUI').notNull(),
+  emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  activatedAt: timestamp('activated_at', { withTimezone: true }),
   mustChangePassword: boolean('must_change_password').default(true).notNull(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdBy: uuid('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ------------------------------------------------------------------------------
+// 9. Tabel Token Autentikasi (auth_tokens)
+// Menyimpan token verifikasi email, undangan aktivasi, dan reset kata sandi.
+// Hanya hash token yang disimpan — token asli hanya ada di tautan yang dikirim.
+// ------------------------------------------------------------------------------
+export const authTokens = pgTable('auth_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 30 }).notNull(), // VERIFIKASI_EMAIL | UNDANGAN_AKTIVASI | RESET_SANDI
+  tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -231,10 +258,18 @@ export const touristVillagesRelations = relations(touristVillages, ({ many }) =>
   users: many(users),
 }));
 
-export const usersRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   village: one(touristVillages, {
     fields: [users.villageId],
     references: [touristVillages.id],
+  }),
+  authTokens: many(authTokens),
+}));
+
+export const authTokensRelations = relations(authTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [authTokens.userId],
+    references: [users.id],
   }),
 }));
 

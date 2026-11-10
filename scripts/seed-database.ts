@@ -39,7 +39,7 @@ async function runSeed() {
     // 4. Update PostGIS Geometries
     console.log('🗺️  Memperbarui geometri koordinat PostGIS...');
     try {
-      await client.query('UPDATE tourist_villages SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) WHERE geom IS NULL;');
+      await client.query('UPDATE tourist_villages SET geom = ST_SetSRID(ST_MakePoint(longitude::float8, latitude::float8), 4326) WHERE geom IS NULL;');
       console.log('✅ Koordinat spasial PostGIS selesai dimutakhirkan!\n');
     } catch (geomErr: any) {
       console.warn('⚠️  PostGIS warning (melewati update spasial):', geomErr.message);
