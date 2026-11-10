@@ -13,6 +13,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { DashboardTicket } from './types';
+import { convertImageToWebP } from '@/lib/utils/imageOptimizer';
 
 interface PerbaruiPenangananViewProps {
   ticket: DashboardTicket;
@@ -57,11 +58,12 @@ export default function PerbaruiPenangananView({
     setResolvedImage(ticket.resolvedImage || null);
   }, [ticket.id, ticket.status, ticket.notes, ticket.resolvedImage]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setResolvedFile(file);
-      setResolvedImage(URL.createObjectURL(file));
+      const optimized = file.type.startsWith('image/') ? await convertImageToWebP(file) : file;
+      setResolvedFile(optimized);
+      setResolvedImage(URL.createObjectURL(optimized));
       setErrorMessage(null);
     }
   };
