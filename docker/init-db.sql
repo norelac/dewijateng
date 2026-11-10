@@ -9,6 +9,8 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- Drop existing tables jika migrasi ulang
 DROP TABLE IF EXISTS auth_tokens CASCADE;
+DROP TABLE IF EXISTS village_opening_balances CASCADE;
+DROP TABLE IF EXISTS village_transactions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS report_resolutions CASCADE;
 DROP TABLE IF EXISTS incident_reports CASCADE;
@@ -218,6 +220,45 @@ CREATE TABLE auth_tokens (
 
 CREATE INDEX idx_auth_tokens_user ON auth_tokens(user_id);
 CREATE INDEX idx_auth_tokens_hash ON auth_tokens(token_hash);
+
+-- ==============================================================================
+-- TABEL 10: village_transactions (Transaksi keuangan desa wisata)
+-- Satu tabel untuk pemasukan dan pengeluaran; `type` yang membedakan.
+-- Dipakai layar "Monitoring keuangan" (Fase 4) dengan akses baca saja.
+-- ==============================================================================
+CREATE TABLE village_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
+    type VARCHAR(12) CHECK (type IN ('PEMASUKAN', 'PENGELUARAN')) NOT NULL,
+    reference_code VARCHAR(32) UNIQUE NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    category VARCHAR(60) NOT NULL,
+    transaction_date DATE NOT NULL,
+    amount BIGINT NOT NULL CHECK (amount >= 0),
+    payment_method VARCHAR(120),
+    counterparty VARCHAR(200),
+    note TEXT,
+    -- NULL = transaksi belum dilengkapi bukti (status "Perlu bukti").
+    proof_file_name VARCHAR(200),
+    proof_file_size_kb INTEGER,
+    proof_uploaded_by VARCHAR(120),
+    recorded_by VARCHAR(120) NOT NULL,
+    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_village_transactions_village ON village_transactions(village_id, transaction_date);
+CREATE INDEX idx_village_transactions_period ON village_transactions(transaction_date);
+
+-- ==============================================================================
+-- TABEL 11: village_opening_balances (Saldo awal per periode per desa)
+-- ==============================================================================
+CREATE TABLE village_opening_balances (
+    village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
+    period VARCHAR(7) NOT NULL, -- YYYY-MM
+    amount BIGINT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (village_id, period)
+);
 
 
 

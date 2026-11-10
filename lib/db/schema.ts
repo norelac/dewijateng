@@ -16,6 +16,8 @@ import {
   timestamp,
   serial,
   jsonb,
+  date,
+  primaryKey,
   customType,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
@@ -250,6 +252,56 @@ export const authTokens = pgTable('auth_tokens', {
 });
 
 // ------------------------------------------------------------------------------
+// 10. Tabel Transaksi Keuangan Desa (village_transactions)
+// Satu tabel untuk pemasukan dan pengeluaran �" bentuknya identik, hanya `type`
+// yang membedakan. Dipakai layar "Monitoring keuangan" (Fase 4), baca saja:
+// pencatatan transaksi tetap dilakukan pengelola desa di luar ruang dinas.
+// ------------------------------------------------------------------------------
+export const villageTransactions = pgTable('village_transactions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  villageId: uuid('village_id')
+    .references(() => touristVillages.id, { onDelete: 'cascade' })
+    .notNull(),
+  type: varchar('type', { length: 12 }).notNull(), // PEMASUKAN | PENGELUARAN
+  referenceCode: varchar('reference_code', { length: 32 }).notNull().unique(),
+  title: varchar('title', { length: 200 }).notNull(),
+  category: varchar('category', { length: 60 }).notNull(),
+  transactionDate: date('transaction_date').notNull(),
+  amount: bigint('amount', { mode: 'number' }).notNull(),
+  paymentMethod: varchar('payment_method', { length: 120 }),
+  counterparty: varchar('counterparty', { length: 200 }),
+  note: text('note'),
+  // NULL = transaksi belum dilengkapi bukti (status "Perlu bukti").
+  proofFileName: varchar('proof_file_name', { length: 200 }),
+  proofFileSizeKb: integer('proof_file_size_kb'),
+  proofUploadedBy: varchar('proof_uploaded_by', { length: 120 }),
+  recordedBy: varchar('recorded_by', { length: 120 }).notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ------------------------------------------------------------------------------
+// 11. Tabel Saldo Awal per Periode (village_opening_balances)
+// ------------------------------------------------------------------------------
+export const villageOpeningBalances = pgTable(
+  'village_opening_balances',
+  {
+    villageId: uuid('village_id')
+      .references(() => touristVillages.id, { onDelete: 'cascade' })
+      .notNull(),
+    period: varchar('period', { length: 7 }).notNull(), // YYYY-MM
+    amount: bigint('amount', { mode: 'number' }).default(0).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.villageId, table.period] }),
+  })
+);
+
+// ------------------------------------------------------------------------------
 // Drizzle Relations Mapping
 // ------------------------------------------------------------------------------
 export const touristVillagesRelations = relations(touristVillages, ({ many }) => ({
@@ -313,3 +365,20 @@ export const reportResolutionsRelations = relations(reportResolutions, ({ one })
     references: [incidentReports.id],
   }),
 }));
+
+export const villageTransactionsRelations = relations(villageTransactions, ({ one }) => ({
+  village: one(touristVillages, {
+    fields: [villageTransactions.villageId],
+    references: [touristVillages.id],
+  }),
+}));
+
+export const villageOpeningBalancesRelations = relations(
+  villageOpeningBalances,
+  ({ one }) => ({
+    village: one(touristVillages, {
+      fields: [villageOpeningBalances.villageId],
+      references: [touristVillages.id],
+    }),
+  })
+);

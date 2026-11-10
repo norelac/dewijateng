@@ -1,63 +1,82 @@
 import { NextResponse } from 'next/server';
 import { getLpjDocumentData } from '@/lib/services/lpjService';
 import { renderLpjPdf } from '@/lib/services/lpjDocumentPdf';
+import { getTransactionByReference } from '@/lib/services/financeService';
+import { renderBuktiPdf } from '@/lib/services/financeDocumentPdf';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /documents/lpj-<slug-desa>-<tahun>.pdf
+ * GET /documents/lpj-<slug-desa>-<tahun>.pdf  -> dokumen LPJ desa wisata
+ * GET /documents/bukti-<kode-referensi>.pdf   -> bukti transaksi keuangan desa
  *
- * Menyajikan dokumen LPJ desa wisata sebagai PDF. Isi berkas dirender dari data
- * `village_grants` + `grant_expenses`, jadi selalu sinkron dengan basis data dan
- * tidak perlu menyimpan ratusan berkas statis.
+ * Kedua berkas dirender dari basis data (tidak ada ratusan berkas statis), jadi
+ * isinya selalu sinkron. `?unduh=1` memaksa unduhan, tanpa parameter langsung
+ * tampil di peramban.
  *
- * ponytail: kalau pengelola desa mengunggah PDF asli, `lpj_document_url` akan
- * menunjuk `/uploads/official-documents/...` dan route ini tidak terpakai lagi.
+ * ponytail: kalau pengelola desa mengunggah PDF/dokumen asli, arahkan URL-nya ke
+ * `/uploads/official-documents/...` dan route ini tidak terpakai lagi.
  */
 
-const FILE_PATTERN = /^lpj-(.+)-(\d{4})\.pdf$/;
+const LPJ_PATTERN = /^lpj-(.+)-(\d{4})\.pdf$/;
+const BUKTI_PATTERN = /^bukti-([A-Za-z]{2}-\d{4}-\d{4})\.pdf$/;
+
+function pdfResponse(
+  bytes: Uint8Array<ArrayBuffer>,
+  filename: string,
+  unduh: boolean
+): NextResponse {
+  const body = new Blob([bytes], { type: 'application/pdf' });
+  return new NextResponse(body, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `${unduh ? 'attachment' : 'inline'}; filename="${filename}"`,
+      'Cache-Control': 'public, max-age=300, must-revalidate',
+    },
+  });
+}
 
 export async function GET(
-  _req: Request,
+  request: Request,
   { params }: { params: { file: string } }
 ) {
   const file = decodeURIComponent(params.file || '');
-  const match = FILE_PATTERN.exec(file);
-
-  if (!match) {
-    return NextResponse.json(
-      { success: false, error: 'Nama berkas LPJ tidak dikenali' },
-      { status: 404 }
-    );
-  }
-
-  const [, slug, year] = match;
-  const fiscalYear = parseInt(year, 10);
+  const unduh = new URL(request.url).searchParams.get('unduh') === '1';
 
   try {
-    const data = await getLpjDocumentData(slug, fiscalYear);
-
-    if (!data) {
-      return NextResponse.json(
-        { success: false, error: 'Dokumen LPJ tidak ditemukan untuk desa dan tahun tersebut' },
-        { status: 404 }
-      );
+    const lpjMatch = LPJ_PATTERN.exec(file);
+    if (lpjMatch) {
+      const [, slug, year] = lpjMatch;
+      const data = await getLpjDocumentData(slug, parseInt(year, 10));
+      if (!data) {
+        return NextResponse.json(
+          { success: false, error: 'Dokumen LPJ tidak ditemukan untuk desa dan tahun tersebut' },
+          { status: 404 }
+        );
+      }
+      return pdfResponse(await renderLpjPdf(data), file, unduh);
     }
 
-    const pdf = await renderLpjPdf(data);
-    const body = new Blob([pdf], { type: 'application/pdf' });
+    const buktiMatch = BUKTI_PATTERN.exec(file);
+    if (buktiMatch) {
+      const transaction = await getTransactionByReference(buktiMatch[1].toUpperCase());
+      if (!transaction) {
+        return NextResponse.json(
+          { success: false, error: 'Bukti transaksi tidak ditemukan' },
+          { status: 404 }
+        );
+      }
+      return pdfResponse(await renderBuktiPdf(transaction), file, unduh);
+    }
 
-    return new NextResponse(body, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${file}"`,
-        'Cache-Control': 'public, max-age=300, must-revalidate',
-      },
-    });
+    return NextResponse.json(
+      { success: false, error: 'Nama berkas dokumen tidak dikenali' },
+      { status: 404 }
+    );
   } catch (error) {
     console.error('[GET /documents/[file] error]:', error);
     return NextResponse.json(
-      { success: false, error: 'Gagal menyiapkan dokumen LPJ' },
+      { success: false, error: 'Gagal menyiapkan dokumen' },
       { status: 500 }
     );
   }

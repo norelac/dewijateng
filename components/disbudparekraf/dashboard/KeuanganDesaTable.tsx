@@ -1,36 +1,46 @@
 import React from 'react';
-import { KEUANGAN_DESA } from '@/components/disbudparekraf/dashboard/demoData';
+import Link from 'next/link';
+import type { VillageFinanceRow } from '@/lib/finance';
+import { periodeLabel } from '@/lib/finance';
+import { formatRupiahCompact } from '@/lib/utils';
+import KelengkapanBadge from '@/components/disbudparekraf/monitoring/KelengkapanBadge';
 
-function KelengkapanBadge({ value }: { value: 'Lengkap' | 'Perlu bukti' }) {
-  const lengkap = value === 'Lengkap';
-  return (
-    <span
-      className={`inline-flex h-[26px] items-center rounded-[999px] px-2.5 text-[11px] font-medium ${
-        lengkap ? 'bg-[#E5F4ED] text-[#216B55]' : 'bg-[#FCF1DC] text-[#875B12]'
-      }`}
-    >
-      {value}
-    </span>
-  );
+function wilayahShort(regency: string): string {
+  return regency.replace(/^Kabupaten\s+/i, '');
 }
 
-/** Tabel ringkasan keuangan per desa (Figma 422:1068). */
-export default function KeuanganDesaTable() {
+/**
+ * Tabel ringkasan keuangan per desa pada dashboard (Figma 422:1068).
+ * Hanya desa yang sudah melapor yang ditampilkan.
+ */
+export default function KeuanganDesaTable({
+  rows,
+  desaMelapor,
+  desaTotal,
+  periode,
+}: {
+  rows: VillageFinanceRow[];
+  desaMelapor: number;
+  desaTotal: number;
+  periode: string;
+}) {
   return (
     <div className="w-full bg-white border border-[#E6ECF5] rounded-[14px] p-6 shadow-xs">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex flex-col gap-1">
-          <h3 className="text-[#0D2453] text-[17px] font-semibold leading-[1.5]">Keuangan desa wisata</h3>
+          <h3 className="text-[#0D2453] text-[17px] font-semibold leading-[1.5]">
+            Keuangan desa wisata
+          </h3>
           <p className="text-[#64748B] text-[12px] leading-[1.5]">
-            Ringkasan 4 dari 48 desa · periode Oktober 2026
+            Ringkasan {desaMelapor} dari {desaTotal} desa · periode {periodeLabel(periode)}
           </p>
         </div>
-        <button
-          type="button"
-          className="h-[40px] px-5 inline-flex items-center justify-center rounded-[999px] border-2 border-[#E6ECF5] bg-white text-[#0D2453] text-[12px] font-semibold whitespace-nowrap"
+        <Link
+          href="/disbudparekraf/monitoring"
+          className="h-[40px] px-5 inline-flex items-center justify-center rounded-[999px] border-2 border-[#E6ECF5] bg-white text-[#0D2453] text-[12px] font-semibold whitespace-nowrap hover:bg-slate-50 transition-colors"
         >
           Lihat seluruh desa
-        </button>
+        </Link>
       </div>
 
       <div className="overflow-x-auto mt-5">
@@ -46,27 +56,44 @@ export default function KeuanganDesaTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E6ECF5]">
-            {KEUANGAN_DESA.map((row) => (
-              <tr key={row.desa}>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-10 text-center text-[12px] text-[#64748B]">
+                  Belum ada desa yang melaporkan periode ini.
+                </td>
+              </tr>
+            )}
+            {rows.map((row) => (
+              <tr key={row.villageId}>
                 <td className="py-3.5 px-3">
                   <div className="flex flex-col leading-tight">
-                    <span className="text-[#0D2453] text-[13px] font-semibold">{row.desa}</span>
-                    <span className="text-[#64748B] text-[11px] mt-1">{row.wilayah}</span>
+                    <span className="text-[#0D2453] text-[13px] font-semibold">
+                      {row.shortName}
+                    </span>
+                    <span className="text-[#64748B] text-[11px] mt-1">
+                      {wilayahShort(row.regency)}
+                    </span>
                   </div>
                 </td>
-                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">{row.pemasukan}</td>
-                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">{row.pengeluaran}</td>
-                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">{row.saldo}</td>
+                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">
+                  {formatRupiahCompact(row.pemasukan)}
+                </td>
+                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">
+                  {formatRupiahCompact(row.pengeluaran)}
+                </td>
+                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">
+                  {formatRupiahCompact(row.saldoAkhir)}
+                </td>
                 <td className="py-3.5 px-3">
                   <KelengkapanBadge value={row.kelengkapan} />
                 </td>
                 <td className="py-3.5 px-3">
-                  <button
-                    type="button"
-                    className="h-[40px] px-5 inline-flex items-center justify-center rounded-[999px] border-2 border-[#E6ECF5] bg-white text-[#0D2453] text-[12px] font-semibold whitespace-nowrap"
+                  <Link
+                    href={`/disbudparekraf/monitoring/${row.slug}?periode=${periode}`}
+                    className="h-[40px] px-5 inline-flex items-center justify-center rounded-[999px] border-2 border-[#E6ECF5] bg-white text-[#0D2453] text-[12px] font-semibold whitespace-nowrap hover:bg-slate-50 transition-colors"
                   >
                     Lihat desa
-                  </button>
+                  </Link>
                 </td>
               </tr>
             ))}
@@ -75,7 +102,8 @@ export default function KeuanganDesaTable() {
       </div>
 
       <p className="text-[#64748B] text-[11px] mt-4">
-        Saldo akhir = saldo awal + pemasukan − pengeluaran. Data yang belum dilengkapi tidak dianggap final.
+        Saldo akhir = saldo awal + pemasukan − pengeluaran. Data yang belum dilengkapi tidak
+        dianggap final.
       </p>
     </div>
   );
