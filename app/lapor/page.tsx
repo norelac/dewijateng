@@ -16,12 +16,14 @@ import {
   SlidersHorizontal,
   Columns,
   Sparkles,
+  Clock,
 } from 'lucide-react';
 
 import {
   getPublicReportsAction,
   getReportDetailAction,
 } from '@/app/actions/reportActions';
+import { calculateSLARemaining } from '@/lib/utils';
 import type { IncidentReportDetail } from '@/lib/services/reportService';
 
 interface TimelineStep {
@@ -52,6 +54,8 @@ interface ReportItem {
     url: string;
     label: string;
   };
+  /** Tenggat SLA (ISO). null untuk laporan selesai/data lama. */
+  deadlineAt?: string | null;
   timeline: TimelineStep[];
 }
 
@@ -591,8 +595,41 @@ function mapIncidentToReportItem(detail: IncidentReportDetail): ReportItem {
             label: `Sesudah · ${formatTanggalPendek(detail.resolution.resolvedAt)}`,
           }
         : undefined,
+    deadlineAt:
+      detail.status === 'RESOLVED' || !detail.deadlineAt
+        ? null
+        : typeof detail.deadlineAt === 'string'
+          ? detail.deadlineAt
+          : detail.deadlineAt.toISOString(),
     timeline,
   };
+}
+
+/** Chip tenggat SLA; menyegarkan label tiap menit. */
+function SlaBadge({ deadlineAt }: { deadlineAt: string }) {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const sla = calculateSLARemaining(deadlineAt);
+  const palette =
+    sla.statusColor === 'crimson'
+      ? 'bg-[#FDECEA] text-[#B3261E] border-[#F7C9C4]'
+      : sla.statusColor === 'amber'
+        ? 'bg-[#FFF4DC] text-[#936015] border-[#F3E0B5]'
+        : 'bg-[#E7F5ED] text-[#16725C] border-[#BFE3D0]';
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${palette}`}
+    >
+      <Clock className="w-3.5 h-3.5" />
+      {sla.label}
+    </span>
+  );
 }
 
 function LaporContent() {
@@ -1188,6 +1225,12 @@ function LaporContent() {
                 <p className="text-xs sm:text-[13px] text-[#64748B] leading-[1.7] font-normal mt-0.5">
                   {activeReport.detailDesc}
                 </p>
+
+                {activeReport.deadlineAt && (
+                  <div className="pt-1">
+                    <SlaBadge deadlineAt={activeReport.deadlineAt} />
+                  </div>
+                )}
               </div>
 
               {/* 3. Perjalanan Laporan (Timeline) */}

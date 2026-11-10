@@ -41,15 +41,22 @@ export async function submitReportAction(formData: FormData): Promise<
     const rawLng = formData.get('longitude') as string;
     const isAnonymous = formData.get('is_anonymous') === 'true';
     const reporterPhone = (formData.get('reporter_phone') as string) || undefined;
-    const photo = formData.get('photo') as File | null;
 
-    let photoBuffer: Buffer | undefined;
-    let photoName: string | undefined;
+    // Dukungan banyak lampiran: field 'photo' boleh dikirim berulang (maks 3).
+    const rawPhotoEntries = formData.getAll('photo');
+    const photoFiles: { buffer: Buffer; name: string }[] = [];
 
-    if (photo && photo.size > 0 && typeof photo.arrayBuffer === 'function') {
-      const arrayBuffer = await photo.arrayBuffer();
-      photoBuffer = Buffer.from(arrayBuffer);
-      photoName = photo.name;
+    for (const entry of rawPhotoEntries) {
+      if (
+        entry &&
+        typeof entry !== 'string' &&
+        (entry as File).size > 0 &&
+        typeof (entry as File).arrayBuffer === 'function'
+      ) {
+        const file = entry as File;
+        const arrayBuffer = await file.arrayBuffer();
+        photoFiles.push({ buffer: Buffer.from(arrayBuffer), name: file.name });
+      }
     }
 
     const latitude = parseFloat(rawLat || '-6.9932');
@@ -60,8 +67,7 @@ export async function submitReportAction(formData: FormData): Promise<
       category,
       title,
       description,
-      photoBuffer,
-      photoName,
+      photoFiles: photoFiles.length > 0 ? photoFiles : undefined,
       latitude: isNaN(latitude) ? -6.9932 : latitude,
       longitude: isNaN(longitude) ? 110.4203 : longitude,
       isAnonymous,

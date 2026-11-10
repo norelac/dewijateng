@@ -77,6 +77,9 @@ const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
   },
 };
 
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_FILES = 3;
+
 export default function HomeReportForm() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [address, setAddress] = useState('Nama Desa, Kecamatan, Kabupaten');
@@ -308,8 +311,6 @@ export default function HomeReportForm() {
   const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    const MAX_FILE_BYTES = 5 * 1024 * 1024;
-    const MAX_FILES = 3;
     const incoming = Array.from(e.target.files);
 
     const tooBig = incoming.find((f) => f.size > MAX_FILE_BYTES);
@@ -403,7 +404,10 @@ export default function HomeReportForm() {
       }
 
       if (rawFiles.length > 0) {
-        formData.append('photo', rawFiles[0]);
+        // Kirim semua lampiran (maks 3) sebagai field 'photo' berulang.
+        rawFiles.slice(0, MAX_FILES).forEach((file) => {
+          formData.append('photo', file);
+        });
       }
 
       const res = await submitReportAction(formData);

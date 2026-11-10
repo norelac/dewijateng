@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Clock, CheckCircle2, ShieldCheck, MapPin, ArrowRight } from 'lucide-react';
-import { formatDateIndo } from '@/lib/utils';
+import { formatDateIndo, calculateSLARemaining } from '@/lib/utils';
 import { getPublicReportsAction } from '@/app/actions/reportActions';
 
 interface TicketData {
@@ -21,6 +21,7 @@ interface TicketData {
   is_anonymous: boolean;
   status: string;
   created_at: string;
+  deadline_at?: string | null;
   resolution_summary?: string | null;
   resolution_photo_after?: string | null;
   resolution_officer?: string | null;
@@ -69,6 +70,11 @@ export default function PengelolaTicketBoard() {
           is_anonymous: r.isAnonymous,
           status: r.status,
           created_at: typeof r.createdAt === 'string' ? r.createdAt : r.createdAt.toISOString(),
+          deadline_at: r.deadlineAt
+            ? typeof r.deadlineAt === 'string'
+              ? r.deadlineAt
+              : r.deadlineAt.toISOString()
+            : null,
           resolution_summary: r.resolution?.actionSummary || null,
           resolution_photo_after: r.resolution?.photoAfterUrl || null,
           resolution_officer: r.resolution?.officerName || null,
@@ -94,11 +100,19 @@ export default function PengelolaTicketBoard() {
   const complianceRate =
     tickets.length > 0 ? Math.round((resolvedCount / tickets.length) * 100) : 0;
 
-  const filteredTickets = tickets.filter((t) => {
-    if (filterStatus === 'ACTIVE') return t.status !== 'RESOLVED';
-    if (filterStatus === 'RESOLVED') return t.status === 'RESOLVED';
-    return true;
-  });
+  const filteredTickets = tickets
+    .filter((t) => {
+      if (filterStatus === 'ACTIVE') return t.status !== 'RESOLVED';
+      if (filterStatus === 'RESOLVED') return t.status === 'RESOLVED';
+      return true;
+    })
+    // Urutkan tiket aktif berdasarkan tenggat SLA terdekat; tiket selesai/tanpa tenggat di akhir.
+    .sort((a, b) => {
+      if (!a.deadline_at && !b.deadline_at) return 0;
+      if (!a.deadline_at) return 1;
+      if (!b.deadline_at) return -1;
+      return new Date(a.deadline_at).getTime() - new Date(b.deadline_at).getTime();
+    });
 
   const summary = [
     { label: 'Tiket aktif berjalan', value: `${activeCount} tiket`, icon: Clock },
@@ -183,6 +197,16 @@ export default function PengelolaTicketBoard() {
             filteredTickets.map((ticket) => {
               const isResolved = ticket.status === 'RESOLVED';
               const action = actionFor(ticket);
+              const sla =
+                !isResolved && ticket.deadline_at
+                  ? calculateSLARemaining(ticket.deadline_at)
+                  : null;
+              const slaClass =
+                sla?.statusColor === 'crimson'
+                  ? 'text-[#B3261E]'
+                  : sla?.statusColor === 'amber'
+                    ? 'text-[#936015]'
+                    : 'text-[#16725C]';
 
               return (
                 <div
@@ -238,6 +262,12 @@ export default function PengelolaTicketBoard() {
                           {ticket.village_name}, {ticket.village_regency}
                         </span>
                         <span>Dilaporkan {formatDateIndo(ticket.created_at)}</span>
+                        {sla && (
+                          <span className={`flex items-center gap-1 font-semibold ${slaClass}`}>
+                            <Clock className="w-3.5 h-3.5" />
+                            {sla.label}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
