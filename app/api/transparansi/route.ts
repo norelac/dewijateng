@@ -51,7 +51,9 @@ export async function GET(req: NextRequest) {
     // Ambil data bantuan keuangan (village_grants)
     const grantRes = await query(
       `SELECT
-         id, fiscal_year, funding_source, total_allocated, total_realized,
+         id, fiscal_year, funding_source,
+         apbdes_amount, banprov_amount, pades_amount,
+         total_allocated, total_realized,
          remaining_balance, lpj_document_url, lpj_status, uploaded_at, created_at
        FROM village_grants
        WHERE village_id = $1 AND fiscal_year = $2
@@ -104,6 +106,9 @@ export async function GET(req: NextRequest) {
               id: grant.id,
               fiscal_year: grant.fiscal_year,
               funding_source: grant.funding_source,
+              apbdes_amount: parseInt(grant.apbdes_amount || '0', 10),
+              banprov_amount: parseInt(grant.banprov_amount || '0', 10),
+              pades_amount: parseInt(grant.pades_amount || '0', 10),
               total_allocated: parseInt(grant.total_allocated, 10),
               total_realized: parseInt(grant.total_realized, 10),
               remaining_balance: parseInt(grant.remaining_balance, 10),

@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { VillageBudgetData } from './types';
 
 interface UbahAnggaranViewProps {
   budget: VillageBudgetData;
   onBack: () => void;
-  onSaveBudget: (updated: Partial<VillageBudgetData>) => void;
-  /** Belum ada endpoint tulis anggaran di BE; nonaktifkan simpan sampai tersedia. */
+  onSaveBudget: (
+    updated: Partial<VillageBudgetData>
+  ) => Promise<{ success: boolean; error?: string } | void> | void;
+  /** Aktifkan tombol simpan; backend tulis anggaran sudah tersedia. */
   saveEnabled?: boolean;
 }
 
@@ -35,7 +37,7 @@ export default function UbahAnggaranView({
   budget,
   onBack,
   onSaveBudget,
-  saveEnabled = false,
+  saveEnabled = true,
 }: UbahAnggaranViewProps) {
   const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
@@ -51,6 +53,20 @@ export default function UbahAnggaranView({
   );
 
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Data anggaran dimuat asinkron (INITIAL_BUDGET_DATA → data grant asli).
+  // Sinkronkan nilai form selama pengguna belum mengubah apa pun, agar tidak
+  // tersimpan dengan angka placeholder.
+  useEffect(() => {
+    if (isDirty) return;
+    setSelectedYear(budget.year || 2026);
+    setApbdesStr(formatNumberInput(budget.apbdes));
+    setBanprovStr(formatNumberInput(budget.banprov));
+    setPadesStr(formatNumberInput(budget.pades));
+  }, [budget.year, budget.apbdes, budget.banprov, budget.pades, isDirty]);
 
   // Live dynamic calculations
   const apbdesNum = parseNumberInput(apbdesStr);
@@ -66,6 +82,7 @@ export default function UbahAnggaranView({
   ) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value.replace(/\D/g, '');
+      setIsDirty(true);
       if (!raw) {
         setter('0');
       } else {
@@ -74,20 +91,32 @@ export default function UbahAnggaranView({
     };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!saveEnabled) return;
-    onSaveBudget({
-      year: selectedYear,
-      apbdes: apbdesNum,
-      banprov: banprovNum,
-      pades: padesNum,
-      lastUpdatedStr: `Diperbarui TA ${selectedYear} · Total ${formatRupiah(totalPendanaan)} dipublikasikan.`,
-    });
-    setIsSaved(true);
-    setTimeout(() => {
-      onBack();
-    }, 600);
+    if (!saveEnabled || isSaving) return;
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      const result = await onSaveBudget({
+        year: selectedYear,
+        apbdes: apbdesNum,
+        banprov: banprovNum,
+        pades: padesNum,
+        lastUpdatedStr: `Diperbarui TA ${selectedYear} · Total ${formatRupiah(totalPendanaan)} dipublikasikan.`,
+      });
+      if (result && result.success === false) {
+        setSaveError(result.error || 'Gagal menyimpan anggaran.');
+        return;
+      }
+      setIsSaved(true);
+      setTimeout(() => {
+        onBack();
+      }, 600);
+    } catch {
+      setSaveError('Terjadi kesalahan sistem saat menyimpan.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -227,19 +256,31 @@ export default function UbahAnggaranView({
               Total adalah penjumlahan ketiga sumber dana.
             </p>
 
+            {saveError && (
+              <p className="text-[12px] text-[#B3261E] bg-[#FDECEA] border border-[#F7C9C4] rounded-[8px] px-3 py-2">
+                {saveError}
+              </p>
+            )}
+
             {/* Tindakan Formulir */}
             <div className="flex items-center gap-[10px] pt-[6px]">
               <button
                 type="submit"
-                disabled={!saveEnabled}
+                disabled={!saveEnabled || isSaving}
                 title={saveEnabled ? undefined : 'Penyimpanan anggaran belum tersedia'}
                 className={`border-2 rounded-full h-[40px] px-[18px] text-[12px] font-semibold transition-all shadow-2xs ${
                   saveEnabled
-                    ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer'
+                    ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed'
                     : 'bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                {saveEnabled ? (isSaved ? 'Tersimpan!' : 'Simpan perubahan') : 'Belum tersedia'}
+                {!saveEnabled
+                  ? 'Belum tersedia'
+                  : isSaving
+                    ? 'Menyimpan...'
+                    : isSaved
+                      ? 'Tersimpan!'
+                      : 'Simpan perubahan'}
               </button>
 
               <button

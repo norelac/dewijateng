@@ -60,29 +60,28 @@ export function useBudgetData(fiscalYear = 2026, villageSlug = 'candirejo-magela
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/transparansi?fiscal_year=${fiscalYear}&slug=${villageSlug}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (cancelled) return;
-        if (json?.success && json.data) {
-          const g = json.data.grant;
-          setVillage(json.data.village || null);
-          setGrant(g || null);
-          setExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
-          if (g) setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
-          setIsLive(true);
-        }
-      })
-      .catch((err) => console.error('[useBudgetData]', err))
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/transparansi?fiscal_year=${fiscalYear}&slug=${villageSlug}`);
+      const json = await res.json();
+      if (json?.success && json.data) {
+        const g = json.data.grant;
+        setVillage(json.data.village || null);
+        setGrant(g || null);
+        setExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
+        if (g) setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
+        setIsLive(true);
+      }
+    } catch (err) {
+      console.error('[useBudgetData]', err);
+    } finally {
+      setLoading(false);
+    }
   }, [fiscalYear, villageSlug]);
 
-  return { budget, village, grant, expenses, loading, isLive };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { budget, village, grant, expenses, loading, isLive, reload: load };
 }
