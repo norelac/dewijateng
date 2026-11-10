@@ -195,7 +195,16 @@ async function matchWithLlmSemantic(
   }
 
   try {
-    const catalogOptions = catalog
+    // Best practice hemat token: Saring ke top-25 kandidat yang relevan (bukan seluruh 1.000+ item)
+    const itemWords = itemName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length > 2);
+    const candidateMatches = catalog.filter((c) => {
+      const cLower = c.item_name.toLowerCase();
+      return itemWords.some((w) => cLower.includes(w));
+    });
+
+    const candidates = (candidateMatches.length > 0 ? candidateMatches : catalog).slice(0, 25);
+
+    const catalogOptions = candidates
       .map((c) => `- [${c.item_code}] ${c.item_name} (Satuan: ${c.unit}, Standar: ${formatRupiahId(c.standard_price)})`)
       .join('\n');
 
