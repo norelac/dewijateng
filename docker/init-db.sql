@@ -63,7 +63,10 @@ CREATE TABLE village_grants (
     village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
     fiscal_year INT NOT NULL, -- 2024, 2025, 2026
     funding_source VARCHAR(150) NOT NULL, -- Bantuan Keuangan Pemprov Jateng / APBDes
-    total_allocated DECIMAL(15, 2) NOT NULL, -- Pagu Bantuan Diterima
+    apbdes_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Rincian sumber dana APBDes
+    banprov_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Rincian sumber dana Bantuan Provinsi
+    pades_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Rincian sumber dana PADes Wisata
+    total_allocated DECIMAL(15, 2) NOT NULL, -- Pagu Bantuan Diterima (jumlah tiga sumber)
     total_realized DECIMAL(15, 2) DEFAULT 0.00, -- Total Realisasi Belanja Modal
     remaining_balance DECIMAL(15, 2) DEFAULT 0.00, -- Sisa Saldo Kas
     lpj_document_url VARCHAR(255) NULL, -- Tautan berkas asli LPJ (PDF)
@@ -126,12 +129,14 @@ CREATE TABLE incident_reports (
     title VARCHAR(150) NOT NULL,
     description TEXT NOT NULL,
     photo_before_url VARCHAR(255) NOT NULL,
+    photo_before_urls JSONB NOT NULL DEFAULT '[]'::jsonb, -- seluruh lampiran foto (maks 3)
     latitude DECIMAL(10, 7) NOT NULL,
     longitude DECIMAL(10, 7) NOT NULL,
     geom GEOMETRY(Point, 4326),
     is_anonymous BOOLEAN DEFAULT TRUE,
     reporter_contact_hash VARCHAR(64) NULL, -- SHA-256 hash nomor kontak pelapor
     status VARCHAR(20) CHECK (status IN ('SUBMITTED', 'IN_PROGRESS', 'RESOLVED')) DEFAULT 'SUBMITTED',
+    deadline_at TIMESTAMP WITH TIME ZONE NULL, -- tenggat SLA: PUNGLI 24 jam, lain 168 jam
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -265,6 +270,11 @@ INSERT INTO incident_reports (id, report_code, village_id, category, title, desc
 ('c0000000-0000-0000-0000-000000000003', 'LP-JTG-2026-0088', 'a0000000-0000-0000-0000-000000000003', 'FASILITAS_RUSAK', 'Kran Air Toilet Umum Mati & Pintu Rusak', 'Fasilitas MCK di pintu masuk tidak mengalirkan air dan slot kunci pintu patah.', '/img/figma/toilet-sebelum.png', -7.2891500, 109.3482500, true, 'SUBMITTED', CURRENT_TIMESTAMP - INTERVAL '1 days');
 
 UPDATE incident_reports SET updated_at = CURRENT_TIMESTAMP;
+
+-- Isi tenggat SLA untuk data seed: PUNGLI 24 jam, kategori lain 168 jam.
+UPDATE incident_reports
+SET deadline_at = created_at + (CASE WHEN category = 'PUNGLI' THEN INTERVAL '24 hours' ELSE INTERVAL '168 hours' END),
+    photo_before_urls = jsonb_build_array(photo_before_url);
 
 
 -- ==============================================================================

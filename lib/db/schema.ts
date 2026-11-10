@@ -15,6 +15,7 @@ import {
   boolean,
   timestamp,
   serial,
+  jsonb,
   customType,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
@@ -82,6 +83,10 @@ export const villageGrants = pgTable('village_grants', {
     .notNull(),
   fiscalYear: integer('fiscal_year').notNull(),
   fundingSource: varchar('funding_source', { length: 150 }).notNull(),
+  // Rincian tiga sumber dana (opsional; total_allocated = jumlah ketiganya).
+  apbdesAmount: bigint('apbdes_amount', { mode: 'number' }).default(0).notNull(),
+  banprovAmount: bigint('banprov_amount', { mode: 'number' }).default(0).notNull(),
+  padesAmount: bigint('pades_amount', { mode: 'number' }).default(0).notNull(),
   totalAllocated: bigint('total_allocated', { mode: 'number' }).notNull(),
   totalRealized: bigint('total_realized', { mode: 'number' }).default(0).notNull(),
   remainingBalance: bigint('remaining_balance', { mode: 'number' })
@@ -152,12 +157,20 @@ export const incidentReports = pgTable('incident_reports', {
   title: varchar('title', { length: 200 }).notNull(),
   description: text('description').notNull(),
   photoBeforeUrl: text('photo_before_url').notNull(),
+  // Foto pertama tetap di photo_before_url agar semua pembacaan lama aman;
+  // kolom ini menyimpan seluruh lampiran (maks 3) untuk galeri.
+  photoBeforeUrls: jsonb('photo_before_urls')
+    .$type<string[]>()
+    .default([])
+    .notNull(),
   latitude: doublePrecision('latitude').notNull(),
   longitude: doublePrecision('longitude').notNull(),
   geom: postgisGeometryPoint('geom'),
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   reporterContactHash: varchar('reporter_contact_hash', { length: 64 }),
   status: varchar('status', { length: 30 }).default('SUBMITTED').notNull(),
+  // Tenggat SLA: PUNGLI 24 jam, kategori lain 168 jam sejak laporan dibuat.
+  deadlineAt: timestamp('deadline_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
