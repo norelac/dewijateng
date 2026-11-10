@@ -10,7 +10,9 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/seed-database.ts",
+    "seed:generate": "python3 scripts/generate-seeds.py"
   },
   "dependencies": {
     "@types/node": "^26.6.6",
