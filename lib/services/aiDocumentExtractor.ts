@@ -372,61 +372,54 @@ export async function extractLpjFromPdf(
   if (metadata.itemsOverride && Array.isArray(metadata.itemsOverride) && metadata.itemsOverride.length > 0) {
     rawItems = metadata.itemsOverride;
   } else {
-    // 3. Ekstraksi cerdas: ekstrak teks dokumen menggunakan PDF stream decoder (pdf-parse)
+    // 3. Ekstraksi teks dokumen menggunakan PDF stream decoder (pdf-parse)
     const textPreview = metadata.rawText || (await extractPdfText(buffer));
-    let llmResult: {
-      fundingSource?: string;
-      totalAllocated?: number;
-      totalRealized?: number;
-      remainingBalance?: number;
-      items: ExtractedLpjExpenseItem[];
-    } | null = null;
 
-    if (process.env.GEMINI_API_KEY || (process.env.LLM_BASE_URL && process.env.LLM_API_KEY)) {
-      llmResult = await extractLpjWithLlm(textPreview, {
+    // A. COBA PARSER LOKAL DETERMINISTIK TERLEBIH DAHULU (0 TOKEN, CEPAT < 5ms)
+    const localRows: ExtractedLpjExpenseItem[] = [];
+    const lines = textPreview.split(/\r?\n/);
+    for (const line of lines) {
+      const match = line.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s+([a-zA-Z0-9/]+)\s+Rp?\s*([\d\.,]+)\s+Rp?\s*([\d\.,]+)$/i);
+      if (match) {
+        const activity_name = match[1].trim();
+        const volume = parseFloat(match[2]);
+        const unit = match[3].trim();
+        const claimed_unit_price = parseRupiahNumber(match[4]);
+        const amount_realized = parseRupiahNumber(match[5]) || Math.round(volume * claimed_unit_price);
+        const category = classifyExpenseCategory(activity_name);
+
+        localRows.push({
+          activity_name,
+          category,
+          volume,
+          unit,
+          claimed_unit_price,
+          amount_realized,
+        });
+      }
+    }
+
+    // B. Tiered Routing: Jika tabel rapi berhasil diparsing lokal, hemat token (jangan panggil LLM)
+    if (localRows.length >= 3) {
+      rawItems = localRows;
+    } else if (process.env.GEMINI_API_KEY || (process.env.LLM_BASE_URL && process.env.LLM_API_KEY)) {
+      // Panggil Gemini LLM hanya untuk dokumen yang layoutnya acak atau tidak berpola
+      const llmResult = await extractLpjWithLlm(textPreview, {
         villageId,
         fiscalYear,
         fundingSource,
         totalAllocated,
       });
-    }
 
-    if (llmResult && llmResult.items && llmResult.items.length > 0) {
-      rawItems = llmResult.items;
-      if (llmResult.fundingSource) metadata.fundingSource = llmResult.fundingSource;
-      if (llmResult.totalAllocated) metadata.totalAllocated = llmResult.totalAllocated;
-    } else {
-      // 4. Fallback ke parser lokal deterministik berbasis regex dan pola baris dokumen
-      const extractedRows: ExtractedLpjExpenseItem[] = [];
-      const lines = textPreview.split(/\r?\n/);
-      for (const line of lines) {
-        // Pola: Nama Item | Volume | Satuan | Harga | Total
-        const match = line.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s+([a-zA-Z0-9/]+)\s+Rp?\s*([\d\.,]+)\s+Rp?\s*([\d\.,]+)$/i);
-        if (match) {
-          const activity_name = match[1].trim();
-          const volume = parseFloat(match[2]);
-          const unit = match[3].trim();
-          const claimed_unit_price = parseRupiahNumber(match[4]);
-          const amount_realized = parseRupiahNumber(match[5]) || Math.round(volume * claimed_unit_price);
-          const category = classifyExpenseCategory(activity_name);
-
-          extractedRows.push({
-            activity_name,
-            category,
-            volume,
-            unit,
-            claimed_unit_price,
-            amount_realized,
-          });
-        }
-      }
-
-      if (extractedRows.length >= 3) {
-        rawItems = extractedRows;
+      if (llmResult && llmResult.items && llmResult.items.length > 0) {
+        rawItems = llmResult.items;
+        if (llmResult.fundingSource) metadata.fundingSource = llmResult.fundingSource;
+        if (llmResult.totalAllocated) metadata.totalAllocated = llmResult.totalAllocated;
       } else {
-        // Gunakan default structured dataset yang merefleksikan standar pelaporan Pemprov Jateng
-        rawItems = DEFAULT_LPJ_EXPENSE_SAMPLE;
+        rawItems = localRows.length > 0 ? localRows : DEFAULT_LPJ_EXPENSE_SAMPLE;
       }
+    } else {
+      rawItems = localRows.length > 0 ? localRows : DEFAULT_LPJ_EXPENSE_SAMPLE;
     }
   }
 
