@@ -148,7 +148,9 @@ export default function DashboardKpis({
             {reportCounts.selesai} dari {reportCounts.total}
           </div>
           <div className="text-[#64748B] text-[11px] font-normal">
-            {selesaiPct}% dari seluruh laporan {villageShort}
+            {reportCounts.total === 0
+              ? 'Nihil aduan berjalan'
+              : `${selesaiPct}% dari seluruh laporan ${villageShort}`}
           </div>
         </div>
 

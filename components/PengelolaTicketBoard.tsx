@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Clock, CheckCircle2, ShieldCheck, MapPin, ArrowRight } from 'lucide-react';
 import { formatDateIndo } from '@/lib/utils';
 import { getPublicReportsAction } from '@/app/actions/reportActions';
+import { getSessionAction } from '@/app/actions/authActions';
 
 interface TicketData {
   id: string;
@@ -52,13 +53,22 @@ export default function PengelolaTicketBoard() {
   const loadReports = async () => {
     setLoading(true);
     try {
-      const res = await getPublicReportsAction();
+      const sess = await getSessionAction();
+      const filterParams: { limit: number; villageId?: string } = { limit: 100 };
+      if (sess?.villageId) {
+        filterParams.villageId = sess.villageId;
+      } else if (sess?.role === 'desa') {
+        // Keamanan: cegah kebocoran tiket desa lain bagi akun desa
+        filterParams.villageId = '00000000-0000-0000-0000-000000000000';
+      }
+
+      const res = await getPublicReportsAction(filterParams);
       if (res.success && res.data) {
         const mapped: TicketData[] = res.data.map((r) => ({
           id: r.id,
           report_code: r.reportCode,
           village_id: r.villageId,
-          village_name: r.village?.name || 'Desa Wisata Jateng',
+          village_name: r.village?.name || sess?.fullName || 'Desa Wisata Jateng',
           village_regency: r.village?.regency || 'Jawa Tengah',
           category: r.category,
           title: r.title,
@@ -77,9 +87,12 @@ export default function PengelolaTicketBoard() {
           resolved_at: r.resolution?.resolvedAt ? String(r.resolution.resolvedAt) : null,
         }));
         setTickets(mapped);
+      } else {
+        setTickets([]);
       }
     } catch (err) {
       console.error('Gagal mengambil laporan aduan:', err);
+      setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -92,7 +105,7 @@ export default function PengelolaTicketBoard() {
   const activeCount = tickets.filter((t) => t.status !== 'RESOLVED').length;
   const resolvedCount = tickets.filter((t) => t.status === 'RESOLVED').length;
   const complianceRate =
-    tickets.length > 0 ? Math.round((resolvedCount / tickets.length) * 100) : 0;
+    tickets.length > 0 ? Math.round((resolvedCount / tickets.length) * 100) : 100;
 
   const filteredTickets = tickets.filter((t) => {
     if (filterStatus === 'ACTIVE') return t.status !== 'RESOLVED';
@@ -103,7 +116,11 @@ export default function PengelolaTicketBoard() {
   const summary = [
     { label: 'Tiket aktif berjalan', value: `${activeCount} tiket`, icon: Clock },
     { label: 'Tuntas dengan bukti fisik', value: `${resolvedCount} tiket`, icon: CheckCircle2 },
-    { label: 'Rasio penyelesaian', value: `${complianceRate}% selesai`, icon: ShieldCheck },
+    {
+      label: 'Rasio penyelesaian',
+      value: tickets.length === 0 ? '100% (Nihil aduan)' : `${complianceRate}% selesai`,
+      icon: ShieldCheck,
+    },
   ];
 
   const filterTabs = [
@@ -176,8 +193,16 @@ export default function PengelolaTicketBoard() {
               Memuat daftar aduan…
             </div>
           ) : filteredTickets.length === 0 ? (
-            <div className="p-10 text-center text-[#64748B] text-[12px]">
-              Tidak ada tiket aduan pada kategori ini.
+            <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#E7F5ED] flex items-center justify-center text-[#16725C]">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <p className="text-[14px] font-semibold text-[#0D2453]">
+                Belum ada tiket aduan untuk desa ini
+              </p>
+              <p className="text-[12px] text-[#64748B] max-w-md">
+                Laporan dari masyarakat melalui portal publik yang ditujukan ke desa Anda akan muncul di sini untuk verifikasi dan tindak lanjut lapangan.
+              </p>
             </div>
           ) : (
             filteredTickets.map((ticket) => {

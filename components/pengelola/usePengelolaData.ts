@@ -38,12 +38,17 @@ export function useDashboardTickets() {
       const filterParams: { limit: number; villageId?: string } = { limit: 100 };
       if (sess?.villageId) {
         filterParams.villageId = sess.villageId;
+      } else if (sess?.role === 'desa') {
+        // Cegah kebocoran tiket desa lain bagi akun pengelola desa
+        filterParams.villageId = '00000000-0000-0000-0000-000000000000';
       }
 
       const res = await getPublicReportsAction(filterParams);
       if (res.success && Array.isArray(res.data)) {
         setTickets(res.data.map(mapIncidentToDashboardTicket));
         setIsLive(true);
+      } else {
+        setTickets([]);
       }
     } catch (err) {
       console.error('[useDashboardTickets]', err);
@@ -94,7 +99,21 @@ export function useBudgetData(fiscalYear = 2026, villageSlug = 'candirejo-magela
           setVillage(json.data.village || null);
           setGrant(g || null);
           setExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
-          if (g) setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
+          if (g) {
+            setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
+          } else {
+            // Desa baru belum memiliki data usulan/realisasi anggaran
+            setBudget({
+              year: fiscalYear,
+              dateStr: `Tahun Anggaran ${fiscalYear}`,
+              apbdes: 0,
+              banprov: 0,
+              pades: 0,
+              usedAmount: 0,
+              usedActivitiesCount: 0,
+              lastUpdatedStr: 'Belum ada usulan anggaran belanja',
+            });
+          }
           setIsLive(true);
         }
       } catch (err) {
