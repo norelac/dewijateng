@@ -147,7 +147,7 @@ export default function RegisterVillageModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
         {/* Header Modal */}
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-950 via-[#080E21] to-[#0D2453] text-white flex items-center justify-between">
+        <div className="px-6 py-5 bg-[#0D2453] text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
               <Building2 className="w-5 h-5" />
