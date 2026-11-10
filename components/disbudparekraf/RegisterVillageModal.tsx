@@ -123,7 +123,7 @@ export default function RegisterVillageModal({
     if (!result?.credentials) return;
     const { username, temporaryPassword, contactPhone, loginUrl } = result.credentials;
     const text = encodeURIComponent(
-      `Halo Pengelola ${result.village?.name},\n\nAkun portal desa wisata Anda telah terdaftar resmi di Dispora Jawa Tengah (Platform DEWI JATENG).\n\nBerikut rincian akun Anda:\n• Username: ${username}\n• Kata Sandi Sementara: ${temporaryPassword}\n• Tautan Masuk: ${loginUrl}\n\nSilakan masuk dan lakukan penggantian kata sandi berkala untuk mengelola dokumen LPJ bantuan serta menindaklanjuti aduan sarana publik warga.\n\nSalam,\nDispora Provinsi Jawa Tengah`
+      `Halo Pengelola ${result.village?.name},\n\nAkun portal desa wisata Anda telah terdaftar resmi di Disbudparekraf Jawa Tengah (Platform DEWI JATENG).\n\nBerikut rincian akun Anda:\n• Username: ${username}\n• Kata Sandi Sementara: ${temporaryPassword}\n• Tautan Masuk: ${loginUrl}\n\nSilakan masuk dan lakukan penggantian kata sandi berkala untuk mengelola dokumen LPJ bantuan serta menindaklanjuti aduan sarana publik warga.\n\nSalam,\nDisbudparekraf Provinsi Jawa Tengah`
     );
     window.open(`https://wa.me/${cleanPhone(contactPhone)}?text=${text}`, '_blank');
   };
@@ -155,7 +155,7 @@ export default function RegisterVillageModal({
             <div>
               <h3 className="text-base font-bold text-white">Daftarkan Desa Wisata Baru</h3>
               <p className="text-[11px] text-slate-300">
-                Penerbitan entitas desa resmi & akun pengelola otomatis oleh Dispora Jateng
+                Penerbitan entitas desa resmi & akun pengelola otomatis oleh Disbudparekraf Jateng
               </p>
             </div>
           </div>

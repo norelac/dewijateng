@@ -33,7 +33,7 @@ export default function HomeKpiCounters() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/dispora/overview')
+    fetch('/api/disbudparekraf/overview')
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (cancelled || !json?.success || !json.data?.macro_metrics) return;

@@ -105,16 +105,16 @@ SELECT setval(
 );
 
 -- ------------------------------------------------------------------------------
--- 4c. Akun Demo Awal: Admin Dispora & Pengelola Desa Wisata Candirejo
+-- 4c. Akun Demo Awal: Admin Disbudparekraf & Pengelola Desa Wisata Candirejo
 -- ------------------------------------------------------------------------------
 INSERT INTO users (id, username, password_hash, role, village_id, full_name, phone, status, must_change_password) VALUES
 (
     'e0000000-0000-0000-0000-000000000001',
-    'dispora',
-    'pbkdf2$10000$58dc4fdbe2bc9641be3a7b67a3da17d3$928da298f6796161a91db390e23d804fcbde16b67f40458cb7cd403b13908969de1765f6c57c41da827d3b35b40304aa7179b1dca9940fc34c0a43733ac8b6b9',
-    'dispora',
+    'disbudparekraf',
+    'pbkdf2$10000$e8393b3b6dd5c7a1d54ff785fe602a15$29a96fc31b11b546e7bd1f4d4a76ea09e9b7fd5725e5ba7482e68399c0fd9d100d631542bd772a89a98165781c457c40af01f984f7b486b8ce5d620a6492a9f2',
+    'disbudparekraf',
     NULL,
-    'Admin Eksekutif Dispora Jateng',
+    'Admin Eksekutif Disbudparekraf Jateng',
     '081122334455',
     'AKTIF',
     false

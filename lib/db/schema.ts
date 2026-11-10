@@ -189,13 +189,13 @@ export const reportResolutions = pgTable('report_resolutions', {
 });
 
 // ------------------------------------------------------------------------------
-// 8. Tabel Pengguna Sistem (users) - Akun Dispora & Desa
+// 8. Tabel Pengguna Sistem (users) - Akun Disbudparekraf & Desa
 // ------------------------------------------------------------------------------
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   username: varchar('username', { length: 60 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  role: varchar('role', { length: 20 }).notNull(), // 'desa' | 'dispora'
+  role: varchar('role', { length: 20 }).notNull(), // 'desa' | 'disbudparekraf'
   villageId: uuid('village_id').references(() => touristVillages.id, { onDelete: 'cascade' }),
   fullName: varchar('full_name', { length: 100 }).notNull(),
   phone: varchar('phone', { length: 30 }),

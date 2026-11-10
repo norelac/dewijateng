@@ -37,10 +37,10 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickFill = (role: 'dispora' | 'desa') => {
-    if (role === 'dispora') {
-      setUsername('dispora');
-      setPassword('dispora2026');
+  const handleQuickFill = (role: 'disbudparekraf' | 'desa') => {
+    if (role === 'disbudparekraf') {
+      setUsername('disbudparekraf');
+      setPassword('disbudparekraf2026');
     } else {
       setUsername('desa-candirejo');
       setPassword('candirejo2026');
@@ -67,7 +67,7 @@ export default function LoginPage() {
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-white">Portal Akses Pengguna</h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Masuk sebagai Admin Dispora Jateng atau Pengelola Desa Wisata
+            Masuk sebagai Admin Disbudparekraf Jateng atau Pengelola Desa Wisata
           </p>
         </div>
 
@@ -80,12 +80,12 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => handleQuickFill('dispora')}
+              onClick={() => handleQuickFill('disbudparekraf')}
               className="px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-blue-950/80 hover:border-blue-500/40 border border-slate-700/60 text-xs font-medium text-left flex items-center gap-2 transition-all cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
               <div>
-                <p className="font-bold text-white text-[11px]">Admin Dispora</p>
+                <p className="font-bold text-white text-[11px]">Admin Disbudparekraf</p>
                 <p className="text-[10px] text-slate-400">Peta Kendali & Verifikasi</p>
               </div>
             </button>
@@ -123,7 +123,7 @@ export default function LoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. dispora atau desa-candirejo"
+                  placeholder="e.g. disbudparekraf atau desa-candirejo"
                   className="w-full px-4 py-3 pl-10 rounded-xl bg-slate-950/80 border border-slate-700/80 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
                 />
                 <UserCheck className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
@@ -167,7 +167,7 @@ export default function LoginPage() {
             <p className="text-xs text-slate-400">
               Belum memiliki akun desa?{' '}
               <span className="text-slate-300">
-                Pendaftaran akun baru diterbitkan langsung oleh Dispora Jateng.
+                Pendaftaran akun baru diterbitkan langsung oleh Disbudparekraf Jateng.
               </span>
             </p>
           </div>

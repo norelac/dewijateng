@@ -23,12 +23,12 @@ export interface AuthActionResult {
 // Fallback demo users jika database belum disinkronkan
 const FALLBACK_USERS: Record<
   string,
-  { password: string; role: 'desa' | 'dispora'; fullName: string; villageId: string | null }
+  { password: string; role: 'desa' | 'disbudparekraf'; fullName: string; villageId: string | null }
 > = {
-  dispora: {
-    password: 'dispora2026',
-    role: 'dispora',
-    fullName: 'Admin Eksekutif Dispora Jateng',
+  disbudparekraf: {
+    password: 'disbudparekraf2026',
+    role: 'disbudparekraf',
+    fullName: 'Admin Eksekutif Disbudparekraf Jateng',
     villageId: null,
   },
   'desa-candirejo': {
@@ -65,7 +65,7 @@ export async function loginAction(
       if (foundUsers.length > 0) {
         const u = foundUsers[0];
         if (u.status !== 'AKTIF') {
-          return { success: false, message: 'Akun Anda sedang dinonaktifkan. Hubungi Dispora.' };
+          return { success: false, message: 'Akun Anda sedang dinonaktifkan. Hubungi Disbudparekraf.' };
         }
 
         const valid = verifyPassword(password, u.passwordHash);
@@ -74,7 +74,7 @@ export async function loginAction(
             id: u.id,
             username: u.username,
             fullName: u.fullName,
-            role: u.role as 'desa' | 'dispora',
+            role: u.role as 'desa' | 'disbudparekraf',
             villageId: u.villageId,
             mustChangePassword: Boolean(u.mustChangePassword),
           };
@@ -96,7 +96,7 @@ export async function loginAction(
       const fb = FALLBACK_USERS[username];
       if (fb.password === password) {
         sessionUser = {
-          id: username === 'dispora' ? 'e0000000-0000-0000-0000-000000000001' : 'e0000000-0000-0000-0000-000000000002',
+          id: username === 'disbudparekraf' ? 'e0000000-0000-0000-0000-000000000001' : 'e0000000-0000-0000-0000-000000000002',
           username,
           fullName: fb.fullName,
           role: fb.role,
@@ -113,7 +113,7 @@ export async function loginAction(
     // Simpan ke session cookie
     await setSessionCookie(sessionUser);
 
-    const redirectTo = sessionUser.role === 'dispora' ? '/dispora' : '/pengelola';
+    const redirectTo = sessionUser.role === 'disbudparekraf' ? '/disbudparekraf' : '/pengelola';
     return {
       success: true,
       redirectTo,

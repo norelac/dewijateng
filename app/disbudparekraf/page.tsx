@@ -22,8 +22,8 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
-import RegisterVillageModal from '@/components/dispora/RegisterVillageModal';
-import LpjVerificationQueue from '@/components/dispora/LpjVerificationQueue';
+import RegisterVillageModal from '@/components/disbudparekraf/RegisterVillageModal';
+import LpjVerificationQueue from '@/components/disbudparekraf/LpjVerificationQueue';
 
 interface MacroMetrics {
   total_villages: number;
@@ -58,7 +58,7 @@ interface OverviewData {
   grant_priorities: GrantPriority[];
 }
 
-export default function DisporaCommandCenterPage() {
+export default function DisbudparekrafCommandCenterPage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [regencySearch, setRegencySearch] = useState('');
@@ -68,7 +68,7 @@ export default function DisporaCommandCenterPage() {
   const fetchOverview = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/dispora/overview');
+      const res = await fetch('/api/disbudparekraf/overview');
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
@@ -99,7 +99,7 @@ export default function DisporaCommandCenterPage() {
           <div>
             <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-900/60 border border-blue-500/30 text-blue-300 text-xs font-semibold w-fit mb-3">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Pusat Kendali Eksekutif Dispora Pemprov Jateng</span>
+              <span>Pusat Kendali Eksekutif Disbudparekraf Pemprov Jateng</span>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
               Command Center Evaluasi 1.000 Desa Wisata 2027
@@ -246,7 +246,7 @@ export default function DisporaCommandCenterPage() {
         </div>
       </section>
 
-      {/* Antrean Verifikasi Dokumen LPJ oleh Dispora */}
+      {/* Antrean Verifikasi Dokumen LPJ oleh Disbudparekraf */}
       <LpjVerificationQueue onStatusChange={fetchOverview} />
 
       {/* Main Grid: Radar 35 Kabupaten/Kota & Prioritas Hibah 2027 */}

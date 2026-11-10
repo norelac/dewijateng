@@ -526,7 +526,7 @@ export default function EdukasiPage() {
                 { name: 'Basarnas Jateng', num: '(024) 760-7777', role: 'Evakuasi & Pertolongan SAR' },
                 { name: 'PMI Jawa Tengah', num: '(024) 354-3500', role: 'Ambulans & Pertolongan Medis' },
                 { name: 'Layanan Darurat', num: '112', role: 'Bebas Pulsa · Siaga 24 Jam' },
-                { name: 'Disporapar Jateng', num: '(024) 354-6681', role: 'Pusat Koordinasi Pengaduan' },
+                { name: 'Disbudparekraf Jateng', num: '(024) 354-6681', role: 'Pusat Koordinasi Pengaduan' },
               ].map((c) => (
                 <a
                   key={c.num}

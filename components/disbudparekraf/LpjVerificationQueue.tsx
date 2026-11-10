@@ -147,7 +147,7 @@ export default function LpjVerificationQueue({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">
             <FileCheck2 className="w-4 h-4 text-blue-600" />
-            <span>Fungsi Pengawasan Fiskal Dispora</span>
+            <span>Fungsi Pengawasan Fiskal Disbudparekraf</span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">
             Antrean Verifikasi Dokumen LPJ Desa

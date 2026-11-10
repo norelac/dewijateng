@@ -4,9 +4,9 @@ import { query } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/dispora/overview
+ * GET /api/disbudparekraf/overview
  * Menyediakan data agregasi statistik makro 35 Kabupaten/Kota Jawa Tengah
- * untuk Command Center Dispora Pemprov Jateng.
+ * untuk Command Center Disbudparekraf Pemprov Jateng.
  *
  * Optimasi: Menggunakan 2 query utama (bukan 4) dengan CTE dan subquery
  * untuk menjamin respons < 250ms sesuai AC-5 spesifikasi BE-08.
@@ -161,9 +161,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('[API /api/dispora/overview error]:', error);
+    console.error('[API /api/disbudparekraf/overview error]:', error);
     return NextResponse.json(
-      { success: false, error: 'Gagal mengambil data ringkasan Disporapar', details: error.message },
+      { success: false, error: 'Gagal mengambil data ringkasan Disbudparekraf', details: error.message },
       { status: 500 }
     );
   }
