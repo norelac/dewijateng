@@ -14,7 +14,8 @@ export type Json =
 // --- ENUMS ---
 export type VillageClassification = 'RINTISAN' | 'BERKEMBANG' | 'MAJU' | 'MANDIRI';
 export type TariffType = 'ENTRY_TICKET' | 'PARKING_MOTOR' | 'PARKING_CAR' | 'PACKAGE_TOUR';
-export type LpjStatus = 'PENDING_UPLOAD' | 'SUBMITTED' | 'VERIFIED';
+export type LpjStatus = 'PENDING_UPLOAD' | 'SUBMITTED' | 'VERIFIED' | 'REVISION';
+export type UserRole = 'desa' | 'dispora';
 export type ExpenseCategory = 'MATERIAL_FISIK' | 'UPAH_TENAGA' | 'KESELAMATAN_K3' | 'OPERASIONAL';
 export type ReportCategory = 'FASILITAS_RUSAK' | 'PUNGLI' | 'BAHAYA_K3' | 'KEBERSIHAN';
 export type ReportStatus = 'SUBMITTED' | 'IN_PROGRESS' | 'RESOLVED';
@@ -57,7 +58,23 @@ export interface VillageGrantRow {
   remaining_balance: number;
   lpj_document_url: string | null;
   lpj_status: LpjStatus;
+  lpj_review_notes?: string | null;
   uploaded_at: string | null;
+  created_at: string;
+}
+
+export interface UserRow {
+  id: string;
+  username: string;
+  password_hash: string;
+  role: UserRole;
+  village_id: string | null;
+  full_name: string;
+  phone: string | null;
+  status: 'AKTIF' | 'NONAKTIF';
+  must_change_password: boolean;
+  last_login_at: string | null;
+  created_by: string | null;
   created_at: string;
 }
 

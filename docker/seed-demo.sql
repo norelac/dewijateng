@@ -92,6 +92,47 @@ INSERT INTO report_resolutions (report_id, action_summary, photo_after_url, offi
 ON CONFLICT (report_id) DO NOTHING;
 
 -- ------------------------------------------------------------------------------
+-- 4b. Sinkronisasi PostgreSQL sequence agar aduan baru tidak bentrok dengan kode seed
+-- ------------------------------------------------------------------------------
+SELECT setval(
+    'seq_report_code_2026',
+    COALESCE((
+        SELECT MAX(SUBSTRING(report_code FROM '(\d+)$')::bigint)
+        FROM incident_reports
+        WHERE report_code LIKE 'LP-JTG-2026-%'
+    ), 100),
+    true
+);
+
+-- ------------------------------------------------------------------------------
+-- 4c. Akun Demo Awal: Admin Dispora & Pengelola Desa Wisata Candirejo
+-- ------------------------------------------------------------------------------
+INSERT INTO users (id, username, password_hash, role, village_id, full_name, phone, status, must_change_password) VALUES
+(
+    'e0000000-0000-0000-0000-000000000001',
+    'dispora',
+    'pbkdf2$10000$58dc4fdbe2bc9641be3a7b67a3da17d3$928da298f6796161a91db390e23d804fcbde16b67f40458cb7cd403b13908969de1765f6c57c41da827d3b35b40304aa7179b1dca9940fc34c0a43733ac8b6b9',
+    'dispora',
+    NULL,
+    'Admin Eksekutif Dispora Jateng',
+    '081122334455',
+    'AKTIF',
+    false
+),
+(
+    'e0000000-0000-0000-0000-000000000002',
+    'desa-candirejo',
+    'pbkdf2$10000$6cff3c501f59dfe02a2379ec35bb5e8b$675ca8fa45b9f676a5ec2ae35a9243ec35c351e9de1c9ef579ae65234d465b1855877166e6b7956e9cfae3b9db2ec4965d3f2b3c13ff56e32c1d41ce4595357e',
+    'desa',
+    'a0000000-0000-0000-0000-000000000002',
+    'Pengelola Desa Wisata Candirejo',
+    '081234567802',
+    'AKTIF',
+    false
+)
+ON CONFLICT (username) DO NOTHING;
+
+-- ------------------------------------------------------------------------------
 -- 5. Ringkasan hasil seed
 -- ------------------------------------------------------------------------------
 DO $$
