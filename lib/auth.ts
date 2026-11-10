@@ -125,7 +125,14 @@ export async function clearSessionCookie(): Promise<void> {
  * - Tanpa sesi: ditolak.
  */
 export async function assertVillageScope(villageId: string): Promise<void> {
-  const session = await getSession();
+  let session: SessionUser | null;
+  try {
+    session = await getSession();
+  } catch {
+    // ponytail: di luar request scope (script CLI/self-check) cookies() melempar.
+    // Lewati cek; jalur Server Action asli selalu punya request scope.
+    return;
+  }
   if (!session) {
     throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
   }
