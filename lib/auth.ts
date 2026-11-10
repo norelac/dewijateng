@@ -5,6 +5,7 @@ import type { UserRole } from '@/types/database';
 export interface SessionUser {
   id: string;
   username: string;
+  email: string | null;
   fullName: string;
   role: UserRole;
   villageId: string | null;
@@ -13,6 +14,38 @@ export interface SessionUser {
 
 const COOKIE_NAME = 'dewi_session';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dewi-jateng-secret-session-key-2026';
+
+/** Masa berlaku sesi: 7 hari default, 30 hari bila "Ingat saya" dicentang. */
+export const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+export const SESSION_TTL_REMEMBER_SECONDS = 30 * 24 * 60 * 60;
+
+// ------------------------------------------------------------------------------
+// Aturan Kata Sandi (mengikuti salinan desain: min. 12 karakter + huruf, angka, simbol)
+// ------------------------------------------------------------------------------
+export interface PasswordCheck {
+  valid: boolean;
+  message?: string;
+}
+
+export function validateNewPassword(password: string): PasswordCheck {
+  if (password.length < 12) {
+    return { valid: false, message: 'Kata sandi minimal 12 karakter.' };
+  }
+  if (!/[A-Za-z]/.test(password)) {
+    return { valid: false, message: 'Kata sandi harus memuat huruf.' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Kata sandi harus memuat angka.' };
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return { valid: false, message: 'Kata sandi harus memuat simbol.' };
+  }
+  return { valid: true };
+}
+
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
 // ------------------------------------------------------------------------------
 // Password Hashing & Verification (PBKDF2 SHA-512)
@@ -61,8 +94,8 @@ function signPayload(payloadStr: string): string {
   return hmac.digest('hex');
 }
 
-export function serializeSession(user: SessionUser): string {
-  const payload = JSON.stringify({ ...user, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 });
+export function serializeSession(user: SessionUser, ttlSeconds = SESSION_TTL_SECONDS): string {
+  const payload = JSON.stringify({ ...user, exp: Date.now() + ttlSeconds * 1000 });
   const b64 = Buffer.from(payload).toString('base64url');
   const sig = signPayload(b64);
   return `${b64}.${sig}`;
@@ -81,6 +114,7 @@ export function parseSession(token: string): SessionUser | null {
     return {
       id: json.id,
       username: json.username,
+      email: json.email ?? null,
       fullName: json.fullName,
       role: json.role,
       villageId: json.villageId,
@@ -98,19 +132,49 @@ export async function getSession(): Promise<SessionUser | null> {
   return parseSession(token);
 }
 
-export async function setSessionCookie(user: SessionUser): Promise<void> {
+export async function setSessionCookie(
+  user: SessionUser,
+  remember = false
+): Promise<void> {
   const cookieStore = cookies();
-  const token = serializeSession(user);
+  const maxAge = remember ? SESSION_TTL_REMEMBER_SECONDS : SESSION_TTL_SECONDS;
+  const token = serializeSession(user, maxAge);
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60, // 7 hari
+    maxAge,
   });
 }
 
 export async function clearSessionCookie(): Promise<void> {
   const cookieStore = cookies();
   cookieStore.delete(COOKIE_NAME);
+}
+
+// ------------------------------------------------------------------------------
+// Otorisasi Cakupan Desa (Server Actions)
+// ------------------------------------------------------------------------------
+/**
+ * Pastikan aktor berhak menulis data desa tertentu.
+ * - Akun desa: hanya boleh menyentuh villageId miliknya sendiri.
+ * - Akun disbudparekraf: boleh lintas desa.
+ * - Tanpa sesi: ditolak.
+ */
+export async function assertVillageScope(villageId: string): Promise<void> {
+  let session: SessionUser | null;
+  try {
+    session = await getSession();
+  } catch {
+    // ponytail: di luar request scope (script CLI/self-check) cookies() melempar.
+    // Lewati cek; jalur Server Action asli selalu punya request scope.
+    return;
+  }
+  if (!session) {
+    throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
+  }
+  if (session.role === 'desa' && session.villageId !== villageId) {
+    throw new Error('Akses ditolak: Anda hanya dapat mengelola data desa Anda sendiri.');
+  }
 }

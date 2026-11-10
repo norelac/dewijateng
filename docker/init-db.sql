@@ -8,6 +8,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- Drop existing tables jika migrasi ulang
+DROP TABLE IF EXISTS auth_tokens CASCADE;
+DROP TABLE IF EXISTS village_opening_balances CASCADE;
+DROP TABLE IF EXISTS village_transactions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS report_resolutions CASCADE;
 DROP TABLE IF EXISTS incident_reports CASCADE;
@@ -64,7 +67,10 @@ CREATE TABLE village_grants (
     village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
     fiscal_year INT NOT NULL, -- 2024, 2025, 2026
     funding_source VARCHAR(150) NOT NULL, -- Bantuan Keuangan Pemprov Jateng / APBDes
-    total_allocated DECIMAL(15, 2) NOT NULL, -- Pagu Bantuan Diterima
+    apbdes_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Rincian sumber dana APBDes
+    banprov_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Rincian sumber dana Bantuan Provinsi
+    pades_amount DECIMAL(15, 2) NOT NULL DEFAULT 0, -- Rincian sumber dana PADes Wisata
+    total_allocated DECIMAL(15, 2) NOT NULL, -- Pagu Bantuan Diterima (jumlah tiga sumber)
     total_realized DECIMAL(15, 2) DEFAULT 0.00, -- Total Realisasi Belanja Modal
     remaining_balance DECIMAL(15, 2) DEFAULT 0.00, -- Sisa Saldo Kas
     lpj_document_url VARCHAR(255) NULL, -- Tautan berkas asli LPJ (PDF)
@@ -128,12 +134,14 @@ CREATE TABLE incident_reports (
     title VARCHAR(150) NOT NULL,
     description TEXT NOT NULL,
     photo_before_url VARCHAR(255) NOT NULL,
+    photo_before_urls JSONB NOT NULL DEFAULT '[]'::jsonb, -- seluruh lampiran foto (maks 3)
     latitude DECIMAL(10, 7) NOT NULL,
     longitude DECIMAL(10, 7) NOT NULL,
     geom GEOMETRY(Point, 4326),
     is_anonymous BOOLEAN DEFAULT TRUE,
     reporter_contact_hash VARCHAR(64) NULL, -- SHA-256 hash nomor kontak pelapor
     status VARCHAR(20) CHECK (status IN ('SUBMITTED', 'IN_PROGRESS', 'RESOLVED')) DEFAULT 'SUBMITTED',
+    deadline_at TIMESTAMP WITH TIME ZONE NULL, -- tenggat SLA: PUNGLI 24 jam, lain 168 jam
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -168,12 +176,20 @@ CREATE INDEX idx_resolutions_report ON report_resolutions(report_id);
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(60) UNIQUE NOT NULL,
+    email VARCHAR(150) NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('desa', 'disbudparekraf')) NOT NULL,
     village_id UUID NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
     full_name VARCHAR(100) NOT NULL,
     phone VARCHAR(30) NULL,
+    nip VARCHAR(30) NULL,
+    institution VARCHAR(150) NULL,
+    regency VARCHAR(100) NULL,
     status VARCHAR(20) CHECK (status IN ('AKTIF', 'NONAKTIF')) DEFAULT 'AKTIF',
+    approval_status VARCHAR(20) CHECK (approval_status IN ('MENUNGGU', 'DISETUJUI', 'DITOLAK')) DEFAULT 'DISETUJUI',
+    email_verified_at TIMESTAMP WITH TIME ZONE NULL,
+    activated_at TIMESTAMP WITH TIME ZONE NULL,
+    deactivated_at TIMESTAMP WITH TIME ZONE NULL,
     must_change_password BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP WITH TIME ZONE NULL,
     created_by UUID NULL,
@@ -186,6 +202,63 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_village ON users(village_id);
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+
+-- ==============================================================================
+-- TABEL 9: auth_tokens (Token verifikasi email, undangan aktivasi, reset sandi)
+-- Hanya hash token yang disimpan; token asli hanya ada pada tautan yang dikirim.
+-- ==============================================================================
+CREATE TABLE auth_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(30) CHECK (type IN ('VERIFIKASI_EMAIL', 'UNDANGAN_AKTIVASI', 'RESET_SANDI')) NOT NULL,
+    token_hash VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_auth_tokens_user ON auth_tokens(user_id);
+CREATE INDEX idx_auth_tokens_hash ON auth_tokens(token_hash);
+
+-- ==============================================================================
+-- TABEL 10: village_transactions (Transaksi keuangan desa wisata)
+-- Satu tabel untuk pemasukan dan pengeluaran; `type` yang membedakan.
+-- Dipakai layar "Monitoring keuangan" (Fase 4) dengan akses baca saja.
+-- ==============================================================================
+CREATE TABLE village_transactions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
+    type VARCHAR(12) CHECK (type IN ('PEMASUKAN', 'PENGELUARAN')) NOT NULL,
+    reference_code VARCHAR(32) UNIQUE NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    category VARCHAR(60) NOT NULL,
+    transaction_date DATE NOT NULL,
+    amount BIGINT NOT NULL CHECK (amount >= 0),
+    payment_method VARCHAR(120),
+    counterparty VARCHAR(200),
+    note TEXT,
+    -- NULL = transaksi belum dilengkapi bukti (status "Perlu bukti").
+    proof_file_name VARCHAR(200),
+    proof_file_size_kb INTEGER,
+    proof_uploaded_by VARCHAR(120),
+    recorded_by VARCHAR(120) NOT NULL,
+    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_village_transactions_village ON village_transactions(village_id, transaction_date);
+CREATE INDEX idx_village_transactions_period ON village_transactions(transaction_date);
+
+-- ==============================================================================
+-- TABEL 11: village_opening_balances (Saldo awal per periode per desa)
+-- ==============================================================================
+CREATE TABLE village_opening_balances (
+    village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
+    period VARCHAR(7) NOT NULL, -- YYYY-MM
+    amount BIGINT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (village_id, period)
+);
 
 
 
@@ -195,7 +268,7 @@ CREATE INDEX idx_users_village ON users(village_id);
 CREATE OR REPLACE FUNCTION update_geom_point()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.geom = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326);
+    NEW.geom = ST_SetSRID(ST_MakePoint(NEW.longitude::float8, NEW.latitude::float8), 4326);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -268,8 +341,8 @@ INSERT INTO ssh_reference_rates (item_code, item_name, category, unit, standard_
 -- SEED DATA: Dokumen LPJ Bantuan Keuangan (Studi Kasus Desa Getas)
 -- ==============================================================================
 INSERT INTO village_grants (id, village_id, fiscal_year, funding_source, total_allocated, total_realized, remaining_balance, lpj_document_url, lpj_status, uploaded_at) VALUES
-('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 2026, 'Bantuan Keuangan Sarpras Pariwisata Pemprov Jateng', 100000000.00, 70500000.00, 29500000.00, '/documents/lpj-desa-getas-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '10 days'),
-('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 2026, 'Bantuan Keuangan Pemprov Jateng TA 2026', 150000000.00, 142000000.00, 8000000.00, '/documents/lpj-candirejo-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '15 days'),
+('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 2026, 'Bantuan Keuangan Sarpras Pariwisata Pemprov Jateng', 100000000.00, 70500000.00, 29500000.00, '/documents/lpj-getas-semarang-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '10 days'),
+('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 2026, 'Bantuan Keuangan Pemprov Jateng TA 2026', 150000000.00, 142000000.00, 8000000.00, '/documents/lpj-candirejo-magelang-2026.pdf', 'VERIFIED', CURRENT_TIMESTAMP - INTERVAL '15 days'),
 ('b0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000003', 2026, 'Bantuan Keuangan Sarpras Rintisan Wisata', 100000000.00, 0.00, 100000000.00, NULL, 'PENDING_UPLOAD', NULL);
 
 
@@ -293,6 +366,11 @@ INSERT INTO incident_reports (id, report_code, village_id, category, title, desc
 ('c0000000-0000-0000-0000-000000000003', 'LP-JTG-2026-0088', 'a0000000-0000-0000-0000-000000000003', 'FASILITAS_RUSAK', 'Kran Air Toilet Umum Mati & Pintu Rusak', 'Fasilitas MCK di pintu masuk tidak mengalirkan air dan slot kunci pintu patah.', '/img/figma/toilet-sebelum.png', -7.2891500, 109.3482500, true, 'SUBMITTED', CURRENT_TIMESTAMP - INTERVAL '1 days');
 
 UPDATE incident_reports SET updated_at = CURRENT_TIMESTAMP;
+
+-- Isi tenggat SLA untuk data seed: PUNGLI 24 jam, kategori lain 168 jam.
+UPDATE incident_reports
+SET deadline_at = created_at + (CASE WHEN category = 'PUNGLI' THEN INTERVAL '24 hours' ELSE INTERVAL '168 hours' END),
+    photo_before_urls = jsonb_build_array(photo_before_url);
 
 
 -- ==============================================================================

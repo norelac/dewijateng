@@ -16,6 +16,8 @@ export interface CreateReportDTO {
   description: string;
   photoBuffer?: Buffer;
   photoName?: string;
+  /** Lampiran foto jamak (maks 3). Bila diisi, menang atas photoBuffer tunggal. */
+  photoFiles?: { buffer: Buffer; name: string }[];
   photoFallbackUrl?: string;
   latitude: number;
   longitude: number;
@@ -52,12 +54,16 @@ export interface IncidentReportDetail {
   title: string;
   description: string;
   photoBeforeUrl: string;
+  /** Seluruh lampiran foto; selalu memuat photoBeforeUrl sebagai elemen pertama. */
+  photoBeforeUrls: string[];
   latitude: number;
   longitude: number;
   isAnonymous: boolean;
   status: 'SUBMITTED' | 'IN_PROGRESS' | 'RESOLVED' | string;
   createdAt: string | Date;
   updatedAt: string | Date;
+  /** Tenggat SLA. null bila data lama belum punya tenggat. */
+  deadlineAt: string | Date | null;
   resolution?: ReportResolutionInfo | null;
 }
 
@@ -69,6 +75,21 @@ export interface ListReportsFilter {
 
 const DEFAULT_FALLBACK_PHOTO =
   'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80';
+
+const MAX_PHOTOS = 3;
+
+/** Tenggat SLA per kategori: PUNGLI 24 jam, kategori lain 168 jam (7 hari). */
+export function getSlaHours(category: string): number {
+  return category === 'PUNGLI' ? 24 : 168;
+}
+
+/** Normalisasi jsonb lampiran foto; selalu mengembalikan minimal satu URL. */
+function normalizePhotoUrls(raw: unknown, fallback: string): string[] {
+  const arr = Array.isArray(raw)
+    ? raw.filter((u): u is string => typeof u === 'string' && u.length > 0)
+    : [];
+  return arr.length > 0 ? arr : [fallback];
+}
 
 /**
  * Membuat aduan masyarakat baru dengan validasi, PostGIS nearest village lookup,
@@ -121,13 +142,25 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
     }
   }
 
-  // 3. Simpan foto ke disk storage lokal
-  let photoBeforeUrl = input.photoFallbackUrl || DEFAULT_FALLBACK_PHOTO;
-  if (input.photoBuffer && input.photoBuffer.length > 0) {
-    const fileName = input.photoName || 'bukti-aduan.jpg';
-    const saved = await saveFileToStorage('report-photos-before', fileName, input.photoBuffer);
-    photoBeforeUrl = saved.publicUrl;
+  // 3. Simpan foto ke disk storage lokal. Mendukung hingga MAX_PHOTOS lampiran;
+  //    photoBeforeUrl selalu berisi foto pertama agar pembacaan lama tetap jalan.
+  const photoUrls: string[] = [];
+  const incomingPhotos =
+    input.photoFiles && input.photoFiles.length > 0
+      ? input.photoFiles.slice(0, MAX_PHOTOS)
+      : input.photoBuffer && input.photoBuffer.length > 0
+        ? [{ buffer: input.photoBuffer, name: input.photoName || 'bukti-aduan.jpg' }]
+        : [];
+
+  for (const file of incomingPhotos) {
+    if (file.buffer && file.buffer.length > 0) {
+      const saved = await saveFileToStorage('report-photos-before', file.name, file.buffer);
+      photoUrls.push(saved.publicUrl);
+    }
   }
+
+  const photoBeforeUrl =
+    photoUrls[0] || input.photoFallbackUrl || DEFAULT_FALLBACK_PHOTO;
 
   // 4. Enkripsi hash satu arah nomor WhatsApp pelapor jika opsi anonim dipilih
   const contactHash =
@@ -139,6 +172,11 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
   const reportCode = await generateReportCode();
 
   // 6. Simpan baris laporan ke basis data PostgreSQL dengan Point spasial
+  const slaHours = getSlaHours(category);
+  const photoUrlsJson = JSON.stringify(
+    photoUrls.length > 0 ? photoUrls : [photoBeforeUrl]
+  );
+
   const insertRes = await query<{ id: string; report_code: string; status: string; village_id: string }>(
     `INSERT INTO incident_reports (
        report_code,
@@ -147,18 +185,21 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
        title,
        description,
        photo_before_url,
+       photo_before_urls,
        latitude,
        longitude,
        geom,
        is_anonymous,
        reporter_contact_hash,
-       status
+       status,
+       deadline_at
      ) VALUES (
-       $1, $2, $3, $4, $5, $6,
-       $7::double precision,
+       $1, $2, $3, $4, $5, $6, $7::jsonb,
        $8::double precision,
-       ST_SetSRID(ST_MakePoint($8::double precision, $7::double precision), 4326),
-       $9, $10, 'SUBMITTED'
+       $9::double precision,
+       ST_SetSRID(ST_MakePoint($9::double precision, $8::double precision), 4326),
+       $10, $11, 'SUBMITTED',
+       NOW() + ($12 || ' hours')::interval
      )
      RETURNING id, report_code, status, village_id`,
     [
@@ -168,10 +209,12 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
       title,
       description,
       photoBeforeUrl,
+      photoUrlsJson,
       latitude,
       longitude,
       isAnonymous,
       contactHash,
+      slaHours,
     ]
   );
 
@@ -214,6 +257,8 @@ export async function getReportByCode(reportCode: string): Promise<IncidentRepor
       r.title,
       r.description,
       r.photo_before_url,
+      r.photo_before_urls,
+      r.deadline_at,
       r.latitude,
       r.longitude,
       r.is_anonymous,
@@ -260,12 +305,14 @@ export async function getReportByCode(reportCode: string): Promise<IncidentRepor
     title: row.title,
     description: row.description,
     photoBeforeUrl: row.photo_before_url,
+    photoBeforeUrls: normalizePhotoUrls(row.photo_before_urls, row.photo_before_url),
     latitude: parseFloat(row.latitude),
     longitude: parseFloat(row.longitude),
     isAnonymous: row.is_anonymous,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    deadlineAt: row.deadline_at || null,
     resolution: row.resolution_id
       ? {
           id: row.resolution_id,
@@ -303,6 +350,8 @@ export async function listPublicReports(
       r.title,
       r.description,
       r.photo_before_url,
+      r.photo_before_urls,
+      r.deadline_at,
       r.latitude,
       r.longitude,
       r.is_anonymous,
@@ -358,12 +407,14 @@ export async function listPublicReports(
     title: row.title,
     description: row.description,
     photoBeforeUrl: row.photo_before_url,
+    photoBeforeUrls: normalizePhotoUrls(row.photo_before_urls, row.photo_before_url),
     latitude: parseFloat(row.latitude),
     longitude: parseFloat(row.longitude),
     isAnonymous: row.is_anonymous,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    deadlineAt: row.deadline_at || null,
     resolution: row.resolution_id
       ? {
           id: row.resolution_id,

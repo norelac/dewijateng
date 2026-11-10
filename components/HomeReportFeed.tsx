@@ -203,12 +203,12 @@ export default function HomeReportFeed() {
           .filter((item): item is ReportCardItem => item !== null);
         if (mapped.length === 0) return;
 
-        setCards(mapped.slice(0, 4));
+        setCards(mapped.slice(0, 3));
         setSliderModes(
-          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, true]))
+          Object.fromEntries(mapped.slice(0, 3).map((item) => [item.id, true]))
         );
         setSliderPositions(
-          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, 50]))
+          Object.fromEntries(mapped.slice(0, 3).map((item) => [item.id, 50]))
         );
       })
       .catch(() => {

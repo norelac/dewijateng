@@ -186,16 +186,25 @@ async function matchWithLlmSemantic(
   itemName: string,
   catalog: SshCatalogItem[]
 ): Promise<SshCatalogItem | null> {
-  const baseUrl = process.env.LLM_BASE_URL;
-  const apiKey = process.env.LLM_API_KEY;
-  const model = process.env.LLM_MODEL || 'ag/gemini-3.8-flash';
+  const baseUrl = process.env.LLM_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai';
+  const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
+  const model = process.env.LLM_MODEL || 'gemini-2.5-flash';
 
   if (!baseUrl || !apiKey || catalog.length === 0) {
     return null;
   }
 
   try {
-    const catalogOptions = catalog
+    // Best practice hemat token: Saring ke top-25 kandidat yang relevan (bukan seluruh 1.000+ item)
+    const itemWords = itemName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length > 2);
+    const candidateMatches = catalog.filter((c) => {
+      const cLower = c.item_name.toLowerCase();
+      return itemWords.some((w) => cLower.includes(w));
+    });
+
+    const candidates = (candidateMatches.length > 0 ? candidateMatches : catalog).slice(0, 25);
+
+    const catalogOptions = candidates
       .map((c) => `- [${c.item_code}] ${c.item_name} (Satuan: ${c.unit}, Standar: ${formatRupiahId(c.standard_price)})`)
       .join('\n');
 

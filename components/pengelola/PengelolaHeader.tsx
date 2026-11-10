@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, ChevronDown, Menu, LogOut, User, Shield } from 'lucide-react';
 import { getSessionAction, logoutAction } from '@/app/actions/authActions';
 import type { SessionUser } from '@/lib/auth';
@@ -14,6 +15,7 @@ export default function PengelolaHeader({
   onOpenMobile,
   activeTabTitle = 'Dashboard',
 }: PengelolaHeaderProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasUnread] = useState(true);
   const [session, setSession] = useState<SessionUser | null>(null);
@@ -30,6 +32,13 @@ export default function PengelolaHeader({
     .map((s) => s[0])
     .join('')
     .toUpperCase() || 'PD';
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logoutAction();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <header className="w-full h-[72px] sm:h-[80px] bg-white border-b border-[#E6ECF5] px-4 sm:px-8 flex items-center justify-between shrink-0 sticky top-0 z-20">
@@ -112,7 +121,7 @@ export default function PengelolaHeader({
                 <div className="h-px bg-slate-100 my-1" />
                 <button
                   type="button"
-                  onClick={() => logoutAction()}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />

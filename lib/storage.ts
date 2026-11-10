@@ -5,6 +5,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import sharp from 'sharp';
 
 export type StorageBucket =
   | 'official-documents'
@@ -16,14 +17,14 @@ const BASE_UPLOAD_DIR =
 
 const ALLOWED_EXTENSIONS: Record<StorageBucket, string[]> = {
   'official-documents': ['.pdf'],
-  'report-photos-before': ['.jpg', '.jpeg', '.png', '.webp'],
-  'proof-of-fix': ['.jpg', '.jpeg', '.png', '.webp'],
+  'report-photos-before': ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'],
+  'proof-of-fix': ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'],
 };
 
 const MAX_FILE_SIZES: Record<StorageBucket, number> = {
   'official-documents': 25 * 1024 * 1024, // 25 MB
-  'report-photos-before': 10 * 1024 * 1024, // 10 MB
-  'proof-of-fix': 10 * 1024 * 1024, // 10 MB
+  'report-photos-before': 15 * 1024 * 1024, // 15 MB
+  'proof-of-fix': 15 * 1024 * 1024, // 15 MB
 };
 
 /**
@@ -59,11 +60,28 @@ export async function saveFileToStorage(
   const bucketDir = path.join(BASE_UPLOAD_DIR, bucket);
   await fs.mkdir(bucketDir, { recursive: true });
 
+  let finalBuffer = buffer;
+  let finalExt = ext;
+
+  // Auto-convert & compress ke format WebP untuk seluruh foto aduan & bukti lapangan
+  if (bucket === 'report-photos-before' || bucket === 'proof-of-fix') {
+    try {
+      finalBuffer = await sharp(buffer)
+        .rotate() // Auto-orient berdasarkan EXIF kamera HP
+        .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 82, effort: 4 })
+        .toBuffer();
+      finalExt = '.webp';
+    } catch (sharpErr) {
+      console.warn('[saveFileToStorage] Warning auto-convert WebP via sharp, fallback ke format asli:', sharpErr);
+    }
+  }
+
   const rawBaseName = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
-  const sanitizedFileName = `${Date.now()}-${rawBaseName}${ext}`;
+  const sanitizedFileName = `${Date.now()}-${rawBaseName}${finalExt}`;
   const targetPath = path.join(bucketDir, sanitizedFileName);
 
-  await fs.writeFile(targetPath, buffer);
+  await fs.writeFile(targetPath, finalBuffer);
 
   const publicUrl = `/uploads/${bucket}/${sanitizedFileName}`;
   return { publicUrl, filePath: targetPath };
