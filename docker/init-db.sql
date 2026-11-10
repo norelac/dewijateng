@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- Drop existing tables jika migrasi ulang
+DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS report_resolutions CASCADE;
 DROP TABLE IF EXISTS incident_reports CASCADE;
 DROP TABLE IF EXISTS grant_expenses CASCADE;
@@ -67,7 +68,8 @@ CREATE TABLE village_grants (
     total_realized DECIMAL(15, 2) DEFAULT 0.00, -- Total Realisasi Belanja Modal
     remaining_balance DECIMAL(15, 2) DEFAULT 0.00, -- Sisa Saldo Kas
     lpj_document_url VARCHAR(255) NULL, -- Tautan berkas asli LPJ (PDF)
-    lpj_status VARCHAR(20) CHECK (lpj_status IN ('PENDING_UPLOAD', 'SUBMITTED', 'VERIFIED')) DEFAULT 'PENDING_UPLOAD',
+    lpj_status VARCHAR(20) CHECK (lpj_status IN ('PENDING_UPLOAD', 'SUBMITTED', 'VERIFIED', 'REVISION')) DEFAULT 'PENDING_UPLOAD',
+    lpj_review_notes TEXT NULL, -- Catatan verifikator Dispora saat revisi / verifikasi
     uploaded_at TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_village_grants_village_year UNIQUE (village_id, fiscal_year)
@@ -159,6 +161,32 @@ CREATE TABLE report_resolutions (
 );
 
 CREATE INDEX idx_resolutions_report ON report_resolutions(report_id);
+
+-- ==============================================================================
+-- TABEL 8: users (Akun Pengguna Sistem - Dispora & Pengelola Desa)
+-- ==============================================================================
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(60) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) CHECK (role IN ('desa', 'dispora')) NOT NULL,
+    village_id UUID NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(30) NULL,
+    status VARCHAR(20) CHECK (status IN ('AKTIF', 'NONAKTIF')) DEFAULT 'AKTIF',
+    must_change_password BOOLEAN DEFAULT TRUE,
+    last_login_at TIMESTAMP WITH TIME ZONE NULL,
+    created_by UUID NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_role_village CHECK (
+        (role = 'desa' AND village_id IS NOT NULL) OR
+        (role = 'dispora' AND village_id IS NULL)
+    )
+);
+
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_village ON users(village_id);
+
 
 
 -- ==============================================================================

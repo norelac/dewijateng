@@ -18,9 +18,12 @@ import {
   ArrowUpRight,
   ChevronRight,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  PlusCircle,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
+import RegisterVillageModal from '@/components/dispora/RegisterVillageModal';
+import LpjVerificationQueue from '@/components/dispora/LpjVerificationQueue';
 
 interface MacroMetrics {
   total_villages: number;
@@ -55,16 +58,17 @@ interface OverviewData {
   grant_priorities: GrantPriority[];
 }
 
-export default function DisporaparCommandCenterPage() {
+export default function DisporaCommandCenterPage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [regencySearch, setRegencySearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'GREEN' | 'YELLOW' | 'RED'>('ALL');
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const fetchOverview = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/disporapar/overview');
+      const res = await fetch('/api/dispora/overview');
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
@@ -95,7 +99,7 @@ export default function DisporaparCommandCenterPage() {
           <div>
             <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-900/60 border border-blue-500/30 text-blue-300 text-xs font-semibold w-fit mb-3">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Pusat Kendali Eksekutif Disporapar Pemprov Jateng</span>
+              <span>Pusat Kendali Eksekutif Dispora Pemprov Jateng</span>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
               Command Center Evaluasi 1.000 Desa Wisata 2027
@@ -105,7 +109,15 @@ export default function DisporaparCommandCenterPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsRegisterModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4 text-slate-950" />
+              <span>+ Daftarkan Desa Wisata</span>
+            </button>
             <button
               type="button"
               onClick={fetchOverview}
@@ -233,6 +245,9 @@ export default function DisporaparCommandCenterPage() {
           </span>
         </div>
       </section>
+
+      {/* Antrean Verifikasi Dokumen LPJ oleh Dispora */}
+      <LpjVerificationQueue onStatusChange={fetchOverview} />
 
       {/* Main Grid: Radar 35 Kabupaten/Kota & Prioritas Hibah 2027 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -408,6 +423,13 @@ export default function DisporaparCommandCenterPage() {
           </div>
         </section>
       </div>
+
+      {/* Modal Pendaftaran Desa Baru & Penerbitan Akun */}
+      <RegisterVillageModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={fetchOverview}
+      />
     </div>
   );
 }
