@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { VillageBudgetData } from './types';
+import { useVillageName } from './usePengelolaData';
 
 interface UbahAnggaranViewProps {
   budget: VillageBudgetData;
@@ -41,6 +42,7 @@ export default function UbahAnggaranView({
 }: UbahAnggaranViewProps) {
   const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const villageName = useVillageName();
 
   const [apbdesStr, setApbdesStr] = useState<string>(
     formatNumberInput(budget.apbdes)
@@ -137,7 +139,7 @@ export default function UbahAnggaranView({
           Ubah anggaran
         </h1>
         <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
-          Perbarui sumber pendanaan Desa Candirejo. Nilai awal sesuai anggaran tersimpan.
+          Perbarui sumber pendanaan {villageName}. Nilai awal sesuai anggaran tersimpan.
         </p>
       </div>
 
@@ -354,7 +356,7 @@ export default function UbahAnggaranView({
       {/* 4. Sub-Footer Layanan */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
         <span>© 2026 DEWI JATENG</span>
-        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+        <span>{villageName} · Per 28 Oktober 2026</span>
       </div>
     </div>
   );

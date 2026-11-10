@@ -78,6 +78,15 @@ export interface VillageAccountListResult {
   kabupatenOptions: string[];
 }
 
+/** Ringkasan akun pengelola untuk kartu dashboard Disbudparekraf. */
+export interface VillageAccountStats {
+  total: number;
+  aktif: number;
+  menunggu: number;
+  nonaktif: number;
+  regencyCount: number;
+}
+
 /**
  * Ekspresi SQL status turunan. Dipakai berulang di SELECT, WHERE, dan hitungan
  * tab supaya definisi "Menunggu aktivasi" hanya ada di satu tempat.
@@ -109,6 +118,92 @@ function iso(value: Date | string | null): string | null {
   if (!value) return null;
   const d = value instanceof Date ? value : new Date(value);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** Pemetaan baris SQL -> VillageAccountRow (dipakai daftar akun & dashboard). */
+function mapVillageAccountRow(row: any): VillageAccountRow {
+  const derived = row.derived_status as VillageAccountStatus;
+  return {
+    userId: row.id,
+    villageId: row.village_id,
+    villageName: row.village_name,
+    villageSlug: row.village_slug,
+    regency: row.regency,
+    district: row.district,
+    fullName: row.full_name,
+    email: row.email,
+    phone: row.phone,
+    status: derived,
+    statusLabel: ACCOUNT_STATUS_LABEL[derived],
+    createdAt: iso(row.created_at) ?? '',
+    activatedAt: iso(row.activated_at),
+    deactivatedAt: iso(row.deactivated_at),
+    lastLoginAt: iso(row.last_login_at),
+    invitationSentAt: iso(row.invitation_sent_at),
+    invitationExpiresAt: iso(row.invitation_expires_at),
+  };
+}
+
+/**
+ * Ringkasan akun pengelola untuk dashboard Disbudparekraf.
+ *
+ * Sebelumnya kartu "Pengelolaan akun desa" memakai angka contoh statis
+ * (48 desa / 42 aktif / 4 menunggu / 2 nonaktif). Sekarang dibaca dari
+ * database supaya konsisten dengan layar "Akun desa wisata".
+ */
+export async function getVillageAccountStats(): Promise<{
+  stats: VillageAccountStats;
+  recent: VillageAccountRow[];
+}> {
+  await requireDisbudparekraf();
+
+  const statsRes = await query<any>(
+    `SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE (${STATUS_EXPR}) = 'AKTIF')::int AS aktif,
+        COUNT(*) FILTER (WHERE (${STATUS_EXPR}) = 'MENUNGGU_AKTIVASI')::int AS menunggu,
+        COUNT(*) FILTER (WHERE (${STATUS_EXPR}) = 'NONAKTIF')::int AS nonaktif,
+        COUNT(DISTINCT tv.regency)::int AS regency_count
+       FROM users u
+       JOIN tourist_villages tv ON tv.id = u.village_id
+      WHERE u.role = 'desa'`
+  );
+
+  const recentRes = await query<any>(
+    `SELECT u.id, u.village_id, u.full_name, u.email, u.phone, u.status,
+            u.created_at, u.activated_at, u.deactivated_at, u.last_login_at,
+            tv.name AS village_name, tv.slug AS village_slug,
+            tv.regency, tv.district,
+            (${STATUS_EXPR}) AS derived_status,
+            inv.created_at AS invitation_sent_at,
+            inv.expires_at AS invitation_expires_at
+       FROM users u
+       JOIN tourist_villages tv ON tv.id = u.village_id
+       LEFT JOIN LATERAL (
+         SELECT t.created_at, t.expires_at
+           FROM auth_tokens t
+          WHERE t.user_id = u.id
+            AND t.type = 'UNDANGAN_AKTIVASI'
+            AND t.used_at IS NULL
+          ORDER BY t.created_at DESC
+          LIMIT 1
+       ) inv ON true
+      WHERE u.role = 'desa'
+      ORDER BY u.created_at DESC
+      LIMIT 4`
+  );
+
+  const s = statsRes.rows[0] ?? {};
+  return {
+    stats: {
+      total: s.total ?? 0,
+      aktif: s.aktif ?? 0,
+      menunggu: s.menunggu ?? 0,
+      nonaktif: s.nonaktif ?? 0,
+      regencyCount: s.regency_count ?? 0,
+    },
+    recent: recentRes.rows.map(mapVillageAccountRow),
+  };
 }
 
 // ------------------------------------------------------------------------------
@@ -206,28 +301,7 @@ export async function listVillageAccounts(
       ORDER BY tv.regency ASC`
   );
 
-  const rows: VillageAccountRow[] = rowsRes.rows.map((row) => {
-    const derived = row.derived_status as VillageAccountStatus;
-    return {
-      userId: row.id,
-      villageId: row.village_id,
-      villageName: row.village_name,
-      villageSlug: row.village_slug,
-      regency: row.regency,
-      district: row.district,
-      fullName: row.full_name,
-      email: row.email,
-      phone: row.phone,
-      status: derived,
-      statusLabel: ACCOUNT_STATUS_LABEL[derived],
-      createdAt: iso(row.created_at) ?? '',
-      activatedAt: iso(row.activated_at),
-      deactivatedAt: iso(row.deactivated_at),
-      lastLoginAt: iso(row.last_login_at),
-      invitationSentAt: iso(row.invitation_sent_at),
-      invitationExpiresAt: iso(row.invitation_expires_at),
-    };
-  });
+  const rows: VillageAccountRow[] = rowsRes.rows.map(mapVillageAccountRow);
 
   const c = countsRes.rows[0] ?? {};
   return {

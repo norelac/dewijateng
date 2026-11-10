@@ -40,7 +40,7 @@ export default function PengelolaSidebar({
   // pengelola; tukar ke prop dari halaman bila fetch ganda jadi beban.
   const { tickets } = useDashboardTickets();
   const { village } = useBudgetData();
-  const activeVillage = villageName ?? village?.name ?? 'Desa Candirejo';
+  const activeVillage = villageName ?? village?.name ?? 'Desa wisata';
   const pendingCount =
     pendingReportCount ??
     tickets.filter((t) => t.status === 'Masuk' || t.status === 'Diverifikasi')

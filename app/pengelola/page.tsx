@@ -98,11 +98,11 @@ function PengelolaDashboardContent() {
           {/* KPI Indikator & Identitas Desa */}
           <section id="section-kpi" className="w-full">
             <DashboardKpis
-              villageName={village?.name || 'Desa Candirejo'}
+              villageName={village?.name || 'Desa wisata'}
               regency={
                 village
-                  ? `${village.district}, Kabupaten ${village.regency} · Jawa Tengah`
-                  : 'Borobudur, Kabupaten Magelang · Jawa Tengah'
+                  ? `${village.district}, ${village.regency} · Jawa Tengah`
+                  : 'Jawa Tengah'
               }
               updatedAt={`Per ${budget.dateStr} · 10.00 WIB`}
               periodYear={`TA ${budget.year}`}

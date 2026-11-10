@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronDown, ShieldCheck, Check } from 'lucide-react';
 import { DashboardTicket, TicketStatus } from './types';
+import { useVillageName } from './usePengelolaData';
 
 interface KelolaLaporanListViewProps {
   tickets: DashboardTicket[];
@@ -16,6 +17,7 @@ export default function KelolaLaporanListView({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('Semua status');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const villageName = useVillageName();
 
   // Status counts
   const counts = useMemo(() => {
@@ -273,7 +275,7 @@ export default function KelolaLaporanListView({
       {/* 5. Catatan Layanan Sub-Footer */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
         <span>© 2026 DEWI JATENG</span>
-        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+        <span>{villageName} · Per 28 Oktober 2026</span>
       </div>
     </div>
   );

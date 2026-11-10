@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { DashboardTicket } from './types';
 import { convertImageToWebP } from '@/lib/utils/imageOptimizer';
+import { useVillageName } from './usePengelolaData';
 
 interface PerbaruiPenangananViewProps {
   ticket: DashboardTicket;
@@ -47,6 +48,7 @@ export default function PerbaruiPenangananView({
   const [showAfterModal, setShowAfterModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const villageName = useVillageName();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,7 +145,7 @@ export default function PerbaruiPenangananView({
           {ticket.status}
         </span>
         <p className="text-[#64748b] text-[13px] leading-[1.5]">
-          {ticket.fullDate || `Diterima ${ticket.date}`} · Candirejo ·{' '}
+          {ticket.fullDate || `Diterima ${ticket.date}`} · {villageName} ·{' '}
           {ticket.status === 'Selesai'
             ? 'Status selesai'
             : 'Status saat ini, belum selesai'}
@@ -507,7 +509,7 @@ export default function PerbaruiPenangananView({
       {/* 5. Sub-Footer Layanan */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
         <span>© 2026 DEWI JATENG</span>
-        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+        <span>{villageName} · Per 28 Oktober 2026</span>
       </div>
 
       {/* Modal Foto Sebelum */}

@@ -1,22 +1,29 @@
 import React from 'react';
 import Link from 'next/link';
-import { AKUN_TERBARU } from '@/components/disbudparekraf/dashboard/demoData';
+import type { VillageAccountRow } from '@/app/actions/villageAccountActions';
 
-function StatusBadge({ status }: { status: 'Aktif' | 'Menunggu aktivasi' }) {
-  const aktif = status === 'Aktif';
+function StatusBadge({ status }: { status: VillageAccountRow['status'] }) {
+  const aktif = status === 'AKTIF';
+  const menunggu = status === 'MENUNGGU_AKTIVASI';
   return (
     <span
       className={`inline-flex h-[26px] items-center rounded-[999px] px-2.5 text-[11px] font-medium whitespace-nowrap ${
-        aktif ? 'bg-[#E5F4ED] text-[#216B55]' : 'bg-[#FCF1DC] text-[#875B12]'
+        aktif
+          ? 'bg-[#E5F4ED] text-[#216B55]'
+          : menunggu
+          ? 'bg-[#FCF1DC] text-[#875B12]'
+          : 'bg-[#EEF2F7] text-[#64748B]'
       }`}
     >
-      {status}
+      {aktif ? 'Aktif' : menunggu ? 'Menunggu aktivasi' : 'Nonaktif'}
     </span>
   );
 }
 
-/** Tabel akun desa wisata terbaru (Figma 418:1070). */
-export default function AkunTerbaruTable() {
+/** Tabel akun desa wisata terbaru (Figma 418:1070). Data dari database. */
+export default function AkunTerbaruTable({ rows }: { rows: VillageAccountRow[] }) {
+  const menunggu = rows.filter((r) => r.status === 'MENUNGGU_AKTIVASI').length;
+
   return (
     <div className="w-full bg-white border border-[#E6ECF5] rounded-[14px] p-6 shadow-xs">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -43,21 +50,30 @@ export default function AkunTerbaruTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E6ECF5]">
-            {AKUN_TERBARU.map((row) => (
-              <tr key={row.desa}>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={4} className="py-6 px-3 text-center text-[12px] text-[#64748B]">
+                  Belum ada akun pengelola desa wisata.
+                </td>
+              </tr>
+            )}
+            {rows.map((row) => (
+              <tr key={row.userId}>
                 <td className="py-3.5 px-3">
                   <div className="flex flex-col leading-tight">
-                    <span className="text-[#0D2453] text-[13px] font-semibold">{row.desa}</span>
-                    <span className="text-[#64748B] text-[11px] mt-1">{row.wilayah}</span>
+                    <span className="text-[#0D2453] text-[13px] font-semibold">{row.villageName}</span>
+                    <span className="text-[#64748B] text-[11px] mt-1">
+                      {row.district}, {row.regency}
+                    </span>
                   </div>
                 </td>
-                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">{row.pengelola}</td>
+                <td className="py-3.5 px-3 text-[#0D2453] text-[12px]">{row.fullName}</td>
                 <td className="py-3.5 px-3">
                   <StatusBadge status={row.status} />
                 </td>
                 <td className="py-3.5 px-3">
                   <Link
-                    href="/disbudparekraf/akun"
+                    href={`/disbudparekraf/akun/${row.userId}`}
                     className="h-[40px] px-5 inline-flex items-center justify-center rounded-[999px] border-2 border-[#E6ECF5] bg-white text-[#0D2453] text-[12px] font-semibold whitespace-nowrap"
                   >
                     Detail akun
@@ -69,7 +85,9 @@ export default function AkunTerbaruTable() {
         </table>
       </div>
 
-      <p className="text-[#64748B] text-[11px] mt-4">4 akun terbaru · 1 akun menunggu aktivasi</p>
+      <p className="text-[#64748B] text-[11px] mt-4">
+        {rows.length} akun terbaru · {menunggu} akun menunggu aktivasi
+      </p>
     </div>
   );
 }

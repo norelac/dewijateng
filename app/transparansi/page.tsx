@@ -239,7 +239,9 @@ export default function TransparansiPage() {
   const desaOptions = useMemo(() => {
     if (villages.length === 0) return DEFAULT_DESA;
     const inRegency = villages.filter((v) => v.regency === selectedKabupaten);
-    return (inRegency.length > 0 ? inRegency : villages).map((v) => v.name);
+    // Nama desa bisa kembar antar-slug (mis. "Desa Wisata Sambak"), jadi unikkan
+    // supaya key <option> tidak duplikat.
+    return Array.from(new Set((inRegency.length > 0 ? inRegency : villages).map((v) => v.name)));
   }, [villages, selectedKabupaten]);
 
   // Pastikan desa terpilih selalu ada di kabupaten aktif

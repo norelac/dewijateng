@@ -106,7 +106,7 @@ export default function PengeluaranView() {
       ? Math.round((grant.total_realized / grant.total_allocated) * 100)
       : undefined;
 
-  const villageName = village?.name || 'Desa Candirejo';
+  const villageName = village?.name || 'Desa wisata';
   const rupiah = (n: number) => 'Rp' + new Intl.NumberFormat('id-ID').format(n);
   const canWrite = Boolean(grant?.id);
 

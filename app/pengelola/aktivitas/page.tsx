@@ -70,7 +70,7 @@ function AktivitasContent() {
             events={events}
             stages={stages}
             traceSubject={traceSubject}
-            villageName={village?.name || 'Desa Candirejo'}
+            villageName={village?.name || 'Desa wisata'}
             onNavigate={handleNavigate}
           />
         </div>

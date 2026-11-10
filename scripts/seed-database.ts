@@ -36,6 +36,21 @@ async function runSeed() {
       console.log('✅ Akun demo dan laporan awal berhasil di-seed!\n');
     }
 
+    // 3b. Lengkapi data demo untuk SELURUH desa (grant, rincian belanja,
+    //     tarif resmi, aduan warga, bukti perbaikan). Idempoten.
+    const fullSqlPath = path.join(process.cwd(), 'docker', 'seed-demo-full.sql');
+    if (fs.existsSync(fullSqlPath)) {
+      console.log('📦 Melengkapi data demo untuk seluruh desa wisata...');
+      const sql3b = fs.readFileSync(fullSqlPath, 'utf-8');
+      const summary = await client.query(sql3b);
+      const rows = Array.isArray(summary) ? summary[summary.length - 1]?.rows : null;
+      if (rows && rows.length > 0) {
+        console.log('✅ Data demo lengkap:', JSON.stringify(rows[0]), '\n');
+      } else {
+        console.log('✅ Data demo seluruh desa berhasil di-seed!\n');
+      }
+    }
+
     // 4. Update PostGIS Geometries
     console.log('🗺️  Memperbarui geometri koordinat PostGIS...');
     try {

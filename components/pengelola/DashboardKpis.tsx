@@ -44,8 +44,8 @@ function formatFunding(num: number): string {
 }
 
 export default function DashboardKpis({
-  villageName = 'Desa Candirejo',
-  regency = 'Borobudur, Kabupaten Magelang · Jawa Tengah',
+  villageName = 'Desa wisata',
+  regency = 'Jawa Tengah',
   updatedAt = 'Per 28 Oktober 2026 · 10.00 WIB',
   periodYear = 'TA 2026',
   totalFunding = 1200000000,
