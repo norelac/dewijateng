@@ -42,11 +42,11 @@ export async function registerVillageAction(
   input: RegisterVillageInput
 ): Promise<RegisterVillageResult> {
   const session = await getSession();
-  // Validasi sesi: Hanya Dispora yang berhak mendaftarkan desa
-  if (session && session.role !== 'dispora') {
+  // Validasi sesi: Hanya Disbudparekraf yang berhak mendaftarkan desa
+  if (session && session.role !== 'disbudparekraf') {
     return {
       success: false,
-      message: 'Akses ditolak: Hanya Admin Dispora yang dapat mendaftarkan desa baru.',
+      message: 'Akses ditolak: Hanya Admin Disbudparekraf yang dapat mendaftarkan desa baru.',
     };
   }
 
@@ -119,7 +119,7 @@ export async function registerVillageAction(
       console.warn('[registerVillageAction] DB save warning, generating fallback response:', dbErr?.message);
     }
 
-    revalidatePath('/dispora');
+    revalidatePath('/disbudparekraf');
     revalidatePath('/transparansi');
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -152,7 +152,7 @@ export async function registerVillageAction(
 }
 
 // ------------------------------------------------------------------------------
-// Action: Verifikasi atau Kembalikan LPJ oleh Dispora
+// Action: Verifikasi atau Kembalikan LPJ oleh Disbudparekraf
 // ------------------------------------------------------------------------------
 export async function reviewLpjAction(params: {
   grantId: string;
@@ -160,8 +160,8 @@ export async function reviewLpjAction(params: {
   reviewNotes?: string;
 }): Promise<{ success: boolean; message: string }> {
   const session = await getSession();
-  if (session && session.role !== 'dispora') {
-    return { success: false, message: 'Hanya Dispora yang berhak memverifikasi LPJ' };
+  if (session && session.role !== 'disbudparekraf') {
+    return { success: false, message: 'Hanya Disbudparekraf yang berhak memverifikasi LPJ' };
   }
 
   const { grantId, status, reviewNotes } = params;
@@ -175,7 +175,7 @@ export async function reviewLpjAction(params: {
       })
       .where(eq(villageGrants.id, grantId));
 
-    revalidatePath('/dispora');
+    revalidatePath('/disbudparekraf');
     revalidatePath('/transparansi');
     revalidatePath('/pengelola/anggaran');
 

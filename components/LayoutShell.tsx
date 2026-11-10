@@ -7,9 +7,12 @@ import Footer from '@/components/Footer';
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPengelola = pathname?.startsWith('/pengelola');
+  const isDashboardOrAuth =
+    pathname?.startsWith('/pengelola') ||
+    pathname?.startsWith('/disbudparekraf') ||
+    pathname === '/login';
 
-  if (isPengelola) {
+  if (isDashboardOrAuth) {
     return <main className="min-h-screen w-full">{children}</main>;
   }
 

@@ -23,7 +23,7 @@ export default function PengelolaHeader({
   }, []);
 
   const displayName = session?.fullName || 'Pengelola Candirejo';
-  const roleLabel = session?.role === 'dispora' ? 'Admin Dispora' : 'Admin Desa';
+  const roleLabel = session?.role === 'disbudparekraf' ? 'Admin Disbudparekraf' : 'Admin Desa';
   const initials = displayName
     .split(' ')
     .slice(0, 2)

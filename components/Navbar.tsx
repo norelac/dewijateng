@@ -164,11 +164,11 @@ export default function Navbar() {
                   Portal Masuk
                 </Link>
                 <Link
-                  href="/dispora"
+                  href="/disbudparekraf"
                   onClick={() => setMobileOpen(false)}
                   className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all"
                 >
-                  Command Center Dispora
+                  Command Center Disbudparekraf
                 </Link>
               </div>
             </div>

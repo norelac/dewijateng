@@ -69,7 +69,7 @@ CREATE TABLE village_grants (
     remaining_balance DECIMAL(15, 2) DEFAULT 0.00, -- Sisa Saldo Kas
     lpj_document_url VARCHAR(255) NULL, -- Tautan berkas asli LPJ (PDF)
     lpj_status VARCHAR(20) CHECK (lpj_status IN ('PENDING_UPLOAD', 'SUBMITTED', 'VERIFIED', 'REVISION')) DEFAULT 'PENDING_UPLOAD',
-    lpj_review_notes TEXT NULL, -- Catatan verifikator Dispora saat revisi / verifikasi
+    lpj_review_notes TEXT NULL, -- Catatan verifikator Disbudparekraf saat revisi / verifikasi
     uploaded_at TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_village_grants_village_year UNIQUE (village_id, fiscal_year)
@@ -163,13 +163,13 @@ CREATE TABLE report_resolutions (
 CREATE INDEX idx_resolutions_report ON report_resolutions(report_id);
 
 -- ==============================================================================
--- TABEL 8: users (Akun Pengguna Sistem - Dispora & Pengelola Desa)
+-- TABEL 8: users (Akun Pengguna Sistem - Disbudparekraf & Pengelola Desa)
 -- ==============================================================================
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(60) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) CHECK (role IN ('desa', 'dispora')) NOT NULL,
+    role VARCHAR(20) CHECK (role IN ('desa', 'disbudparekraf')) NOT NULL,
     village_id UUID NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
     full_name VARCHAR(100) NOT NULL,
     phone VARCHAR(30) NULL,
@@ -180,7 +180,7 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_role_village CHECK (
         (role = 'desa' AND village_id IS NOT NULL) OR
-        (role = 'dispora' AND village_id IS NULL)
+        (role = 'disbudparekraf' AND village_id IS NULL)
     )
 );
 

@@ -123,7 +123,7 @@ export default function RegisterVillageModal({
     if (!result?.credentials) return;
     const { username, temporaryPassword, contactPhone, loginUrl } = result.credentials;
     const text = encodeURIComponent(
-      `Halo Pengelola ${result.village?.name},\n\nAkun portal desa wisata Anda telah terdaftar resmi di Dispora Jawa Tengah (Platform DEWI JATENG).\n\nBerikut rincian akun Anda:\n• Username: ${username}\n• Kata Sandi Sementara: ${temporaryPassword}\n• Tautan Masuk: ${loginUrl}\n\nSilakan masuk dan lakukan penggantian kata sandi berkala untuk mengelola dokumen LPJ bantuan serta menindaklanjuti aduan sarana publik warga.\n\nSalam,\nDispora Provinsi Jawa Tengah`
+      `Halo Pengelola ${result.village?.name},\n\nAkun portal desa wisata Anda telah terdaftar resmi di Disbudparekraf Jawa Tengah (Platform DEWI JATENG).\n\nBerikut rincian akun Anda:\n• Username: ${username}\n• Kata Sandi Sementara: ${temporaryPassword}\n• Tautan Masuk: ${loginUrl}\n\nSilakan masuk dan lakukan penggantian kata sandi berkala untuk mengelola dokumen LPJ bantuan serta menindaklanjuti aduan sarana publik warga.\n\nSalam,\nDisbudparekraf Provinsi Jawa Tengah`
     );
     window.open(`https://wa.me/${cleanPhone(contactPhone)}?text=${text}`, '_blank');
   };
@@ -147,7 +147,7 @@ export default function RegisterVillageModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
         {/* Header Modal */}
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-950 via-[#080E21] to-[#0D2453] text-white flex items-center justify-between">
+        <div className="px-6 py-5 bg-[#0D2453] text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
               <Building2 className="w-5 h-5" />
@@ -155,7 +155,7 @@ export default function RegisterVillageModal({
             <div>
               <h3 className="text-base font-bold text-white">Daftarkan Desa Wisata Baru</h3>
               <p className="text-[11px] text-slate-300">
-                Penerbitan entitas desa resmi & akun pengelola otomatis oleh Dispora Jateng
+                Penerbitan entitas desa resmi & akun pengelola otomatis oleh Disbudparekraf Jateng
               </p>
             </div>
           </div>
