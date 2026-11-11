@@ -9,6 +9,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '25mb',
     },
+    // Mesin lokal ~7GB RAM; worker build default (jumlah core - 1) membuat proses
+    // dibunuh OS saat "Collecting page data". Set BUILD_CPUS=1 bila perlu.
+    ...(process.env.BUILD_CPUS ? { cpus: Number(process.env.BUILD_CPUS) } : {}),
   },
   images: {
     remotePatterns: [
