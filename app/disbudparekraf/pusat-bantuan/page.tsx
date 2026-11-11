@@ -2,7 +2,7 @@ import React from 'react';
 import PusatBantuanView from '@/components/pengelola/PusatBantuanView';
 
 export const metadata = {
-  title: 'Pusat bantuan · DEWI JATENG',
+  title: 'Pusat bantuan',
 };
 
 /** Pusat bantuan untuk akun Disbudparekraf (ruang admin dinas). */

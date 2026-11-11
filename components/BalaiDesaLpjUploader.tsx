@@ -54,7 +54,7 @@ export default function BalaiDesaLpjUploader() {
         const sess = await getSessionAction();
         setSession(sess);
 
-        const res = await fetch('/api/villages');
+        const res = await fetch('/api/villages?limit=1000');
         const json = await res.json();
         const villageList: VillageItem[] = Array.isArray(json.data)
           ? json.data

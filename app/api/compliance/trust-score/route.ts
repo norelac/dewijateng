@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import {
   calculateVillageTrustScore,
   recalculateAllVillages,
@@ -33,6 +34,20 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Sesi tidak ditemukan. Silakan masuk terlebih dahulu.' },
+        { status: 401 }
+      );
+    }
+    if (session.role !== 'disbudparekraf') {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak: hanya Disbudparekraf yang dapat memicu rekalkulasi Trust Score.' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     // Batch mode: rekalkulasi seluruh desa wisata

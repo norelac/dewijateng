@@ -2,7 +2,7 @@ import React from 'react';
 import PengaturanDinasView from '@/components/disbudparekraf/dashboard/PengaturanDinasView';
 
 export const metadata = {
-  title: 'Pengaturan · DEWI JATENG',
+  title: 'Pengaturan',
 };
 
 /** Layar "Pengaturan" ruang admin dinas. */

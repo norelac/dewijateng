@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import { saveLpjSubmission } from '@/lib/services/lpjService';
 
 /**
@@ -9,11 +10,30 @@ import { saveLpjSubmission } from '@/lib/services/lpjService';
  */
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Sesi tidak ditemukan. Silakan masuk terlebih dahulu.' },
+        { status: 401 }
+      );
+    }
+
     const formData = await req.formData();
-    const villageId =
+    let villageId =
       (formData.get('village_id') as string) ||
       (formData.get('villageId') as string) ||
       '';
+    if (session.role === 'desa') {
+      if (!session.villageId || (villageId && villageId !== session.villageId)) {
+        return NextResponse.json(
+          { success: false, error: 'Akses ditolak: Anda hanya dapat mengunggah LPJ desa Anda sendiri.' },
+          { status: 403 }
+        );
+      }
+      villageId = session.villageId;
+    } else if (session.role !== 'disbudparekraf') {
+      return NextResponse.json({ success: false, error: 'Akses ditolak' }, { status: 403 });
+    }
     const fiscalYear = parseInt(
       (formData.get('fiscal_year') as string) ||
         (formData.get('fiscalYear') as string) ||

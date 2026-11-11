@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import type { UserRole } from '@/types/database';
 
 export interface SessionUser {
@@ -132,6 +132,18 @@ export async function getSession(): Promise<SessionUser | null> {
   return parseSession(token);
 }
 
+function isHttpsRequest(): boolean {
+  try {
+    const h = headers();
+    const forwarded = h.get('x-forwarded-proto')?.split(',')[0].trim();
+    if (forwarded) return forwarded === 'https';
+    const origin = h.get('origin') || '';
+    if (origin) return origin.startsWith('https://');
+  } catch {}
+  const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || '';
+  return appUrl.startsWith('https://');
+}
+
 export async function setSessionCookie(
   user: SessionUser,
   remember = false
@@ -141,7 +153,7 @@ export async function setSessionCookie(
   const token = serializeSession(user, maxAge);
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production' && isHttpsRequest(),
     sameSite: 'lax',
     path: '/',
     maxAge,
@@ -177,4 +189,24 @@ export async function assertVillageScope(villageId: string): Promise<void> {
   if (session.role === 'desa' && session.villageId !== villageId) {
     throw new Error('Akses ditolak: Anda hanya dapat mengelola data desa Anda sendiri.');
   }
+}
+
+/**
+ * Pastikan aktor berada pada salah satu peran yang diizinkan (Server Actions).
+ * Mengembalikan null hanya saat dijalankan dari skrip CLI di luar request scope.
+ */
+export async function assertRole(allowedRoles: UserRole[]): Promise<SessionUser | null> {
+  let session: SessionUser | null;
+  try {
+    session = await getSession();
+  } catch {
+    return null;
+  }
+  if (!session) {
+    throw new Error('Sesi tidak ditemukan. Silakan masuk kembali.');
+  }
+  if (!allowedRoles.includes(session.role)) {
+    throw new Error('Akses ditolak: peran Anda tidak diizinkan melakukan tindakan ini.');
+  }
+  return session;
 }

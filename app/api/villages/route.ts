@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
     const regency = searchParams.get('regency');
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const rawLimit = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Math.min(Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 50), 2000);
 
     // Jika parameter koordinat diberikan, gunakan PostGIS ST_Distance
     if (lat && lng) {
@@ -85,7 +86,8 @@ export async function GET(req: NextRequest) {
 
         const { searchParams } = new URL(req.url);
         const regency = searchParams.get('regency');
-        const limit = parseInt(searchParams.get('limit') || '50', 10);
+        const rawLimit = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Math.min(Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 50), 2000);
 
         if (regency) {
           list = list.filter((v) => v.regency && v.regency.toLowerCase().includes(regency.toLowerCase()));

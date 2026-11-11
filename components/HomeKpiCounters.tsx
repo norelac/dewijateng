@@ -56,7 +56,7 @@ export default function HomeKpiCounters() {
     };
   }, []);
 
-  const totalDesa = dynamicMetrics.villages ?? 776;
+  const totalDesa = dynamicMetrics.villages ?? 868;
   const totalLaporan = dynamicMetrics.reports ?? 12;
   const rateSelesai = dynamicMetrics.resolutionRate ?? 100;
   const danaMiliar = dynamicMetrics.allocatedMiliar ?? 87.5;

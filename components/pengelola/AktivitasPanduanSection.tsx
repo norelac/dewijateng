@@ -10,7 +10,7 @@ const ACTIVITIES: ActivityItem[] = [
     id: 'act-1',
     date: '28 Okt',
     title: 'Laporan baru diterima',
-    subtitle: 'DS-JTG-2026-0953 · Menunggu verifikasi desa',
+    subtitle: 'LP-JTG-2026-0953 · Menunggu verifikasi desa',
   },
   {
     id: 'act-2',
@@ -22,7 +22,7 @@ const ACTIVITIES: ActivityItem[] = [
     id: 'act-3',
     date: '12 Okt',
     title: 'Penanganan laporan selesai',
-    subtitle: 'DS-JTG-2026-0891 · Dokumentasi perbaikan tersedia',
+    subtitle: 'LP-JTG-2026-0891 · Dokumentasi perbaikan tersedia',
   },
 ];
 

@@ -15,19 +15,18 @@ Repository ini dikembangkan oleh Tim sotodiensracing (Universitas Dian Nuswantor
 - **Animasi & Interaktivitas**: Framer Motion 11.x
 - **Ikon**: Lucide React
 - **Peta & Geospasial**: Leaflet.js & react-leaflet (Pinpoint GPS & Sebaran Titik 35 Kab/Kota)
-- **Fonts**: Plus Jakarta Sans, Inter, JetBrains Mono
+- **Fonts**: Inter & MonteCarlo (`next/font/google`)
 
 ### Basis Data & Penyimpanan
-- **Database**: PostgreSQL 16 (Relational Database Management System)
-- **Ekstensi Spasial**: PostGIS 3.4 (Data spasial koordinat desa wisata)
-- **Layanan BaaS & Auth**: Supabase (PostgreSQL, Row-Level Security, Database Webhooks)
-- **Penyimpanan Berkas**: Supabase Storage (Dokumen LPJ PDF resmi, foto laporan awal, foto bukti hasil perbaikan)
+- **Database**: PostgreSQL 16 + Drizzle ORM
+- **Ekstensi Spasial**: PostGIS 3.4 (Data spasial koordinat 868 desa wisata)
+- **Penyimpanan Berkas**: Penyimpanan lokal (`UPLOAD_DIR=./public/uploads`) serta generator PDF/SVG dinamis (`/documents/*`) untuk dokumen LPJ, bukti transaksi, dan nota belanja
 
-### Layanan Kecerdasan Buatan (AI Engine)
-- **AI Document Table Extractor**: Ekstraksi otomatis tabel dokumen LPJ bantuan sarpras (PDF) menjadi tabel web interaktif (Pagu, Belanja Modal, Realisasi, Sisa Saldo).
-- **AI Anomaly Price Checker**: Pembanding otomatis nilai pos belanja fisik terhadap data acuan Standar Satuan Harga (SSH) Pemprov Jateng (penanda anomali jika deviasi >+40%).
-- **AI Metadata & Timestamp Validator**: Validasi metadata tanggal pemotretan asli (EXIF DateTimeOriginal) pada foto hasil perbaikan (*Proof-of-Fix*) untuk mencegah penggunaan foto arsip lama.
-- **Dynamic Trust Score Engine**: Formula matematis transparan 50/50 (50% Kepatuhan Unggah LPJ + 50% Rasio Ketuntasan Aduan Berbukti) pada Peta Kendali Disbudparekraf.
+### Layanan Audit & Kepatuhan
+- **Document Table Extractor**: Ekstraksi tabel dokumen LPJ bantuan sarpras (PDF) menjadi pos belanja modal terstruktur (Pagu, Belanja Modal, Realisasi, Sisa Saldo).
+- **Anomaly Price Checker**: Pembanding otomatis nilai pos belanja fisik terhadap katalog Standar Satuan Harga / HSD MAS PETRUK Jateng (penanda anomali jika deviasi >+40%).
+- **Metadata & Timestamp Validator**: Validasi metadata EXIF pada foto hasil perbaikan (*Proof-of-Fix*) untuk mencegah penggunaan foto arsip lama.
+- **Dynamic Trust Score Engine**: Formula matematis transparan 50/50 (50% Kepatuhan Unggah LPJ + 50% Rasio Ketuntasan Aduan Berbukti).
 
 ---
 
@@ -35,35 +34,29 @@ Repository ini dikembangkan oleh Tim sotodiensracing (Universitas Dian Nuswantor
 
 ```text
 dewi-jateng/
-├── app/                  # Next.js 14 App Router
-│   ├── admin/            # Portal administrasi & pengawasan
-│   │   ├── balai-desa/   # Portal unggah & verifikasi dokumen LPJ PDF
-│   │   └── command-center/ # Peta kendali Disbudparekraf 35 Kab/Kota & Trust Score
-│   ├── edukasi/          # Pilar 4: Literasi UU KIP, SOP Pokdarwis, K3 & kontak darurat
-│   ├── lapor/            # Pilar 3: Telusuri aduan warga, linimasa & slider Proof-of-Fix
-│   ├── pengelola/        # Papan kerja Pokdarwis & unggah foto perbaikan
-│   ├── transparansi/     # Pilar 2: Transparansi dokumen LPJ bantuan desa & analisis SSH
-│   ├── globals.css       # Style global & token desain
-│   ├── layout.tsx        # Root layout, font Plus Jakarta Sans, & metadata
-│   └── page.tsx          # Pilar 1: Beranda, hero, form lapor terpadu, KPI & mini GIS
-├── components/           # Komponen UI React
-│   ├── CashbookTable.tsx
-│   ├── Footer.tsx
-│   ├── HeroMotion.tsx
-│   ├── HomeKpiCounters.tsx
-│   ├── HomeReportFeed.tsx
-│   ├── HomeReportForm.tsx
-│   ├── Navbar.tsx
-│   ├── PengelolaTicketBoard.tsx
-│   ├── ProofOfFixSlider.tsx
-│   └── ReportFormMotion.tsx
-├── docs/                 # Dokumentasi arsitektur, BRD, PRD, & desain sistem
-├── lib/                  # Helper utilities & mock dataset desa wisata
-├── public/               # Asset statis, logo Pemprov Jateng, favicon
-├── types/                # Definisi antarmuka TypeScript
-├── next.config.mjs       # Konfigurasi Next.js
-├── tailwind.config.mjs   # Konfigurasi Tailwind & token desain
-└── tsconfig.json         # Konfigurasi TypeScript compiler & alias path (@/*)
+├── app/                   # Next.js 14 App Router
+│   ├── (auth)/            # Login, pendaftaran dinas, aktivasi akun, reset sandi
+│   ├── actions/           # Server Actions terotentikasi
+│   ├── api/               # REST API routes (villages, reports, transparansi, LPJ, compliance)
+│   ├── disbudparekraf/    # Command center, verifikasi LPJ, akun desa wisata, monitoring keuangan & ekspor CSV
+│   ├── documents/[file]/  # Generator dinamis dokumen LPJ (PDF), bukti kas (PDF), & nota (SVG)
+│   ├── edukasi/           # Pilar 4: Literasi UU KIP, SOP Pokdarwis, K3 & kontak darurat
+│   ├── lapor/             # Pilar 3: Telusuri aduan warga, linimasa & slider Proof-of-Fix
+│   ├── pengelola/         # Portal pengelola & balai desa (aduan, anggaran, pengeluaran, unggah LPJ)
+│   ├── transparansi/      # Pilar 2: Transparansi kas desa wisata & analisis SSH
+│   ├── globals.css        # Style global & token desain
+│   ├── layout.tsx         # Root layout, font Inter, & metadata
+│   └── page.tsx           # Pilar 1: Beranda, hero, form lapor terpadu, & KPI
+├── components/            # Komponen UI publik, pengelola, & disbudparekraf
+├── data/                  # Dataset master 868 desa wisata & katalog HSD MAS PETRUK
+├── docs/                  # Dokumentasi arsitektur, BRD, PRD, & desain sistem
+├── lib/                   # Koneksi DB, auth HMAC, & domain services
+├── public/                # Aset statis, regulasi PDF, logo Pemprov Jateng, favicon
+├── scripts/               # Seeder & skrip verifikasi alur backend
+├── types/                 # Definisi tipe TypeScript
+├── next.config.mjs        # Konfigurasi Next.js
+├── tailwind.config.mjs    # Konfigurasi Tailwind & token desain
+└── tsconfig.json          # Konfigurasi TypeScript compiler & alias path (@/*)
 ```
 
 ---
@@ -123,28 +116,26 @@ npm run build
 - [x] **Desain UI/UX**: Mockup antarmuka multi-peran dan prototipe interaktif di Figma.
 - [x] **Setup Repositori & Arsitektur Kode**: Konfigurasi Next.js 14 App Router, TypeScript, dan Tailwind CSS.
 - [x] **Halaman Beranda (`/`)**:
-  - Hero banner visi 1.000 Desa Wisata Jateng 2027.
-  - Formulir Pelaporan Aduan Warga Cepat (`HomeReportForm`) terintegrasi peta Leaflet, pengambilan foto langsung, pemilihan 4 kategori, mode anonim, dan modal terbit Kode Pelaporan (`LP-JTG-2026-XXXX`).
-  - KPI Counter statistik makro (776 desa wisata resmi, Rp 87,5 miliar bantuan keuangan sarpras, 100% wajib bukti fisik, formula 50/50 Trust Score).
+  - Hero banner visi Desa Wisata Jawa Tengah.
+  - Formulir Pelaporan Aduan Warga Cepat (`HomeReportForm`) terintegrasi peta Leaflet, unggah foto kompresi WebP, pilihan 4 kategori, mode anonim, dan modal terbit Kode Pelaporan (`LP-JTG-2026-XXXX`).
+  - KPI Counter statistik makro langsung dari database (868 desa wisata terdata, realisasi & alokasi bantuan sarpras, tingkat penyelesaian laporan).
   - Ticker aduan selesai dengan bukti perbaikan (*Proof-of-Fix*).
-  - Mini GIS sebaran kepatuhan desa wisata di 35 Kabupaten/Kota.
 - [x] **Halaman Transparansi Dana (`/transparansi`)**:
-  - Filter pencarian desa wisata dan 35 Kabupaten/Kota.
+  - Filter pencarian 868 desa wisata dan Kabupaten/Kota Jawa Tengah.
   - Kartu neraca pagu bantuan, realisasi belanja modal, dan sisa saldo kas anggaran.
   - Tabel penjabaran pos belanja modal hasil ekstraksi dokumen LPJ dengan lencana deviasi Standar Satuan Harga (SSH) Jateng.
-  - Tautan unduh salinan dokumen LPJ resmi bertandatangan Kepala Desa (PDF).
-- [ ] **Halaman Telusuri Aduan (`/lapor`)**:
-  - Bilah pencarian Kode Pelaporan unik.
-  - Linimasa milestone 3 tahap (Diterima, Sedang Dikerjakan, Selesai).
-  - Slider interaktif komparasi foto *Before-After* (*Proof-of-Fix*) dan kartu validasi timestamp EXIF.
-- [ ] **Halaman Edukasi & Panduan (`/edukasi`)**:
+  - Tautan unduh salinan dokumen LPJ resmi (PDF) dan nota pos belanja.
+- [x] **Halaman Telusuri Aduan (`/lapor`)**:
+  - Bilah pencarian Kode Pelaporan unik, filter wilayah, status, kategori, dan pagination berjendela.
+  - Linimasa milestone 3 tahap (Diterima, Sedang Dikerjakan, Selesai) dan lencana tenggat SLA.
+  - Slider interaktif komparasi foto *Before-After* (*Proof-of-Fix*) dan tampilan berdampingan.
+- [x] **Halaman Edukasi & Panduan (`/edukasi`)**:
   - Modul literasi hak keterbukaan informasi publik (UU KIP No. 14/2008 & Permendagri No. 20/2018).
   - SOP tangga respon penanganan pengaduan Pokdarwis.
-  - Panduan standar K3 sarana buatan dan direktori kontak darurat Jawa Tengah.
-- [ ] **Halaman Pengelola Desa & Disbudparekraf**:
-  - Papan kerja Desa (`/pengelola`) dengan syarat wajib unggah foto *Proof-of-Fix* sebelum tiket ditutup.
-  - Portal Anggaran Desa (`/pengelola/anggaran`) untuk unggah berkas dokumen LPJ bantuan (PDF).
-  - Peta Kendali Disbudparekraf Pemprov Jateng (`/disbudparekraf`) format Widescreen 16:9 Dark Mode dengan pemeringkatan Trust Score matematis.
+  - Panduan standar K3 sarana buatan, FAQ, dan direktori kontak darurat Jawa Tengah.
+- [x] **Portal Pengelola Desa (`/pengelola`) & Disbudparekraf (`/disbudparekraf`)**:
+  - Portal Pengelola Desa (`/pengelola`, `/pengelola/laporan`, `/pengelola/anggaran`, `/pengelola/pengeluaran`, `/pengelola/lpj`) dengan unggah foto *Proof-of-Fix* wajib sebelum tiket ditutup dan pengelolaan buku kas/LPJ.
+  - Command Center Disbudparekraf (`/disbudparekraf`, `/disbudparekraf/akun`, `/disbudparekraf/monitoring`, `/disbudparekraf/aktivitas`) untuk pengelolaan akun desa wisata, verifikasi antrean LPJ, monitoring keuangan per periode, dan ekspor CSV.
 
 ---
 

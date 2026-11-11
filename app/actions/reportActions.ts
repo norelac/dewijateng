@@ -14,6 +14,7 @@ import {
   type IncidentReportDetail,
 } from '@/lib/services/reportService';
 import { revalidatePath } from 'next/cache';
+import { assertRole, assertVillageScope } from '@/lib/auth';
 
 export interface ActionResponse<T = any> {
   success: boolean;
@@ -146,10 +147,15 @@ export async function markReportInProgressAction(
   reportCode: string
 ): Promise<ActionResponse<{ success: boolean; reportCode: string }>> {
   try {
+    await assertRole(['desa', 'disbudparekraf']);
     if (!reportCode || !reportCode.trim()) {
       return { success: false, error: 'Kode tiket tidak boleh kosong' };
     }
     const cleanCode = reportCode.toUpperCase().trim();
+    const existing = await getReportByCode(cleanCode);
+    if (existing) {
+      await assertVillageScope(existing.villageId);
+    }
     const updated = await markReportInProgress(cleanCode);
     if (!updated) {
       return {
