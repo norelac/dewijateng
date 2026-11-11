@@ -4,7 +4,6 @@
 -- Melengkapi data yang masih kosong setelah `docker/seed-demo.sql`:
 --   * village_grants      -> tiap desa punya LPJ 2026
 --   * grant_expenses      -> rincian pos belanja untuk tiap LPJ
---   * official_tariffs    -> tarif resmi tiap desa
 --   * incident_reports    -> aduan warga tiap desa
 --   * report_resolutions  -> bukti perbaikan untuk tiap aduan RESOLVED
 --
@@ -349,49 +348,7 @@ UPDATE incident_reports
 
 
 -- ------------------------------------------------------------------------------
--- 3. official_tariffs - tarif resmi untuk tiap desa yang belum punya
--- ------------------------------------------------------------------------------
-DO $$
-DECLARE
-  v        RECORD;
-  v_seed   TEXT;
-  v_item   RECORD;
-  v_price  NUMERIC;
-BEGIN
-  FOR v IN
-    SELECT tv.id, tv.category
-      FROM tourist_villages tv
-     WHERE NOT EXISTS (
-             SELECT 1 FROM official_tariffs ot WHERE ot.village_id = tv.id)
-     ORDER BY tv.id
-  LOOP
-    v_seed := v.id::text;
-
-    FOR v_item IN
-      SELECT * FROM (VALUES
-        ('Tiket Masuk Wisatawan (Dewasa)', 'ENTRY_TICKET', 10000),
-        ('Parkir Sepeda Motor',             'PARKING_MOTOR', 3000),
-        ('Parkir Mobil',                    'PARKING_CAR', 10000),
-        ('Paket Wisata Edukasi',            'PACKAGE_TOUR', 75000)
-      ) AS t(item_name, tariff_type, base)
-    LOOP
-      CONTINUE WHEN v_item.tariff_type = 'PACKAGE_TOUR'
-               AND v.category NOT IN ('MAJU', 'MANDIRI');
-
-      v_price := round(
-        v_item.base * (80 + dewi_seed_int(v_seed, 5, 41)) / 100.0,
-        -3
-      );
-
-      INSERT INTO official_tariffs (village_id, item_name, tariff_type, price, is_active)
-      VALUES (v.id, v_item.item_name, v_item.tariff_type, v_price, TRUE);
-    END LOOP;
-  END LOOP;
-END $$;
-
-
--- ------------------------------------------------------------------------------
--- 4. incident_reports + report_resolutions - aduan warga tiap desa
+-- 3. incident_reports + report_resolutions - aduan warga tiap desa
 --
 --    Tiap desa yang belum punya aduan mendapat 1-2 aduan. Kode tiket diambil
 --    dari sequence `seq_report_code_2026` supaya tidak bentrok. Aduan
@@ -552,7 +509,6 @@ SELECT
   (SELECT COUNT(*) FROM village_grants
     WHERE apbdes_amount + banprov_amount + pades_amount = 0)     AS grant_sumber_dana_kosong,
   (SELECT COUNT(*) FROM grant_expenses)                          AS expenses,
-  (SELECT COUNT(*) FROM official_tariffs)                        AS tariffs,
   (SELECT COUNT(*) FROM incident_reports)                        AS reports,
   (SELECT COUNT(*) FROM report_resolutions)                      AS resolutions,
   (SELECT COUNT(*) FROM tourist_villages tv
@@ -563,7 +519,4 @@ SELECT
             WHERE vg.village_id = tv.id) < 4)                    AS desa_grant_kurang_4_tahun,
   (SELECT COUNT(*) FROM tourist_villages tv
     WHERE NOT EXISTS (SELECT 1 FROM incident_reports r
-                       WHERE r.village_id = tv.id))              AS desa_tanpa_aduan,
-  (SELECT COUNT(*) FROM tourist_villages tv
-    WHERE NOT EXISTS (SELECT 1 FROM official_tariffs ot
-                       WHERE ot.village_id = tv.id))             AS desa_tanpa_tarif;
+                       WHERE r.village_id = tv.id))              AS desa_tanpa_aduan;
