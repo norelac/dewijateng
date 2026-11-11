@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: 'Gagal mengambil data desa wisata', details: error.message },
+      { success: false, error: 'Gagal mengambil data desa wisata' },
       { status: 500 }
     );
   }

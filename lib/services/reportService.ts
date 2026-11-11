@@ -73,8 +73,7 @@ export interface ListReportsFilter {
   limit?: number;
 }
 
-const DEFAULT_FALLBACK_PHOTO =
-  'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=800&auto=format&fit=crop&q=80';
+const DEFAULT_FALLBACK_PHOTO = '/img/figma/aduan-curug-sebelum.png';
 
 const MAX_PHOTOS = 3;
 

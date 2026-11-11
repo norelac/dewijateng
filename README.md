@@ -132,7 +132,7 @@ npm run build
 - [x] **Halaman Edukasi & Panduan (`/edukasi`)**:
   - Modul literasi hak keterbukaan informasi publik (UU KIP No. 14/2008 & Permendagri No. 20/2018).
   - SOP tangga respon penanganan pengaduan Pokdarwis.
-  - Panduan standar K3 sarana buatan, FAQ, dan direktori kontak darurat Jawa Tengah.
+  - Panduan pelaporan, transparansi dana, privasi pelapor, FAQ, dan direktori kontak darurat Jawa Tengah.
 - [x] **Portal Pengelola Desa (`/pengelola`) & Disbudparekraf (`/disbudparekraf`)**:
   - Portal Pengelola Desa (`/pengelola`, `/pengelola/laporan`, `/pengelola/anggaran`, `/pengelola/pengeluaran`, `/pengelola/lpj`) dengan unggah foto *Proof-of-Fix* wajib sebelum tiket ditutup dan pengelolaan buku kas/LPJ.
   - Command Center Disbudparekraf (`/disbudparekraf`, `/disbudparekraf/akun`, `/disbudparekraf/monitoring`, `/disbudparekraf/aktivitas`) untuk pengelolaan akun desa wisata, verifikasi antrean LPJ, monitoring keuangan per periode, dan ekspor CSV.

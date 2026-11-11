@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     const message = error.message || '';
     const statusCode = message.includes('tidak terdaftar')
       ? 404
-      : message.includes('wajib') || message.includes('bukan format')
+      : message.includes('wajib') || message.includes('bukan format') || message.includes('tabel teks')
       ? 422
       : 500;
     const safeMessage =

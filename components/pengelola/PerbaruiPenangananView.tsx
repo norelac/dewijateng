@@ -13,7 +13,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { DashboardTicket } from './types';
-import { convertImageToWebP } from '@/lib/utils/imageOptimizer';
 import { useVillageName } from './usePengelolaData';
 
 interface PerbaruiPenangananViewProps {
@@ -62,13 +61,17 @@ export default function PerbaruiPenangananView({
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Pertahankan file asli agar metadata EXIF timestamp terbaca oleh validator server
-      // Kompresi WebP dilakukan di server oleh sharp setelah verifikasi EXIF selesai.
-      setResolvedFile(file);
-      setResolvedImage(URL.createObjectURL(file));
-      setErrorMessage(null);
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMessage('Ukuran foto bukti perbaikan maksimal 15 MB.');
+      e.target.value = '';
+      return;
     }
+    // Pertahankan file asli agar metadata EXIF timestamp terbaca oleh validator server;
+    // kompresi WebP dilakukan di server oleh sharp setelah verifikasi EXIF selesai.
+    setResolvedFile(file);
+    setResolvedImage(URL.createObjectURL(file));
+    setErrorMessage(null);
   };
 
   const handleToggleComplete = () => {
@@ -285,7 +288,7 @@ export default function PerbaruiPenangananView({
                   <p className="text-[#64748b] text-[11px] font-normal truncate">
                     {resolvedImage
                       ? 'Foto bukti fisik terlampir (Proof-of-Fix)'
-                      : 'Unggah JPG atau PNG · maksimal 10 MB'}
+                      : 'Unggah JPG, PNG, WebP, atau HEIC · maksimal 15 MB'}
                   </p>
                 </div>
               </div>

@@ -14,7 +14,6 @@ import {
   Check,
   AlertCircle,
   Navigation,
-  Landmark,
   X
 } from 'lucide-react';
 import { submitReportAction } from '@/app/actions/reportActions';
@@ -98,24 +97,6 @@ const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const MAX_FILES = 3;
 
-interface NearestVillageData {
-  village: {
-    id: string;
-    slug: string;
-    name: string;
-    regency: string;
-    district: string;
-    latitude: number;
-    longitude: number;
-    pokdarwisName?: string;
-    trustScore: number;
-  };
-  distanceMeters: number;
-  distanceKm: number;
-  isWithinRadius: boolean;
-  maxRadiusKm: number;
-}
-
 export default function HomeReportForm() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [address, setAddress] = useState('Nama Desa, Kecamatan, Kabupaten');
@@ -129,9 +110,6 @@ export default function HomeReportForm() {
 
   const [villages, setVillages] = useState<Array<{ id: string; name: string; regency: string }>>([]);
   const [selectedVillageId, setSelectedVillageId] = useState<string>('');
-  const [nearestVillageInfo, setNearestVillageInfo] = useState<NearestVillageData | null>(null);
-  const [isDetectingVillage, setIsDetectingVillage] = useState(false);
-  const [isManualOverride, setIsManualOverride] = useState(false);
 
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
     lat: -6.9928,
@@ -148,36 +126,6 @@ export default function HomeReportForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isReverseGeocodingRef = useRef<boolean>(false);
-
-  // Deteksi desa wisata terdekat secara real-time via PostGIS saat koordinat berubah
-  useEffect(() => {
-    let cancelled = false;
-    const detectNearest = async () => {
-      setIsDetectingVillage(true);
-      try {
-        const res = await fetch(`/api/villages/nearest?lat=${coords.lat}&lng=${coords.lng}`);
-        const json = await res.json();
-        if (!cancelled && json.success && json.data) {
-          setNearestVillageInfo(json.data);
-          if (!isManualOverride) {
-            setSelectedVillageId(json.data.village.id);
-          }
-        }
-      } catch (err) {
-        console.warn('Gagal mendeteksi desa wisata terdekat:', err);
-      } finally {
-        if (!cancelled) {
-          setIsDetectingVillage(false);
-        }
-      }
-    };
-
-    const timer = setTimeout(detectNearest, 350);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [coords.lat, coords.lng, isManualOverride]);
 
   useEffect(() => {
     async function loadVillages() {
@@ -467,11 +415,8 @@ export default function HomeReportForm() {
       formData.append('longitude', coords.lng.toString());
       formData.append('is_anonymous', isAnonymous ? 'true' : 'false');
 
-      // Tentukan village_id:
-      // 1. Pilihan / deteksi otomatis (selectedVillageId)
-      // 2. Data desa terdekat dari PostGIS (nearestVillageInfo?.village.id)
-      // 3. Fallback pencocokan teks nama desa di alamat
-      let targetVillageId = selectedVillageId || nearestVillageInfo?.village.id || '';
+      // Tentukan village_id jika ada kecocokan eksplisit dari alamat/lokasi
+      let targetVillageId = selectedVillageId;
       if (!targetVillageId && villages.length > 0) {
         const searchPool = (address + ' ' + locationLabel).toLowerCase();
         const matched = villages.find((v) => {
@@ -612,97 +557,6 @@ export default function HomeReportForm() {
                   {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
                 </span>
               </div>
-            </div>
-
-            {/* Status Penerima Laporan Berbasis Geospasial */}
-            <div className="mt-3 space-y-2">
-              {isDetectingVillage ? (
-                <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#0D2453]" />
-                  <span>Mendeteksi desa wisata terdekat berdasarkan titik koordinat...</span>
-                </div>
-              ) : nearestVillageInfo ? (
-                <div
-                  className={`p-3 rounded-xl border text-xs transition-all ${
-                    nearestVillageInfo.isWithinRadius
-                      ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
-                      : 'bg-amber-50/90 border-amber-200 text-amber-950'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                      <Landmark
-                        className={`w-4 h-4 mt-0.5 shrink-0 ${
-                          nearestVillageInfo.isWithinRadius ? 'text-emerald-700' : 'text-amber-700'
-                        }`}
-                      />
-                      <div>
-                        <div className="font-semibold text-[13px] leading-tight">
-                          {nearestVillageInfo.isWithinRadius
-                            ? `Diteruskan ke: ${nearestVillageInfo.village.name}`
-                            : `Desa Terdekat: ${nearestVillageInfo.village.name}`}
-                        </div>
-                        <p className="text-[11px] opacity-85 mt-0.5">
-                          {nearestVillageInfo.village.district ? `${nearestVillageInfo.village.district}, ` : ''}
-                          {nearestVillageInfo.village.regency} • Jarak {nearestVillageInfo.distanceKm} km
-                        </p>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                        nearestVillageInfo.isWithinRadius
-                          ? 'bg-emerald-200/80 text-emerald-900'
-                          : 'bg-amber-200/80 text-amber-900'
-                      }`}
-                    >
-                      {nearestVillageInfo.isWithinRadius ? 'Dalam Kawasan' : 'Luar Kawasan'}
-                    </span>
-                  </div>
-
-                  {!nearestVillageInfo.isWithinRadius && (
-                    <div className="mt-2 text-[11px] text-amber-900/90 leading-normal border-t border-amber-200/60 pt-1.5 flex flex-col gap-1">
-                      <p>
-                        Titik koordinat berada di luar kawasan desa wisata (&gt; 15 km). Laporan akan otomatis diteruskan ke desa terdekat di atas, atau Anda dapat memilih desa lain secara manual.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Tombol opsi override manual */}
-                  <div className="mt-2 pt-1 border-t border-slate-200/40 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setIsManualOverride((prev) => !prev)}
-                      className="text-[11px] font-semibold text-[#0D2453] underline hover:text-blue-800 cursor-pointer"
-                    >
-                      {isManualOverride ? 'Tutup Pilihan Manual' : 'Pilih Desa Wisata Lain Secara Manual'}
-                    </button>
-                    {isManualOverride && (
-                      <span className="text-[10px] text-slate-500">Mode Manual Aktif</span>
-                    )}
-                  </div>
-
-                  {isManualOverride && (
-                    <div className="mt-2 pt-2 border-t border-slate-200/60">
-                      <select
-                        value={selectedVillageId}
-                        onChange={(e) => {
-                          setSelectedVillageId(e.target.value);
-                          setIsManualOverride(true);
-                        }}
-                        className="w-full p-2 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 focus:outline-none focus:border-[#0D2453]"
-                      >
-                        <option value="">-- Pilih Desa Wisata Tujuan --</option>
-                        {villages.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.name} ({v.regency})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              ) : null}
             </div>
           </div>
         </div>

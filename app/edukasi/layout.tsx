@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Edukasi Hak Warga & Standar Keselamatan Wisata',
+  title: 'Edukasi Hak Warga & Panduan Pelaporan Wisata',
   description:
-    'Pedoman hak keterbukaan informasi publik (UU KIP), alur penanganan laporan aduan, dan standar keselamatan wahana wisata Jawa Tengah.',
+    'Pedoman hak keterbukaan informasi publik (UU KIP), cara membaca transparansi dana desa wisata, privasi pelapor, dan kontak layanan resmi Jawa Tengah.',
 };
 
 export default function EdukasiLayout({

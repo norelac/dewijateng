@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   experimental: {
+    // Biarkan pdf-parse & pdfjs-dist diakses langsung dari node_modules agar pdf.worker.mjs terbaca di produksi
+    serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
     // Foto aduan warga (2–8MB) dikirim lewat Server Action; default Next hanya 1MB.
     serverActions: {
       bodySizeLimit: '25mb',

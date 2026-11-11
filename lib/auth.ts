@@ -144,6 +144,10 @@ function isHttpsRequest(): boolean {
   return appUrl.startsWith('https://');
 }
 
+export function isSecureCookie(): boolean {
+  return process.env.NODE_ENV === 'production' && isHttpsRequest();
+}
+
 export async function setSessionCookie(
   user: SessionUser,
   remember = false
@@ -153,7 +157,7 @@ export async function setSessionCookie(
   const token = serializeSession(user, maxAge);
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' && isHttpsRequest(),
+    secure: isSecureCookie(),
     sameSite: 'lax',
     path: '/',
     maxAge,

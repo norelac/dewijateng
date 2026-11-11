@@ -106,12 +106,17 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API /api/reports POST error]:', error);
     const isValidationError =
-      error.message?.includes('minimal') || error.message?.includes('valid');
+      error.message?.includes('minimal') ||
+      error.message?.includes('valid') ||
+      error.message?.includes('diizinkan') ||
+      error.message?.includes('batas maksimum');
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Gagal mendaftarkan laporan aduan',
+        error: isValidationError
+          ? error.message
+          : 'Gagal mendaftarkan laporan aduan',
       },
       { status: isValidationError ? 422 : 500 }
     );

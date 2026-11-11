@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API /api/compliance/check-anomaly error]:', error);
     return NextResponse.json(
-      { success: false, error: 'Gagal mengevaluasi anomali harga', details: error.message },
+      { success: false, error: 'Gagal mengevaluasi anomali harga' },
       { status: 500 }
     );
   }

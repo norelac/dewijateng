@@ -1,15 +1,32 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import PengelolaSidebar from '@/components/pengelola/PengelolaSidebar';
 import PengelolaHeader from '@/components/pengelola/PengelolaHeader';
 import BalaiDesaLpjUploader from '@/components/BalaiDesaLpjUploader';
 import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
+import { normalizeFiscalYear } from '@/components/pengelola/FiscalYearSelect';
 
 function LpjContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  const [fiscalYear, setFiscalYear] = useState<number>(
+    normalizeFiscalYear(searchParams.get('tahun'))
+  );
+
+  useEffect(() => {
+    const tahunParam = searchParams.get('tahun');
+    if (tahunParam) setFiscalYear(normalizeFiscalYear(tahunParam));
+  }, [searchParams]);
+
+  const handleYearChange = (year: number) => {
+    setFiscalYear(year);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tahun', String(year));
+    router.replace(`/pengelola/lpj?${params.toString()}`, { scroll: false });
+  };
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'lpj') {
@@ -36,7 +53,10 @@ function LpjContent() {
         />
 
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">
-          <BalaiDesaLpjUploader />
+          <BalaiDesaLpjUploader
+            fiscalYear={fiscalYear}
+            onYearChange={handleYearChange}
+          />
         </div>
       </div>
     </div>
@@ -48,7 +68,7 @@ export default function PengelolaLpjPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]">
-          <div className="w-8 h-8 border-3 border-[#0D2453] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-[3px] border-[#0D2453] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

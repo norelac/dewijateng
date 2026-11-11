@@ -252,7 +252,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: 'Gagal mengambil data ringkasan Disbudparekraf', details: error.message },
+      { success: false, error: 'Gagal mengambil data ringkasan Disbudparekraf' },
       { status: 500 }
     );
   }

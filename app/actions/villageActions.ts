@@ -122,61 +122,63 @@ export async function registerVillageAction(
       console.warn('[registerVillageAction] DB save warning, generating fallback response:', dbErr?.message);
     }
 
-    // Persistensi Akun ke data/demo-users.json agar login instan berhasil (baik saat DB online maupun offline)
-    try {
-      const fs = await import('fs');
-      const path = await import('path');
-      const usersFilePath = path.join(process.cwd(), 'data', 'demo-users.json');
-      let existingUsers: any[] = [];
-      if (fs.existsSync(usersFilePath)) {
-        try {
-          existingUsers = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
-        } catch {}
-      }
-      // Hapus jika username sudah ada sebelumnya
-      existingUsers = existingUsers.filter((u: any) => u.username?.toLowerCase() !== username.toLowerCase());
-      existingUsers.push({
-        id: crypto.randomUUID(),
-        username,
-        passwordHash,
-        role: 'desa',
-        fullName: `Pemerintah & Pengelola ${name.trim()}`,
-        phone: (contactPhone || '').trim() || null,
-        villageId,
-        villageName: name.trim(),
-        status: 'AKTIF',
-        mustChangePassword: true,
-      });
-      fs.writeFileSync(usersFilePath, JSON.stringify(existingUsers, null, 2), 'utf-8');
+    // Persistensi lokal ke JSON demo hanya untuk pengembangan offline agar repo produksi tetap bersih
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const usersFilePath = path.join(process.cwd(), 'data', 'demo-users.json');
+        let existingUsers: any[] = [];
+        if (fs.existsSync(usersFilePath)) {
+          try {
+            existingUsers = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+          } catch {}
+        }
+        // Hapus jika username sudah ada sebelumnya
+        existingUsers = existingUsers.filter((u: any) => u.username?.toLowerCase() !== username.toLowerCase());
+        existingUsers.push({
+          id: crypto.randomUUID(),
+          username,
+          passwordHash,
+          role: 'desa',
+          fullName: `Pemerintah & Pengelola ${name.trim()}`,
+          phone: (contactPhone || '').trim() || null,
+          villageId,
+          villageName: name.trim(),
+          status: 'AKTIF',
+          mustChangePassword: true,
+        });
+        fs.writeFileSync(usersFilePath, JSON.stringify(existingUsers, null, 2), 'utf-8');
 
-      // Sinkronkan juga desa baru ke data/master-desa-867.json agar halaman pengelola & transparansi langsung mengenali desa ini
-      const villagesFilePath = path.join(process.cwd(), 'data', 'master-desa-867.json');
-      if (fs.existsSync(villagesFilePath)) {
-        try {
-          const vList = JSON.parse(fs.readFileSync(villagesFilePath, 'utf-8'));
-          if (!vList.some((item: any) => item.slug === rawSlug || item.id === villageId)) {
-            vList.unshift({
-              id: villageId,
-              code: `DSW-${vList.length + 1}`,
-              name: `Desa Wisata ${name.trim()}`,
-              slug: rawSlug,
-              regency: regency.trim(),
-              district: district.trim(),
-              latitude: Number(latitude) || -7.15,
-              longitude: Number(longitude) || 110.14,
-              category,
-              pokdarwis_name: pokdarwisName.trim() || `Pengelola ${name.trim()}`,
-              contact_phone: contactPhone.trim(),
-              trust_score: 80.0,
-              penerima_bankeu: false,
-              nominal_bankeu: 0,
-            });
-            fs.writeFileSync(villagesFilePath, JSON.stringify(vList, null, 2), 'utf-8');
-          }
-        } catch {}
+        // Sinkronkan juga desa baru ke data/master-desa-867.json agar halaman pengelola & transparansi langsung mengenali desa ini
+        const villagesFilePath = path.join(process.cwd(), 'data', 'master-desa-867.json');
+        if (fs.existsSync(villagesFilePath)) {
+          try {
+            const vList = JSON.parse(fs.readFileSync(villagesFilePath, 'utf-8'));
+            if (!vList.some((item: any) => item.slug === rawSlug || item.id === villageId)) {
+              vList.unshift({
+                id: villageId,
+                code: `DSW-${vList.length + 1}`,
+                name: `Desa Wisata ${name.trim()}`,
+                slug: rawSlug,
+                regency: regency.trim(),
+                district: district.trim(),
+                latitude: Number(latitude) || -7.15,
+                longitude: Number(longitude) || 110.14,
+                category,
+                pokdarwis_name: pokdarwisName.trim() || `Pengelola ${name.trim()}`,
+                contact_phone: contactPhone.trim(),
+                trust_score: 80.0,
+                penerima_bankeu: false,
+                nominal_bankeu: 0,
+              });
+              fs.writeFileSync(villagesFilePath, JSON.stringify(vList, null, 2), 'utf-8');
+            }
+          } catch {}
+        }
+      } catch (saveErr) {
+        console.warn('[registerVillageAction] File persistence warning:', saveErr);
       }
-    } catch (saveErr) {
-      console.warn('[registerVillageAction] File persistence warning:', saveErr);
     }
 
     try {
@@ -246,10 +248,11 @@ export async function reviewLpjAction(params: {
     try {
       revalidatePath('/disbudparekraf');
       revalidatePath('/transparansi');
+      revalidatePath('/pengelola/anggaran');
+      revalidatePath('/pengelola/lpj');
     } catch {
       // Ignore when running outside of Next request store
     }
-    revalidatePath('/pengelola/anggaran');
 
     return {
       success: true,

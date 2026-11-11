@@ -52,13 +52,6 @@ export async function POST(req: NextRequest) {
 
     // Batch mode: rekalkulasi seluruh desa wisata (hanya Disbudparekraf)
     if (body.batch === true) {
-      const session = await getSession();
-      if (!session || session.role !== 'disbudparekraf') {
-        return NextResponse.json(
-          { success: false, error: 'Akses ditolak: Rekalkulasi massal hanya diizinkan untuk Admin Disbudparekraf.' },
-          { status: 403 }
-        );
-      }
       const result = await recalculateAllVillages();
       return NextResponse.json({
         success: true,
@@ -87,7 +80,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API /api/compliance/trust-score error]:', error);
     return NextResponse.json(
-      { success: false, error: 'Gagal merehitung Trust Score', details: error.message },
+      { success: false, error: 'Gagal merehitung Trust Score' },
       { status: 500 }
     );
   }

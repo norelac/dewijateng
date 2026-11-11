@@ -45,7 +45,6 @@ export async function GET(
       {
         success: false,
         error: 'Gagal mengambil detail laporan aduan',
-        details: error.message,
       },
       { status: 500 }
     );
@@ -121,7 +120,6 @@ export async function PATCH(
       {
         success: false,
         error: 'Gagal memperbarui status laporan aduan',
-        details: error.message,
       },
       { status: 500 }
     );

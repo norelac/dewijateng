@@ -282,6 +282,10 @@ export async function changePasswordAction(
   const newPassword = String(formData.get('newPassword') || '');
   const confirmPassword = String(formData.get('confirmPassword') || '');
 
+  if (!oldPassword) {
+    return { success: false, message: 'Kata sandi saat ini wajib diisi' };
+  }
+
   const check = validateNewPassword(newPassword);
   if (!check.valid) {
     return { success: false, message: check.message };
@@ -300,7 +304,7 @@ export async function changePasswordAction(
 
     if (foundUsers.length > 0) {
       const u = foundUsers[0];
-      if (oldPassword && !verifyPassword(oldPassword, u.passwordHash)) {
+      if (!verifyPassword(oldPassword, u.passwordHash)) {
         return { success: false, message: 'Kata sandi lama tidak sesuai' };
       }
 
@@ -312,6 +316,12 @@ export async function changePasswordAction(
           mustChangePassword: false,
         })
         .where(eq(users.id, currentSession.id));
+    } else if (FALLBACK_USERS[currentSession.username]) {
+      if (!verifyPassword(oldPassword, FALLBACK_USERS[currentSession.username].passwordHash)) {
+        return { success: false, message: 'Kata sandi lama tidak sesuai' };
+      }
+    } else {
+      return { success: false, message: 'Akun tidak ditemukan untuk perubahan kata sandi' };
     }
 
     await setSessionCookie({

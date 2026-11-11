@@ -96,7 +96,9 @@ export interface TransparansiGrant {
   pades_amount?: number | null;
   total_allocated: number;
   total_realized: number;
+  remaining_balance?: number | null;
   lpj_document_url?: string | null;
+  lpj_status?: string | null;
   uploaded_at?: string;
 }
 

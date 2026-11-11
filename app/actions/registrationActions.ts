@@ -3,7 +3,7 @@
 import { and, eq, or } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { assertRole, hashPassword, isValidEmail, validateNewPassword } from '@/lib/auth';
+import { assertRole, hashPassword, isSecureCookie, isValidEmail, validateNewPassword } from '@/lib/auth';
 import { issueAuthToken, consumeAuthToken, peekAuthToken } from '@/lib/authTokens';
 import { getRequestBaseUrl } from '@/lib/requestUrl';
 
@@ -152,6 +152,7 @@ export async function verifyEmailAction(
       const { cookies } = await import('next/headers');
       cookies().set('dewi_pending', consumed.userId, {
         httpOnly: true,
+        secure: isSecureCookie(),
         sameSite: 'lax',
         path: '/',
         maxAge: 2 * 60 * 60,
