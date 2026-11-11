@@ -209,7 +209,7 @@ export async function extractLpjWithLlm(
 } | null> {
   const baseUrl = process.env.LLM_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai';
   const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
-  const model = process.env.LLM_MODEL || 'gemini-2.5-flash';
+  const model = process.env.LLM_MODEL || 'gemini-3.8-flash';
 
   if (!baseUrl || !apiKey || !documentText || documentText.trim().length === 0) {
     return null;
@@ -250,7 +250,8 @@ Isi Teks / Tabel Dokumen:
 ${documentText.slice(0, 15000)}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
+    // Model thinking (Gemini 3.x) butuh waktu lebih lama daripada 2.5-flash.
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/chat/completions`, {
       method: 'POST',
@@ -289,13 +290,17 @@ ${documentText.slice(0, 15000)}`;
     }
 
     const items: ExtractedLpjExpenseItem[] = parsed.items.map((item: any) => {
-      const name = (item.activity_name || item.name || 'Pos Belanja').trim();
-      const volume = Number(item.volume) > 0 ? Number(item.volume) : 1;
-      const unit = (item.unit || 'unit').trim();
-      const claimed_unit_price = parseRupiahNumber(item.claimed_unit_price || item.unit_price || item.price);
+      const name = (item.activity_name || item.name || item.deskripsi || item.uraian || item.nama || 'Pos Belanja').trim();
+      const rawVolume = item.volume ?? item.kuantitas ?? item.qty ?? item.jumlah;
+      const volume = Number(rawVolume) > 0 ? Number(rawVolume) : 1;
+      const unit = (item.unit || item.satuan || 'unit').trim();
+      const claimed_unit_price = parseRupiahNumber(
+        item.claimed_unit_price || item.unit_price || item.unitPrice || item.harga_satuan || item.price
+      );
       const amount_realized =
-        parseRupiahNumber(item.amount_realized || item.total_price) ||
-        Math.round(volume * claimed_unit_price);
+        parseRupiahNumber(
+          item.amount_realized || item.total_price || item.totalPrice || item.subtotal || item.jumlah_harga
+        ) || Math.round(volume * claimed_unit_price);
       const category = (['MATERIAL_FISIK', 'UPAH_TENAGA', 'KESELAMATAN_K3', 'OPERASIONAL'].includes(item.category)
         ? item.category
         : classifyExpenseCategory(name)) as ExpenseCategory;
@@ -426,13 +431,34 @@ export async function extractLpjFromPdf(
   // 4. Normalisasi dan kalkulasi integritas neraca belanja
   let totalRealized = 0;
   const normalizedItems: ExtractedLpjExpenseItem[] = rawItems.map((item) => {
-    const activityName = (item.activity_name || item.name || 'Pos Belanja').trim();
-    const volume = Number(item.volume) > 0 ? Number(item.volume) : 1;
-    const unit = (item.unit || 'unit').trim();
-    const claimedUnitPrice = parseRupiahNumber(item.claimed_unit_price || item.unitPrice || item.price);
+    const activityName = (
+      item.activity_name ||
+      item.name ||
+      item.deskripsi ||
+      item.uraian ||
+      item.nama ||
+      'Pos Belanja'
+    ).trim();
+    const volume =
+      Number(item.volume ?? item.kuantitas ?? item.qty ?? item.jumlah) > 0
+        ? Number(item.volume ?? item.kuantitas ?? item.qty ?? item.jumlah)
+        : 1;
+    const unit = (item.unit || item.satuan || 'unit').trim();
+    const claimedUnitPrice = parseRupiahNumber(
+      item.claimed_unit_price ||
+        item.unit_price ||
+        item.unitPrice ||
+        item.harga_satuan ||
+        item.price
+    );
     const amountRealized =
-      parseRupiahNumber(item.amount_realized || item.totalPrice) ||
-      Math.round(volume * claimedUnitPrice);
+      parseRupiahNumber(
+        item.amount_realized ||
+          item.total_price ||
+          item.totalPrice ||
+          item.subtotal ||
+          item.jumlah_harga
+      ) || Math.round(volume * claimedUnitPrice);
 
     totalRealized += amountRealized;
 

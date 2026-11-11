@@ -5,6 +5,7 @@ import FinanceSummaryCards from '@/components/disbudparekraf/monitoring/FinanceS
 import ArusKasSection from '@/components/disbudparekraf/dashboard/ArusKasSection';
 import KeuanganDesaTable from '@/components/disbudparekraf/dashboard/KeuanganDesaTable';
 import PengelolaanAkunSection from '@/components/disbudparekraf/dashboard/PengelolaanAkunSection';
+import TrustScoreSection from '@/components/disbudparekraf/dashboard/TrustScoreSection';
 import AkunTerbaruTable from '@/components/disbudparekraf/dashboard/AkunTerbaruTable';
 import { getDashboardFinance } from '@/lib/services/financeService';
 import { getVillageAccountStats } from '@/app/actions/villageAccountActions';
@@ -73,6 +74,7 @@ export default async function DisbudparekrafDashboardPage() {
         desaTotal={totals.desaTotal}
         periode={finance.periode}
       />
+      <TrustScoreSection />
       <PengelolaanAkunSection stats={account.stats} />
       <AkunTerbaruTable rows={account.recent} />
 
