@@ -221,7 +221,7 @@ export default function TransactionDetailView({ tx }: { tx: TransactionDetail })
             pengelola desa.
           </p>
           <p className="text-[13px] font-semibold text-[#0D2453] mt-4">Perlu klarifikasi?</p>
-          <p className="text-[12px] text-[#0D2453] mt-1">{village.managerName}</p>
+          <p className="text-[12px] text-[#0D2453] mt-1">{village.managerName || 'Belum ada pengelola desa'}</p>
           <p className="text-[11px] text-[#64748B] break-all">{village.managerEmail || '—'}</p>
         </div>
       </div>

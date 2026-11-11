@@ -1,16 +1,15 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Phone, Mail, MessageCircle } from 'lucide-react';
+import { ShieldCheck, Phone, MessageCircle } from 'lucide-react';
 
-/** Narahubung pendamping desa (data demo). */
+/** Narahubung pendamping desa. */
 const CONTACT_PERSON = {
-  name: 'Sri Wahyuni',
-  initials: 'SW',
+  name: 'Layanan Pendamping Desa',
+  initials: 'PD',
   role: 'Pendamping Desa Wisata · Disbudparekraf Jateng',
-  phone: '+62 812-3456-7890',
-  waUrl: 'https://wa.me/6281234567890',
-  email: 'pendamping.desa@jatengprov.go.id',
+  phone: '+62 858-1999-7505',
+  waUrl: 'https://wa.me/6285819997505',
 };
 
 interface GuideItem {
@@ -30,15 +29,15 @@ const GUIDE_ITEMS: GuideItem[] = [
   },
   {
     title: 'Progres & penyelesaian',
-    body: 'Buka Perbarui progres pada laporan yang sedang ditangani. Lampirkan foto sesudah penanganan dan tandai selesai agar laporan tertutup dengan bukti. Catatan progres bertahap belum tersimpan sampai endpoint catatan tersedia di backend.',
+    body: 'Buka Perbarui progres pada laporan yang sedang ditangani. Lampirkan foto sesudah penanganan dan tandai selesai agar laporan tertutup dengan bukti.',
   },
   {
     title: 'Anggaran desa',
-    body: 'Buka Anggaran desa untuk melihat alokasi dan realisasi. Form ubah anggaran sudah mengikuti desain, tetapi tombol simpan belum aktif karena endpoint tulis anggaran belum ada.',
+    body: 'Buka Anggaran desa untuk melihat alokasi dan realisasi. Ubah nilai per sumber dana, lalu pilih Simpan perubahan — total pendanaan dan halaman publik transparansi ikut diperbarui.',
   },
   {
     title: 'Pengeluaran & bukti',
-    body: 'Buka Pengeluaran & bukti untuk melihat buku kas dari pos belanja LPJ yang diunggah. Form tambah dan ubah pengeluaran menunggu endpoint tulis; nota dan foto per pos tampil setelah kolom lampiran tersedia.',
+    body: 'Buka Pengeluaran & bukti untuk melihat buku kas dari pos belanja LPJ yang diunggah. Anda bisa menambah, mengubah, dan menghapus pengeluaran; nota dan foto per pos tersedia sebagai bukti pendukung.',
   },
   {
     title: 'Unggah LPJ',
@@ -57,9 +56,9 @@ const FAQ_ITEMS: FaqItem[] = [
       'Setelah masalah tertangani, ringkasan tindakan diisi, dan foto sesudah penanganan dilampirkan. Status berubah setelah bukti disimpan.',
   },
   {
-    question: 'Mengapa tombol simpan pengeluaran belum aktif?',
+    question: 'Bagaimana mengubah nilai anggaran desa?',
     answer:
-      'Endpoint tulis pengeluaran belum tersedia. Selama itu, buku kas hanya membaca pos belanja yang masuk dari unggahan LPJ.',
+      'Buka Anggaran desa, sesuaikan nilai per sumber dana, lalu pilih Simpan perubahan. Total pendanaan dan halaman transparansi publik ikut diperbarui.',
   },
   {
     question: 'Mengapa total belanja belum berubah?',
@@ -167,13 +166,6 @@ export default function PusatBantuanView({ villageName = 'desa' }: { villageName
               >
                 <MessageCircle className="w-[16px] h-[16px] shrink-0" />
                 <span className="tabular-nums">{CONTACT_PERSON.phone}</span>
-              </a>
-              <a
-                href={`mailto:${CONTACT_PERSON.email}`}
-                className="flex items-center gap-[10px] w-full rounded-[10px] border border-[#e6ecf5] px-[12px] py-[10px] text-[#0d2453] text-[13px] font-medium hover:bg-[#f7f9fc] transition-colors break-all"
-              >
-                <Mail className="w-[16px] h-[16px] shrink-0" />
-                <span>{CONTACT_PERSON.email}</span>
               </a>
             </div>
 

@@ -141,7 +141,6 @@ export async function registerVillageAction(
       existingUsers.push({
         id: crypto.randomUUID(),
         username,
-        password: temporaryPassword,
         passwordHash,
         role: 'desa',
         fullName: `Pemerintah & Pengelola ${name.trim()}`,

@@ -1,15 +1,12 @@
 // ==============================================================================
 // DEWI JATENG - Pengiriman email autentikasi
 //
-// Transport aktif saat ini: MODE DEMO. Email tidak benar-benar dikirim ke inbox;
-// tautan penting ditulis ke log server dan dikembalikan ke pemanggil supaya bisa
-// ditampilkan di layar ("Buka tautan — mode demo").
-//
-// Untuk mengganti ke SMTP sungguhan (nanti): isi env SMTP_HOST/SMTP_PORT/
-// SMTP_USER/SMTP_PASS, lalu ganti isi sendMail() dengan nodemailer, dan set
-// DEMO_MAIL=false agar tautan tidak lagi dikembalikan ke klien. Antarmuka
-// pemanggil tidak perlu berubah.
+// Kalau SMTP_HOST/SMTP_USER/SMTP_PASS terisi, email dikirim sungguhan lewat
+// nodemailer. Kalau kosong (atau pengiriman gagal), fungsi jatuh ke mode demo:
+// tautan dikembalikan ke pemanggil supaya alur verifikasi/reset tidak buntu.
 // ==============================================================================
+
+import nodemailer, { type Transporter } from 'nodemailer';
 
 export interface SendMailInput {
   to: string;
@@ -28,10 +25,30 @@ export interface SendMailInput {
 export interface SendMailResult {
   delivered: boolean;
   /**
-   * Hanya terisi di mode demo: tautan yang seharusnya dibuka penerima,
-   * supaya alur bisa diuji tanpa SMTP.
+   * Terisi saat email tidak benar-benar terkirim (SMTP kosong atau gagal),
+   * supaya alur bisa diuji tanpa kotak masuk.
    */
   devLink?: string;
+}
+
+let cached: Transporter | null = null;
+
+function getTransporter(): Transporter | null {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) return null;
+
+  if (!cached) {
+    const port = Number(process.env.SMTP_PORT || 465);
+    cached = nodemailer.createTransport({
+      host,
+      port,
+      secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465,
+      auth: { user, pass },
+    });
+  }
+  return cached;
 }
 
 function renderHtml(input: SendMailInput): string {
@@ -50,19 +67,32 @@ function renderHtml(input: SendMailInput): string {
 
 export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
   const html = renderHtml(input);
+  const from =
+    process.env.SMTP_FROM || `DEWI JATENG <${process.env.SMTP_USER || 'no-reply@localhost'}>`;
+  const transporter = getTransporter();
 
-  // ponytail: mode demo — tidak ada SMTP. Tautan dicatat agar bisa diuji.
-  console.log(
-    `[mailer:demo] -> ${input.to} | ${input.subject}` +
-      (input.actionUrl ? ` | ${input.actionUrl}` : '')
-  );
-
-  if (process.env.DEMO_MAIL === 'false') {
-    // Demo dimatikan manual (mis. setelah SMTP dipasang): jangan bocorkan tautan.
-    console.warn('[mailer] mode demo dimatikan; email tidak terkirim.');
-    return { delivered: false };
+  if (!transporter) {
+    console.log(
+      `[mailer:demo] -> ${input.to} | ${input.subject}` +
+        (input.actionUrl ? ` | ${input.actionUrl}` : '')
+    );
+    return { delivered: false, devLink: input.actionUrl };
   }
 
-  void html;
-  return { delivered: false, devLink: input.actionUrl };
+  try {
+    await transporter.sendMail({
+      from,
+      to: input.to,
+      subject: input.subject,
+      html,
+      text: [input.heading, input.body, input.actionUrl, input.footnote]
+        .filter(Boolean)
+        .join('\n\n'),
+    });
+    return { delivered: true };
+  } catch (err) {
+    // Jaring pengaman hari-H: email gagal terkirim, tapi alur tetap bisa lanjut.
+    console.error('[mailer] gagal kirim, kembali ke tautan demo:', err);
+    return { delivered: false, devLink: input.actionUrl };
+  }
 }

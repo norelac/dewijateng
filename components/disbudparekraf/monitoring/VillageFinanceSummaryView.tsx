@@ -182,7 +182,9 @@ export default function VillageFinanceSummaryView({ data }: { data: VillageFinan
 
       <div className="bg-[#EDF3FC] rounded-[14px] px-6 py-[18px] flex flex-col gap-1">
         <p className="text-[#0D2453] text-[13px] font-semibold">
-          Bukti belum lengkap? Hubungi {village.managerName} · {village.managerEmail || '—'}
+          {village.managerName
+            ? `Bukti belum lengkap? Hubungi ${village.managerName} · ${village.managerEmail || '—'}`
+            : 'Belum ada akun pengelola desa. Koordinasikan lewat Disbudparekraf Jateng.'}
         </p>
         <p className="text-[#64748B] text-[12px]">
           Data untuk pemantauan, bukan perubahan transaksi. Pencatatan dan perbaikan data dilakukan
