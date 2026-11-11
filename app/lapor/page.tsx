@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Search,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   MapPin,
   Check,
@@ -801,6 +803,30 @@ function LaporContent() {
     return filteredReports.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredReports, currentPage]);
 
+  // Jendela nomor halaman: 1 … (aktif ±1) … akhir, sisanya elipsis.
+  const pageWindow = useMemo<(number | 'ellipsis')[]>(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const items: (number | 'ellipsis')[] = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    if (start > 2) items.push('ellipsis');
+    for (let p = start; p <= end; p += 1) items.push(p);
+    if (end < totalPages - 1) items.push('ellipsis');
+    items.push(totalPages);
+    return items;
+  }, [currentPage, totalPages]);
+
+  const listTopRef = useRef<HTMLDivElement>(null);
+  const goToPage = (page: number) => {
+    const clamped = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(clamped);
+    const nextReport = filteredReports[(clamped - 1) * ITEMS_PER_PAGE];
+    if (nextReport) setActiveReportId(nextReport.id);
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   // Active report selection
   const activeReport = useMemo(() => {
     const found = reports.find((r) => r.id === activeReportId);
@@ -1030,7 +1056,7 @@ function LaporContent() {
         {/* 2-Column Master-Detail Layout */}
         <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
           {/* Left Column: Report Cards List (560px on desktop) */}
-          <div className="w-full lg:w-[560px] shrink-0 flex flex-col gap-4">
+          <div ref={listTopRef} className="w-full lg:w-[560px] shrink-0 flex flex-col gap-4 scroll-mt-[112px]">
             {paginatedReports.length === 0 ? (
               <div className="bg-white rounded-[20px] border border-[#E6ECF5] p-8 text-center text-[#64748B] text-sm shadow-[0_1px_2px_rgba(13,36,83,0.035),0_6px_14px_-8px_rgba(13,36,83,0.10)] font-medium">
                 {isLoading
@@ -1105,8 +1131,8 @@ function LaporContent() {
             )}
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between pt-3 pb-1 mt-1 text-[13px] text-[#64748B]">
-              <span className="font-medium text-xs sm:text-[13px] text-[#767676]">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3 pb-1 mt-1 text-[13px] text-[#64748B]">
+              <span className="font-medium text-xs sm:text-[13px] text-[#767676] whitespace-nowrap">
                 Menampilkan{' '}
                 {filteredReports.length === 0
                   ? 0
@@ -1117,42 +1143,64 @@ function LaporContent() {
                 dari {filteredReports.length}
               </span>
 
-              {/* Page numbers: 1, 2, 3, 4 */}
-              <div className="flex items-center gap-1.5">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  const isActive = currentPage === page;
-                  return (
-                    <button
-                      key={page}
-                      type="button"
-                      onClick={() => {
-                        setCurrentPage(page);
-                        const nextReport = filteredReports[(page - 1) * ITEMS_PER_PAGE];
-                        if (nextReport) {
-                          setActiveReportId(nextReport.id);
-                        }
-                      }}
-                      className={`w-9 h-9 rounded-[10px] flex items-center justify-center text-[13px] transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#0D2453] text-white font-bold shadow-[0_2px_6px_rgba(13,36,83,0.18)]'
-                          : 'bg-white border border-[#E6ECF5] text-[#0D2453] font-semibold hover:border-[#CBD5E1] hover:bg-[#F8FAFC]'
-                      }`}
-                      aria-label={`Halaman ${page}`}
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    aria-label="Halaman sebelumnya"
+                    className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-white border border-[#E6ECF5] text-[#0D2453] transition-all cursor-pointer hover:border-[#CBD5E1] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#E6ECF5] disabled:hover:bg-white"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {pageWindow.map((item, idx) =>
+                    item === 'ellipsis' ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="w-6 h-9 flex items-center justify-center text-[#94A3B8] select-none"
+                        aria-hidden="true"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => goToPage(item)}
+                        className={`w-9 h-9 rounded-[10px] flex items-center justify-center text-[13px] transition-all cursor-pointer ${
+                          currentPage === item
+                            ? 'bg-[#0D2453] text-white font-bold shadow-[0_2px_6px_rgba(13,36,83,0.18)]'
+                            : 'bg-white border border-[#E6ECF5] text-[#0D2453] font-semibold hover:border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                        }`}
+                        aria-label={`Halaman ${item}`}
+                        aria-current={currentPage === item ? 'page' : undefined}
+                      >
+                        {item}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    aria-label="Halaman berikutnya"
+                    className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-white border border-[#E6ECF5] text-[#0D2453] transition-all cursor-pointer hover:border-[#CBD5E1] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#E6ECF5] disabled:hover:bg-white"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Right Column: Selected Report Detail (sticky + scroll internal di desktop) */}
+          {/* Right Column: Selected Report Detail */}
           {filteredReports.length > 0 && (
             <div
               key={activeReport.id}
-              className="detail-swap w-full lg:flex-1 lg:sticky lg:top-[112px] lg:max-h-[calc(100vh-128px)] lg:overflow-y-auto overscroll-contain bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_3px_rgba(13,36,83,0.05),0_10px_20px_-8px_rgba(13,36,83,0.10),0_32px_56px_-24px_rgba(13,36,83,0.16)] flex flex-col gap-6"
+              className="detail-swap w-full lg:flex-1 bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_3px_rgba(13,36,83,0.05),0_10px_20px_-8px_rgba(13,36,83,0.10),0_32px_56px_-24px_rgba(13,36,83,0.16)] flex flex-col gap-6"
             >
               {/* 1. Header & Status */}
               <div className="flex items-center justify-between">

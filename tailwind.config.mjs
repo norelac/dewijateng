@@ -20,9 +20,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['var(--font-plus-jakarta)', 'Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-        heading: ['var(--font-montserrat)', 'Montserrat', 'Inter', 'sans-serif'],
-        montserrat: ['var(--font-montserrat)', 'Montserrat', 'sans-serif'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        inter: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
         cursive: ['var(--font-montecarlo)', 'MonteCarlo', 'cursive'],
       },
     },
