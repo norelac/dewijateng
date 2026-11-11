@@ -7,25 +7,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 const HERO_SLIDES = [
   {
     id: 'slide-1',
-    src: '/img/hero/hero-1.png',
+    src: '/img/hero/hero-1.webp',
     alt: 'Desa Wisata Jawa Tengah - Sawah Terasering & Gunung Sindoro',
     caption: 'Kawasan Wisata Lereng Gunung Sindoro, Wonosobo',
   },
   {
     id: 'slide-2',
-    src: '/img/hero/hero-2.jpg',
+    src: '/img/hero/hero-2.webp',
     alt: 'Desa Wisata Candirejo & Borobudur',
     caption: 'Desa Wisata Candirejo, Borobudur, Magelang',
   },
   {
     id: 'slide-3',
-    src: '/img/hero/hero-3.jpg',
-    alt: 'Dataran Tinggi Dieng & Telaga Warna',
-    caption: 'Kawasan Dataran Tinggi Dieng Kulon, Banjarnegara',
+    src: '/img/hero/Desa-Wisata-Samiran-Boyolali.webp',
+    alt: 'Desa Wisata Samiran & Lereng Gunung Merapi, Boyolali',
+    caption: 'Desa Wisata Samiran, Selo, Boyolali',
   },
   {
     id: 'slide-4',
-    src: '/img/hero/hero-4.jpg',
+    src: '/img/hero/hero-4.webp',
     alt: 'Hutan Pinus Limpakuwus Baturraden',
     caption: 'Desa Wisata Limpakuwus, Sumbang, Banyumas',
   },
