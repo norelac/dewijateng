@@ -17,7 +17,7 @@ function LaporanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
-  const { tickets, loading, reload } = useDashboardTickets();
+  const { tickets, loading, reload, session } = useDashboardTickets();
 
   const initialView = (searchParams.get('view') as 'list' | 'detail' | 'progres') || 'list';
   const initialTicketId = searchParams.get('id') || '';
@@ -107,7 +107,7 @@ function LaporanContent() {
     const fd = new FormData();
     fd.append('report_code', ticket.code);
     fd.append('action_summary', summary);
-    fd.append('officer_name', 'Pengelola Desa Candirejo');
+    fd.append('officer_name', session?.fullName || 'Pengelola desa wisata');
     fd.append('photo_after', resolvedFile);
 
     const res = await resolveReportAction(fd);

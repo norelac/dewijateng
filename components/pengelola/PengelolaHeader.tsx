@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, ChevronDown, Menu, LogOut, User, Shield } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronDown, Menu, LogOut, Shield } from 'lucide-react';
 import { getSessionAction, logoutAction } from '@/app/actions/authActions';
 import type { SessionUser } from '@/lib/auth';
+import NotificationBell from '@/components/shared/NotificationBell';
 
 interface PengelolaHeaderProps {
   onOpenMobile?: () => void;
@@ -14,15 +16,15 @@ export default function PengelolaHeader({
   onOpenMobile,
   activeTabTitle = 'Dashboard',
 }: PengelolaHeaderProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hasUnread] = useState(true);
   const [session, setSession] = useState<SessionUser | null>(null);
 
   useEffect(() => {
     getSessionAction().then(setSession);
   }, []);
 
-  const displayName = session?.fullName || 'Pengelola Candirejo';
+  const displayName = session?.fullName || 'Pengelola Desa';
   const roleLabel = session?.role === 'disbudparekraf' ? 'Admin Disbudparekraf' : 'Admin Desa';
   const initials = displayName
     .split(' ')
@@ -30,6 +32,13 @@ export default function PengelolaHeader({
     .map((s) => s[0])
     .join('')
     .toUpperCase() || 'PD';
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logoutAction();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <header className="w-full h-[72px] sm:h-[80px] bg-white border-b border-[#E6ECF5] px-4 sm:px-8 flex items-center justify-between shrink-0 sticky top-0 z-20">
@@ -55,17 +64,7 @@ export default function PengelolaHeader({
       {/* Right: Notification & Profile */}
       <div className="flex items-center gap-3 sm:gap-5">
         {/* Notification Bell */}
-        <button
-          type="button"
-          className="relative p-2 rounded-full hover:bg-slate-100 text-[#64748B] hover:text-[#0D2453] transition-colors"
-          aria-label="Notifikasi"
-          title="Notifikasi terbaru"
-        >
-          <Bell className="w-[18px] h-[18px]" />
-          {hasUnread && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
-          )}
-        </button>
+        <NotificationBell />
 
         {/* Separator */}
         <div className="h-7 w-px bg-[#E6ECF5] hidden sm:block" />
@@ -112,7 +111,7 @@ export default function PengelolaHeader({
                 <div className="h-px bg-slate-100 my-1" />
                 <button
                   type="button"
-                  onClick={() => logoutAction()}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 text-left transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />

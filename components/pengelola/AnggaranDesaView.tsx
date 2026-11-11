@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronDown, ShieldCheck, ArrowRight } from 'lucide-react';
+import React from 'react';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 import { VillageBudgetData } from './types';
+import { useVillageName } from './usePengelolaData';
+import FiscalYearSelect from './FiscalYearSelect';
 
 interface AnggaranDesaViewProps {
   budget: VillageBudgetData;
   onOpenEdit: () => void;
   onNavigateToPengeluaran?: () => void;
+  /** Tahun anggaran aktif (dikendalikan halaman agar data ikut dimuat ulang). */
+  fiscalYear?: number;
+  onYearChange?: (year: number) => void;
+  isLoading?: boolean;
 }
 
 function formatRupiah(num: number): string {
@@ -22,9 +28,12 @@ export default function AnggaranDesaView({
   budget,
   onOpenEdit,
   onNavigateToPengeluaran,
+  fiscalYear,
+  onYearChange,
+  isLoading = false,
 }: AnggaranDesaViewProps) {
-  const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
-  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const selectedYear = fiscalYear ?? budget.year ?? 2026;
+  const villageName = useVillageName();
 
   const totalPendanaan = budget.apbdes + budget.banprov + budget.pades;
   const danaTerpakai = budget.usedAmount;
@@ -50,7 +59,7 @@ export default function AnggaranDesaView({
             Anggaran desa
           </h1>
           <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
-            Sumber pendanaan dan realisasi Desa Candirejo · Tahun anggaran {selectedYear}
+            Sumber pendanaan dan realisasi {villageName} · Tahun anggaran {selectedYear}
           </p>
         </div>
 
@@ -69,44 +78,12 @@ export default function AnggaranDesaView({
           Data per {budget.dateStr || '28 Oktober 2026'}
         </p>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
-            className="bg-white border-2 border-[#e6ecf5] rounded-full h-[40px] px-[14px] flex items-center gap-[8px] text-[#0d2453] text-[12px] font-semibold hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-          >
-            <span>TA {selectedYear}</span>
-            <ChevronDown className="w-[16px] h-[16px] text-[#64748b]" />
-          </button>
-
-          {yearDropdownOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-30"
-                onClick={() => setYearDropdownOpen(false)}
-              />
-              <div className="absolute right-0 top-[48px] bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 w-[130px] animate-in fade-in zoom-in-95 duration-100">
-                {[2026, 2025, 2024].map((yr) => (
-                  <button
-                    key={yr}
-                    type="button"
-                    onClick={() => {
-                      setSelectedYear(yr);
-                      setYearDropdownOpen(false);
-                    }}
-                    className={`w-full px-4 py-2 text-left text-[12px] hover:bg-slate-50 ${
-                      selectedYear === yr
-                        ? 'font-semibold text-[#0d2453] bg-slate-50'
-                        : 'text-[#64748b]'
-                    }`}
-                  >
-                    TA {yr}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        <FiscalYearSelect
+          value={selectedYear}
+          onChange={(year) => onYearChange?.(year)}
+          variant="button"
+          disabled={!onYearChange || isLoading}
+        />
       </div>
 
       {/* 3. Posisi Anggaran (3 Kartu Ringkasan) */}
@@ -116,7 +93,7 @@ export default function AnggaranDesaView({
           <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
             Total pendanaan
           </p>
-          <p className="text-[#0d2453] text-[25px] font-semibold leading-tight font-mono tracking-tight">
+          <p className="text-[#0d2453] text-[25px] font-semibold leading-tight tracking-tight tabular-nums">
             {formatRupiah(totalPendanaan)}
           </p>
           <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
@@ -129,7 +106,7 @@ export default function AnggaranDesaView({
           <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
             Dana terpakai
           </p>
-          <p className="text-[#0d2453] text-[25px] font-semibold leading-tight font-mono tracking-tight">
+          <p className="text-[#0d2453] text-[25px] font-semibold leading-tight tracking-tight tabular-nums">
             {formatRupiah(danaTerpakai)}
           </p>
           <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
@@ -142,7 +119,7 @@ export default function AnggaranDesaView({
           <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
             Sisa kas
           </p>
-          <p className="text-[#0d2453] text-[25px] font-semibold leading-tight font-mono tracking-tight">
+          <p className="text-[#0d2453] text-[25px] font-semibold leading-tight tracking-tight tabular-nums">
             {formatRupiah(sisaKas)}
           </p>
           <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
@@ -169,10 +146,10 @@ export default function AnggaranDesaView({
             {/* Baris 1: APBDes */}
             <div className="border-b border-[#e6ecf5] px-[14px] py-[16px] flex items-center gap-[20px] text-[#0d2453] text-[13px] hover:bg-slate-50/60 transition-colors">
               <div className="flex-1 min-w-px font-semibold">APBDes</div>
-              <div className="w-[220px] shrink-0 font-mono">
+              <div className="w-[220px] shrink-0 tabular-nums">
                 {formatRupiah(budget.apbdes)}
               </div>
-              <div className="w-[120px] shrink-0 font-mono">{apbdesPorsi}%</div>
+              <div className="w-[120px] shrink-0 tabular-nums">{apbdesPorsi}%</div>
             </div>
 
             {/* Baris 2: Bantuan Provinsi */}
@@ -180,19 +157,19 @@ export default function AnggaranDesaView({
               <div className="flex-1 min-w-px font-semibold">
                 Bantuan Provinsi
               </div>
-              <div className="w-[220px] shrink-0 font-mono">
+              <div className="w-[220px] shrink-0 tabular-nums">
                 {formatRupiah(budget.banprov)}
               </div>
-              <div className="w-[120px] shrink-0 font-mono">{banprovPorsi}%</div>
+              <div className="w-[120px] shrink-0 tabular-nums">{banprovPorsi}%</div>
             </div>
 
             {/* Baris 3: PADes Wisata */}
             <div className="border-b border-[#e6ecf5] px-[14px] py-[16px] flex items-center gap-[20px] text-[#0d2453] text-[13px] hover:bg-slate-50/60 transition-colors">
               <div className="flex-1 min-w-px font-semibold">PADes Wisata</div>
-              <div className="w-[220px] shrink-0 font-mono">
+              <div className="w-[220px] shrink-0 tabular-nums">
                 {formatRupiah(budget.pades)}
               </div>
-              <div className="w-[120px] shrink-0 font-mono">{padesPorsi}%</div>
+              <div className="w-[120px] shrink-0 tabular-nums">{padesPorsi}%</div>
             </div>
           </div>
         </div>
@@ -244,7 +221,7 @@ export default function AnggaranDesaView({
       {/* 7. Sub-Footer Layanan */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
         <span>© 2026 DEWI JATENG</span>
-        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+        <span>{villageName} · Per 28 Oktober 2026</span>
       </div>
     </div>
   );

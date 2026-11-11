@@ -173,77 +173,47 @@ function HeroTypewriter({
   text,
   speed = 45,
   delay = 600,
-  holdDelay = 4500,
 }: {
   text: string;
   speed?: number;
   delay?: number;
-  holdDelay?: number;
 }) {
   const [length, setLength] = useState(0);
-  const [isTyping, setIsTyping] = useState(false);
-  const [isFading, setIsFading] = useState(false);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
-    // ponytail: natural loop with smooth fade reset. Upgrade to multi-sentence carousel if plural phrases needed.
-    let timer: NodeJS.Timeout;
+    // Ketik sekali lalu berhenti; kursor hilang setelah selesai.
+    let cancelled = false;
     let currentLength = 0;
-    let isActive = true;
+    let timer: NodeJS.Timeout;
 
-    const startTyping = () => {
-      setIsFading(false);
-      setIsTyping(true);
+    const typeStep = () => {
+      if (cancelled) return;
+      currentLength++;
+      setLength(currentLength);
 
-      const typeStep = () => {
-        if (!isActive) return;
-        currentLength++;
-        setLength(currentLength);
-
-        if (currentLength >= text.length) {
-          setIsTyping(false);
-          // Hold full text for reading, then soft fade
-          timer = setTimeout(() => {
-            if (!isActive) return;
-            setIsFading(true);
-            timer = setTimeout(() => {
-              if (!isActive) return;
-              currentLength = 0;
-              setLength(0);
-              timer = setTimeout(() => {
-                if (!isActive) return;
-                startTyping();
-              }, 300);
-            }, 450);
-          }, holdDelay);
-          return;
-        }
-
-        timer = setTimeout(typeStep, speed);
-      };
+      if (currentLength >= text.length) {
+        setDone(true);
+        return;
+      }
 
       timer = setTimeout(typeStep, speed);
     };
 
-    timer = setTimeout(startTyping, delay);
+    timer = setTimeout(typeStep, delay);
 
     return () => {
-      isActive = false;
+      cancelled = true;
       clearTimeout(timer);
     };
-  }, [text, speed, delay, holdDelay]);
+  }, [text, speed, delay]);
 
   return (
-    <span
-      className={`inline-block select-none transition-opacity duration-400 ease-in-out ${
-        isFading ? 'opacity-0' : 'opacity-100'
-      }`}
-    >
+    <span className="inline-block select-none">
       <span>{text.slice(0, length)}</span>
-      <span
-        className={`inline-block w-[2px] h-[0.9em] ml-1 bg-white align-baseline ${
-          isTyping ? 'opacity-100' : 'animate-pulse'
-        }`}
-      />
+      {!done && (
+        <span className="inline-block w-[2px] h-[0.9em] ml-1 bg-white align-baseline opacity-100" />
+      )}
     </span>
   );
 }

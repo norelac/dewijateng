@@ -14,6 +14,7 @@ import {
   useBudgetData,
   useDashboardTickets,
 } from '@/components/pengelola/usePengelolaData';
+import { normalizeFiscalYear } from '@/components/pengelola/FiscalYearSelect';
 import { mapGrantExpenseToExpenseItem } from '@/components/pengelola/mapReports';
 import type { ActivityItem } from '@/components/pengelola/types';
 
@@ -21,8 +22,18 @@ function PengelolaDashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  const [fiscalYear, setFiscalYear] = useState<number>(
+    normalizeFiscalYear(searchParams.get('tahun'))
+  );
   const { tickets } = useDashboardTickets();
-  const { budget, village, grant, expenses } = useBudgetData();
+  const { budget, village, grant, expenses } = useBudgetData(fiscalYear);
+
+  const handleYearChange = (year: number) => {
+    setFiscalYear(year);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tahun', String(year));
+    router.replace(`/pengelola?${params.toString()}`, { scroll: false });
+  };
 
   const reportCounts = {
     total: tickets.length,
@@ -74,6 +85,12 @@ function PengelolaDashboardContent() {
     }
   }, [searchParams, router]);
 
+  // Sinkronkan tahun anggaran dari URL (mis. dibuka dari tautan bersama).
+  useEffect(() => {
+    const tahunParam = searchParams.get('tahun');
+    if (tahunParam) setFiscalYear(normalizeFiscalYear(tahunParam));
+  }, [searchParams]);
+
   return (
     <div className="bg-[#F7F9FC] min-h-screen flex items-start w-full relative">
       {/* 1. Sidebar Navigasi Pengelola (Desktop + Mobile Drawer) */}
@@ -98,17 +115,18 @@ function PengelolaDashboardContent() {
           {/* KPI Indikator & Identitas Desa */}
           <section id="section-kpi" className="w-full">
             <DashboardKpis
-              villageName={village?.name || 'Desa Candirejo'}
+              villageName={village?.name || 'Desa wisata'}
               regency={
                 village
-                  ? `${village.district}, Kabupaten ${village.regency} · Jawa Tengah`
-                  : 'Borobudur, Kabupaten Magelang · Jawa Tengah'
+                  ? `${village.district}, ${village.regency} · Jawa Tengah`
+                  : 'Jawa Tengah'
               }
               updatedAt={`Per ${budget.dateStr} · 10.00 WIB`}
               periodYear={`TA ${budget.year}`}
               totalFunding={totalFunding}
               reportCounts={reportCounts}
               evidence={evidence}
+              onYearChange={handleYearChange}
             />
           </section>
 

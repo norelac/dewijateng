@@ -285,3 +285,127 @@ export async function getVillageLpjSummary(
     expenses,
   };
 }
+
+// ------------------------------------------------------------------------------
+// Antrean verifikasi LPJ (dipakai layar Disbudparekraf -> Aktivitas)
+// ------------------------------------------------------------------------------
+
+export interface LpjQueueItem {
+  grantId: string;
+  villageName: string;
+  regency: string;
+  fiscalYear: number;
+  totalAllocated: number;
+  totalRealized: number;
+  lpjStatus: 'PENDING_UPLOAD' | 'SUBMITTED' | 'VERIFIED' | 'REVISION';
+  lpjDocumentUrl: string | null;
+  uploadedAt: string | null;
+  lpjReviewNotes: string | null;
+  hasAnomaly: boolean;
+}
+
+/**
+ * Ambil antrean LPJ yang benar-benar ada di database.
+ * Urutan: yang butuh tindakan lebih dulu (SUBMITTED -> REVISION -> VERIFIED),
+ * lalu yang paling baru diunggah.
+ */
+export async function listLpjQueue(
+  fiscalYear: number = 2026,
+  limit: number = 12
+): Promise<LpjQueueItem[]> {
+  const res = await query<any>(
+    `SELECT vg.id, vg.fiscal_year, vg.total_allocated, vg.total_realized,
+            vg.lpj_document_url, vg.lpj_status, vg.uploaded_at, vg.lpj_review_notes,
+            tv.name AS village_name, tv.regency,
+            COALESCE(anom.cnt, 0) AS anomaly_count
+       FROM village_grants vg
+       JOIN tourist_villages tv ON tv.id = vg.village_id
+       LEFT JOIN (
+         SELECT grant_id, COUNT(*) AS cnt
+           FROM grant_expenses
+          WHERE ai_anomaly_flag = true
+          GROUP BY grant_id
+       ) anom ON anom.grant_id = vg.id
+      WHERE vg.fiscal_year = $1
+        AND vg.lpj_document_url IS NOT NULL
+      ORDER BY CASE vg.lpj_status
+                 WHEN 'SUBMITTED' THEN 0
+                 WHEN 'REVISION' THEN 1
+                 WHEN 'VERIFIED' THEN 2
+                 ELSE 3
+               END,
+               vg.uploaded_at DESC NULLS LAST
+      LIMIT $2`,
+    [fiscalYear, limit]
+  );
+
+  return res.rows.map((row) => ({
+    grantId: row.id,
+    villageName: row.village_name,
+    regency: row.regency,
+    fiscalYear: row.fiscal_year,
+    totalAllocated: parseInt(row.total_allocated, 10),
+    totalRealized: parseInt(row.total_realized, 10),
+    lpjStatus: row.lpj_status,
+    lpjDocumentUrl: row.lpj_document_url,
+    uploadedAt: row.uploaded_at ? new Date(row.uploaded_at).toISOString() : null,
+    lpjReviewNotes: row.lpj_review_notes,
+    hasAnomaly: parseInt(row.anomaly_count, 10) > 0,
+  }));
+}
+
+/**
+ * Data lengkap satu grant untuk dirender menjadi berkas PDF LPJ.
+ * `slug` adalah slug desa wisata pada tabel `tourist_villages`.
+ */
+export async function getLpjDocumentData(
+  slug: string,
+  fiscalYear: number = 2026
+): Promise<import('@/lib/services/lpjDocumentPdf').LpjDocumentData | null> {
+  const grantRes = await query<any>(
+    `SELECT vg.id, vg.fiscal_year, vg.funding_source, vg.total_allocated,
+            vg.total_realized, vg.remaining_balance, vg.lpj_status, vg.uploaded_at,
+            tv.name AS village_name, tv.regency, tv.district, tv.trust_score
+       FROM village_grants vg
+       JOIN tourist_villages tv ON tv.id = vg.village_id
+      WHERE tv.slug = $1 AND vg.fiscal_year = $2
+      LIMIT 1`,
+    [slug, fiscalYear]
+  );
+
+  if (grantRes.rows.length === 0) return null;
+  const g = grantRes.rows[0];
+
+  const expRes = await query<any>(
+    `SELECT activity_name, category, volume, unit, claimed_unit_price,
+            amount_realized, ai_anomaly_flag, anomaly_note
+       FROM grant_expenses
+      WHERE grant_id = $1
+      ORDER BY id ASC`,
+    [g.id]
+  );
+
+  return {
+    villageName: g.village_name,
+    regency: g.regency,
+    district: g.district,
+    fiscalYear: g.fiscal_year,
+    fundingSource: g.funding_source,
+    totalAllocated: parseInt(g.total_allocated, 10),
+    totalRealized: parseInt(g.total_realized, 10),
+    remainingBalance: parseInt(g.remaining_balance, 10),
+    lpjStatus: g.lpj_status,
+    uploadedAt: g.uploaded_at ? new Date(g.uploaded_at).toISOString() : null,
+    trustScore: g.trust_score ? parseFloat(g.trust_score) : null,
+    expenses: expRes.rows.map((row) => ({
+      activity_name: row.activity_name,
+      category: row.category,
+      volume: parseFloat(row.volume),
+      unit: row.unit,
+      claimed_unit_price: parseInt(row.claimed_unit_price, 10),
+      amount_realized: parseInt(row.amount_realized, 10),
+      ai_anomaly_flag: row.ai_anomaly_flag,
+      anomaly_note: row.anomaly_note,
+    })),
+  };
+}

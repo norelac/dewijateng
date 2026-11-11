@@ -57,7 +57,7 @@ const REPORT_CARDS: ReportCardItem[] = [
       {
         time: '16 OKT 2026 · 16.00 WIB',
         title: 'Pemeliharaan ruas jalan tercatat',
-        desc: 'Realisasi Rp 100.000.000 dilengkapi contoh nota dan dokumentasi fisik.',
+        desc: 'Realisasi Rp 100.000.000 dilengkapi nota dan dokumentasi fisik.',
         villageLink: 'Desa Wisata Candirejo - Magelang ↗',
       },
     ],
@@ -84,7 +84,7 @@ const REPORT_CARDS: ReportCardItem[] = [
       {
         time: '16 OKT 2026 · 16.00 WIB',
         title: 'Pemeliharaan ruas jalan tercatat',
-        desc: 'Realisasi Rp 100.000.000 dilengkapi contoh nota dan dokumentasi fisik.',
+        desc: 'Realisasi Rp 100.000.000 dilengkapi nota dan dokumentasi fisik.',
         villageLink: 'Desa Wisata Candirejo - Magelang ↗',
       },
     ],
@@ -203,12 +203,12 @@ export default function HomeReportFeed() {
           .filter((item): item is ReportCardItem => item !== null);
         if (mapped.length === 0) return;
 
-        setCards(mapped.slice(0, 4));
+        setCards(mapped.slice(0, 3));
         setSliderModes(
-          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, true]))
+          Object.fromEntries(mapped.slice(0, 3).map((item) => [item.id, true]))
         );
         setSliderPositions(
-          Object.fromEntries(mapped.slice(0, 4).map((item) => [item.id, 50]))
+          Object.fromEntries(mapped.slice(0, 3).map((item) => [item.id, 50]))
         );
       })
       .catch(() => {

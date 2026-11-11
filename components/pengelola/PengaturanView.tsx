@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { changePasswordAction } from '@/app/actions/authActions';
+import { changePasswordAction, getSessionAction } from '@/app/actions/authActions';
+import { useVillageName } from './usePengelolaData';
 
 interface NotificationPrefs {
   newReport: boolean;
@@ -26,7 +27,7 @@ const NOTIFICATION_ITEMS: { key: keyof NotificationPrefs; label: string }[] = [
 ];
 
 const INITIAL_FORM = {
-  displayName: 'Pengelola Candirejo',
+  displayName: '',
   currentPassword: '',
   newPassword: '',
   confirmPassword: '',
@@ -92,10 +93,22 @@ export default function PengaturanView() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [notifications, setNotifications] =
     useState<NotificationPrefs>(INITIAL_NOTIFICATIONS);
+  const villageName = useVillageName();
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+
+  // Isi nama tampilan dari sesi agar tidak menampilkan nama contoh.
+  useEffect(() => {
+    getSessionAction().then((sess) => {
+      if (sess?.fullName) {
+        setForm((prev) =>
+          prev.displayName ? prev : { ...prev, displayName: sess.fullName }
+        );
+      }
+    });
+  }, []);
 
   const handleReset = () => {
     setForm(INITIAL_FORM);
@@ -105,10 +118,10 @@ export default function PengaturanView() {
 
   const handleSave = async () => {
     if (form.newPassword || form.confirmPassword) {
-      if (form.newPassword.length < 8) {
+      if (form.newPassword.length < 12) {
         setSaveMessage({
           type: 'error',
-          text: 'Kata sandi baru minimal 8 karakter.',
+          text: 'Kata sandi baru minimal 12 karakter, memuat huruf, angka, dan simbol.',
         });
         return;
       }
@@ -202,7 +215,7 @@ export default function PengaturanView() {
                   WILAYAH PENGELOLAAN
                 </p>
                 <p className="text-[#0d2453] text-[13px] font-semibold leading-[1.5] w-full">
-                  Desa Candirejo
+                  {villageName}
                 </p>
               </div>
             </div>
@@ -362,7 +375,7 @@ export default function PengaturanView() {
       {/* 3. Catatan layanan */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] font-normal leading-[1.5] w-full">
         <p>© 2026 DEWI JATENG</p>
-        <p>Desa Candirejo · Per 28 Oktober 2026</p>
+        <p>{villageName} · Per 28 Oktober 2026</p>
       </div>
     </div>
   );

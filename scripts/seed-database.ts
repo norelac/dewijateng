@@ -36,10 +36,35 @@ async function runSeed() {
       console.log('✅ Akun demo dan laporan awal berhasil di-seed!\n');
     }
 
+    // 3b. Lengkapi data demo untuk SELURUH desa (grant, rincian belanja,
+    //     tarif resmi, aduan warga, bukti perbaikan). Idempoten.
+    const fullSqlPath = path.join(process.cwd(), 'docker', 'seed-demo-full.sql');
+    if (fs.existsSync(fullSqlPath)) {
+      console.log('📦 Melengkapi data demo untuk seluruh desa wisata...');
+      const sql3b = fs.readFileSync(fullSqlPath, 'utf-8');
+      const summary = await client.query(sql3b);
+      const rows = Array.isArray(summary) ? summary[summary.length - 1]?.rows : null;
+      if (rows && rows.length > 0) {
+        console.log('✅ Data demo lengkap:', JSON.stringify(rows[0]), '\n');
+      } else {
+        console.log('✅ Data demo seluruh desa berhasil di-seed!\n');
+      }
+    }
+
+    // 3c. Transaksi monitoring keuangan untuk banyak desa (turunan pos belanja
+    //     LPJ TA 2026). Idempoten: desa yang sudah punya transaksi dilewati.
+    const financeSqlPath = path.join(process.cwd(), 'docker', 'seed-finance-bulk.sql');
+    if (fs.existsSync(financeSqlPath)) {
+      console.log('📦 Menyiapkan transaksi monitoring keuangan desa...');
+      const sql3c = fs.readFileSync(financeSqlPath, 'utf-8');
+      await client.query(sql3c);
+      console.log('✅ Transaksi monitoring keuangan berhasil di-seed!\n');
+    }
+
     // 4. Update PostGIS Geometries
     console.log('🗺️  Memperbarui geometri koordinat PostGIS...');
     try {
-      await client.query('UPDATE tourist_villages SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) WHERE geom IS NULL;');
+      await client.query('UPDATE tourist_villages SET geom = ST_SetSRID(ST_MakePoint(longitude::float8, latitude::float8), 4326) WHERE geom IS NULL;');
       console.log('✅ Koordinat spasial PostGIS selesai dimutakhirkan!\n');
     } catch (geomErr: any) {
       console.warn('⚠️  PostGIS warning (melewati update spasial):', geomErr.message);

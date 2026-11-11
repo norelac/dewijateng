@@ -1,4 +1,5 @@
 import type { IncidentReportDetail } from '@/lib/services/reportService';
+import { derivePhotoUrl, receiptUrlFor } from '@/lib/evidenceLinks';
 import type {
   ActivityHistoryEvent,
   DashboardTicket,
@@ -87,8 +88,12 @@ export function mapIncidentToDashboardTicket(r: IncidentReportDetail): Dashboard
 }
 
 export interface TransparansiGrant {
+  id?: string;
   fiscal_year: number;
   funding_source: string;
+  apbdes_amount?: number | null;
+  banprov_amount?: number | null;
+  pades_amount?: number | null;
   total_allocated: number;
   total_realized: number;
   lpj_document_url?: string | null;
@@ -97,8 +102,8 @@ export interface TransparansiGrant {
 
 /**
  * Map respons /api/transparansi → VillageBudgetData.
- * ponytail: API tidak memecah APBDes/Banprov/PADes; seluruh alokasi grant
- * dipetakan ke Bantuan Provinsi. Pecah saat BE menyediakan rincian per sumber.
+ * Rincian APBDes/Banprov/PADes dipakai bila tersedia; bila belum pernah
+ * dipecah, seluruh alokasi ditampilkan sebagai Bantuan Provinsi.
  */
 export function mapGrantToBudget(
   grant: TransparansiGrant,
@@ -109,12 +114,17 @@ export function mapGrantToBudget(
     ? 'Periode berjalan'
     : fmt(updated, { day: 'numeric', month: 'long', year: 'numeric' });
 
+  const apbdes = Number(grant.apbdes_amount) || 0;
+  const banprov = Number(grant.banprov_amount) || 0;
+  const pades = Number(grant.pades_amount) || 0;
+  const hasBreakdown = apbdes + banprov + pades > 0;
+
   return {
     year: grant.fiscal_year,
     dateStr,
-    apbdes: 0,
-    banprov: grant.total_allocated,
-    pades: 0,
+    apbdes,
+    banprov: hasBreakdown ? banprov : grant.total_allocated,
+    pades,
     usedAmount: grant.total_realized,
     usedActivitiesCount: expensesCount,
     lastUpdatedStr: `${grant.funding_source || 'Bantuan Keuangan'} · ${dateStr}`,
@@ -127,9 +137,11 @@ export interface TransparansiExpense {
   category?: string | null;
   volume?: number | string | null;
   unit?: string | null;
+  claimed_unit_price?: number | string | null;
   budget_allocated?: number | string | null;
   amount_realized?: number | string | null;
   ai_anomaly_flag?: boolean | null;
+  anomaly_note?: string | null;
   created_at?: string | null;
 }
 
@@ -172,6 +184,11 @@ export function mapGrantExpenseToExpenseItem(
     .filter(Boolean)
     .join(' · ');
 
+  // Nota & foto diturunkan dari baris basis data (deterministik), sehingga
+  // baris buku kas selalu punya bukti yang bisa dibuka.
+  const receipt = receiptUrl ?? receiptUrlFor(exp.id);
+  const photo = derivePhotoUrl(exp.activity_name, exp.category || '');
+
   return {
     id: exp.id,
     date,
@@ -179,11 +196,11 @@ export function mapGrantExpenseToExpenseItem(
     subtitle: subtitle || 'Pos belanja modal',
     amount,
     formattedAmount: new Intl.NumberFormat('id-ID').format(amount),
-    hasReceipt: Boolean(receiptUrl),
-    hasPhoto: false,
+    hasReceipt: Boolean(receipt),
+    hasPhoto: Boolean(photo),
     status: 'Terpublikasi',
-    receiptUrl,
-    photoUrl: undefined,
+    receiptUrl: receipt,
+    photoUrl: photo,
   };
 }
 

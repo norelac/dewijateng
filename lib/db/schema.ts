@@ -15,6 +15,9 @@ import {
   boolean,
   timestamp,
   serial,
+  jsonb,
+  date,
+  primaryKey,
   customType,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
@@ -65,6 +68,10 @@ export const villageGrants = pgTable('village_grants', {
     .notNull(),
   fiscalYear: integer('fiscal_year').notNull(),
   fundingSource: varchar('funding_source', { length: 150 }).notNull(),
+  // Rincian tiga sumber dana (opsional; total_allocated = jumlah ketiganya).
+  apbdesAmount: bigint('apbdes_amount', { mode: 'number' }).default(0).notNull(),
+  banprovAmount: bigint('banprov_amount', { mode: 'number' }).default(0).notNull(),
+  padesAmount: bigint('pades_amount', { mode: 'number' }).default(0).notNull(),
   totalAllocated: bigint('total_allocated', { mode: 'number' }).notNull(),
   totalRealized: bigint('total_realized', { mode: 'number' }).default(0).notNull(),
   remainingBalance: bigint('remaining_balance', { mode: 'number' })
@@ -136,12 +143,20 @@ export const incidentReports = pgTable('incident_reports', {
   title: varchar('title', { length: 200 }).notNull(),
   description: text('description').notNull(),
   photoBeforeUrl: text('photo_before_url').notNull(),
+  // Foto pertama tetap di photo_before_url agar semua pembacaan lama aman;
+  // kolom ini menyimpan seluruh lampiran (maks 3) untuk galeri.
+  photoBeforeUrls: jsonb('photo_before_urls')
+    .$type<string[]>()
+    .default([])
+    .notNull(),
   latitude: doublePrecision('latitude').notNull(),
   longitude: doublePrecision('longitude').notNull(),
   geom: postgisGeometryPoint('geom'),
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   reporterContactHash: varchar('reporter_contact_hash', { length: 64 }),
   status: varchar('status', { length: 30 }).default('SUBMITTED').notNull(),
+  // Tenggat SLA: PUNGLI 24 jam, kategori lain 168 jam sejak laporan dibuat.
+  deadlineAt: timestamp('deadline_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -177,12 +192,21 @@ export const reportResolutions = pgTable('report_resolutions', {
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   username: varchar('username', { length: 60 }).notNull().unique(),
+  email: varchar('email', { length: 150 }),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: varchar('role', { length: 20 }).notNull(), // 'desa' | 'disbudparekraf'
   villageId: uuid('village_id').references(() => touristVillages.id, { onDelete: 'cascade' }),
   fullName: varchar('full_name', { length: 100 }).notNull(),
-  phone: varchar('phone', { length: 30 }),
+  phone: varchar('phone', { length: 30 }), // dipakai sebagai Nomor WhatsApp
+  nip: varchar('nip', { length: 30 }),
+  institution: varchar('institution', { length: 150 }),
+  regency: varchar('regency', { length: 100 }), // wilayah tugas
   status: varchar('status', { length: 20 }).default('AKTIF').notNull(),
+  // MENUNGGU | DISETUJUI | DITOLAK — hanya berarti untuk akun hasil pendaftaran mandiri.
+  approvalStatus: varchar('approval_status', { length: 20 }).default('DISETUJUI').notNull(),
+  emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  activatedAt: timestamp('activated_at', { withTimezone: true }),
+  deactivatedAt: timestamp('deactivated_at', { withTimezone: true }),
   mustChangePassword: boolean('must_change_password').default(true).notNull(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdBy: uuid('created_by'),
@@ -190,6 +214,75 @@ export const users = pgTable('users', {
     .defaultNow()
     .notNull(),
 });
+
+// ------------------------------------------------------------------------------
+// 9. Tabel Token Autentikasi (auth_tokens)
+// Menyimpan token verifikasi email, undangan aktivasi, dan reset kata sandi.
+// Hanya hash token yang disimpan — token asli hanya ada di tautan yang dikirim.
+// ------------------------------------------------------------------------------
+export const authTokens = pgTable('auth_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 30 }).notNull(), // VERIFIKASI_EMAIL | UNDANGAN_AKTIVASI | RESET_SANDI
+  tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ------------------------------------------------------------------------------
+// 10. Tabel Transaksi Keuangan Desa (village_transactions)
+// Satu tabel untuk pemasukan dan pengeluaran �" bentuknya identik, hanya `type`
+// yang membedakan. Dipakai layar "Monitoring keuangan" (Fase 4), baca saja:
+// pencatatan transaksi tetap dilakukan pengelola desa di luar ruang dinas.
+// ------------------------------------------------------------------------------
+export const villageTransactions = pgTable('village_transactions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  villageId: uuid('village_id')
+    .references(() => touristVillages.id, { onDelete: 'cascade' })
+    .notNull(),
+  type: varchar('type', { length: 12 }).notNull(), // PEMASUKAN | PENGELUARAN
+  referenceCode: varchar('reference_code', { length: 32 }).notNull().unique(),
+  title: varchar('title', { length: 200 }).notNull(),
+  category: varchar('category', { length: 60 }).notNull(),
+  transactionDate: date('transaction_date').notNull(),
+  amount: bigint('amount', { mode: 'number' }).notNull(),
+  paymentMethod: varchar('payment_method', { length: 120 }),
+  counterparty: varchar('counterparty', { length: 200 }),
+  note: text('note'),
+  // NULL = transaksi belum dilengkapi bukti (status "Perlu bukti").
+  proofFileName: varchar('proof_file_name', { length: 200 }),
+  proofFileSizeKb: integer('proof_file_size_kb'),
+  proofUploadedBy: varchar('proof_uploaded_by', { length: 120 }),
+  recordedBy: varchar('recorded_by', { length: 120 }).notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ------------------------------------------------------------------------------
+// 11. Tabel Saldo Awal per Periode (village_opening_balances)
+// ------------------------------------------------------------------------------
+export const villageOpeningBalances = pgTable(
+  'village_opening_balances',
+  {
+    villageId: uuid('village_id')
+      .references(() => touristVillages.id, { onDelete: 'cascade' })
+      .notNull(),
+    period: varchar('period', { length: 7 }).notNull(), // YYYY-MM
+    amount: bigint('amount', { mode: 'number' }).default(0).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.villageId, table.period] }),
+  })
+);
 
 // ------------------------------------------------------------------------------
 // Drizzle Relations Mapping
@@ -200,10 +293,18 @@ export const touristVillagesRelations = relations(touristVillages, ({ many }) =>
   users: many(users),
 }));
 
-export const usersRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   village: one(touristVillages, {
     fields: [users.villageId],
     references: [touristVillages.id],
+  }),
+  authTokens: many(authTokens),
+}));
+
+export const authTokensRelations = relations(authTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [authTokens.userId],
+    references: [users.id],
   }),
 }));
 
@@ -239,3 +340,20 @@ export const reportResolutionsRelations = relations(reportResolutions, ({ one })
     references: [incidentReports.id],
   }),
 }));
+
+export const villageTransactionsRelations = relations(villageTransactions, ({ one }) => ({
+  village: one(touristVillages, {
+    fields: [villageTransactions.villageId],
+    references: [touristVillages.id],
+  }),
+}));
+
+export const villageOpeningBalancesRelations = relations(
+  villageOpeningBalances,
+  ({ one }) => ({
+    village: one(touristVillages, {
+      fields: [villageOpeningBalances.villageId],
+      references: [touristVillages.id],
+    }),
+  })
+);

@@ -40,11 +40,11 @@ export default function HomeKpiCounters() {
         const m = json.data.macro_metrics;
         setDynamicMetrics({
           villages: m.total_villages ?? undefined,
-          reports: m.total_reports ?? undefined,
+          reports: m.total_complaints ?? undefined,
           resolutionRate: m.resolution_rate ?? undefined,
           allocatedMiliar:
-            m.total_allocated > 0
-              ? Number((m.total_allocated / 1_000_000_000).toFixed(1))
+            m.total_allocated_sum > 0
+              ? Number((Number(m.total_allocated_sum) / 1_000_000_000).toFixed(1))
               : undefined,
         });
       })
@@ -63,30 +63,31 @@ export default function HomeKpiCounters() {
 
   const metrics: MetricItem[] = [
     {
-      value: 'Rp 185 Miliar',
-      targetNumber: 185,
+      value: `Rp ${danaMiliar.toLocaleString('id-ID')} Miliar`,
+      targetNumber: danaMiliar,
       prefix: 'Rp ',
       suffix: ' Miliar',
-      label: 'Total Dana Desa',
+      decimals: danaMiliar % 1 === 0 ? 0 : 1,
+      label: 'Alokasi Bantuan Sarpras',
       icon: Landmark,
     },
     {
-      value: '9.607',
-      targetNumber: 9607,
-      label: 'Total Laporan',
+      value: totalLaporan.toLocaleString('id-ID'),
+      targetNumber: totalLaporan,
+      label: 'Aduan Warga Diproses',
       icon: FileText,
     },
     {
-      value: '889',
-      targetNumber: 889,
-      label: 'Desa Wisata',
+      value: totalDesa.toLocaleString('id-ID'),
+      targetNumber: totalDesa,
+      label: 'Desa Wisata Terdata',
       icon: MapPin,
     },
     {
-      value: '94,2%',
-      targetNumber: 94.2,
+      value: `${rateSelesai.toLocaleString('id-ID')}%`,
+      targetNumber: rateSelesai,
       suffix: '%',
-      decimals: 1,
+      decimals: rateSelesai % 1 === 0 ? 0 : 1,
       label: 'Tingkat Penyelesaian Laporan',
       icon: CheckCheck,
     },
@@ -140,7 +141,6 @@ function Counter({
   suffix,
   decimals = 0,
   fallback,
-  holdDuration = 6000,
 }: {
   isInView: boolean;
   target: number;
@@ -148,64 +148,39 @@ function Counter({
   suffix: string;
   decimals?: number;
   fallback: string;
-  holdDuration?: number;
 }) {
   const [current, setCurrent] = useState(0);
-  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    // ponytail: repeating rolling count-up loop with gentle fade reset. Upgrade to Framer Motion animate() if spring dampening needed.
+    // Naik sekali ke target lalu berhenti; tidak ada reset/fade berulang.
     if (!isInView || target === 0) return;
 
-    let timer: NodeJS.Timeout;
-    let frameTimer: NodeJS.Timeout;
-    let isActive = true;
+    const duration = 2800;
+    const frameRate = 1000 / 60;
+    const totalFrames = Math.max(1, Math.round(duration / frameRate));
+    let frame = 0;
+    let cancelled = false;
 
-    const runCount = () => {
-      setIsFading(false);
-      const duration = 2800;
-      const frameRate = 1000 / 60;
-      const totalFrames = Math.round(duration / frameRate);
-      let frame = 0;
+    const frameTimer = setInterval(() => {
+      if (cancelled) return;
+      frame++;
+      const progress = frame / totalFrames;
+      // Smooth cubic ease-out
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-      frameTimer = setInterval(() => {
-        if (!isActive) return;
-        frame++;
-        const progress = frame / totalFrames;
-        // Smooth cubic ease-out
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-        const val = target * easeProgress;
-
-        if (frame >= totalFrames) {
-          setCurrent(target);
-          clearInterval(frameTimer);
-          timer = setTimeout(() => {
-            if (!isActive) return;
-            // Soft fade-out before resetting number
-            setIsFading(true);
-            timer = setTimeout(() => {
-              if (!isActive) return;
-              setCurrent(0);
-              timer = setTimeout(() => {
-                if (!isActive) return;
-                runCount();
-              }, 200);
-            }, 350);
-          }, holdDuration);
-        } else {
-          setCurrent(val);
-        }
-      }, frameRate);
-    };
-
-    runCount();
+      if (frame >= totalFrames) {
+        setCurrent(target);
+        clearInterval(frameTimer);
+      } else {
+        setCurrent(target * easeProgress);
+      }
+    }, frameRate);
 
     return () => {
-      isActive = false;
+      cancelled = true;
       clearInterval(frameTimer);
-      clearTimeout(timer);
     };
-  }, [isInView, target, holdDuration]);
+  }, [isInView, target]);
 
   if (!isInView) return <span>{fallback}</span>;
 
@@ -215,11 +190,7 @@ function Counter({
       : Math.floor(current).toLocaleString('id-ID');
 
   return (
-    <span
-      className={`inline-block transition-opacity duration-300 ease-in-out ${
-        isFading ? 'opacity-0' : 'opacity-100'
-      }`}
-    >
+    <span className="inline-block">
       {prefix}
       {formatted}
       {suffix}

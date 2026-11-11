@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { DashboardTicket, TicketStatus } from './types';
+import { useVillageName } from './usePengelolaData';
 
 interface VerifikasiLaporanViewProps {
   ticket: DashboardTicket;
@@ -36,6 +37,7 @@ export default function VerifikasiLaporanView({
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const villageName = useVillageName();
 
   const isAlreadyVerified = ticket.status !== 'Masuk';
 
@@ -368,7 +370,7 @@ export default function VerifikasiLaporanView({
       {/* 4. Sub-Footer Layanan */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
         <span>© 2026 DEWI JATENG</span>
-        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+        <span>{villageName} · Per 28 Oktober 2026</span>
       </div>
 
       {/* Modal Pratinjau Foto Bukti Aduan */}

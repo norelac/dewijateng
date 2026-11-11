@@ -1,11 +1,12 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import {
   hashPassword,
   verifyPassword,
+  validateNewPassword,
   setSessionCookie,
   clearSessionCookie,
   getSession,
@@ -23,75 +24,143 @@ export interface AuthActionResult {
 // Fallback demo users jika database belum disinkronkan
 const FALLBACK_USERS: Record<
   string,
-  { password: string; role: 'desa' | 'disbudparekraf'; fullName: string; villageId: string | null }
+  {
+    passwordHash: string;
+    role: 'desa' | 'disbudparekraf';
+    fullName: string;
+    villageId: string | null;
+    email: string;
+  }
 > = {
   disbudparekraf: {
-    password: 'disbudparekraf2026',
+    passwordHash:
+      'pbkdf2$10000$e58dc314ed70c131ce69c379f86cfca4$d4790cd40500033c292632e0bcbb1ab0854a28362ec38e8e057973ad04017be9f60b95b59b5fadef51ae68c525538e8063f836ead832b171a6fc872099915123',
     role: 'disbudparekraf',
     fullName: 'Admin Eksekutif Disbudparekraf Jateng',
     villageId: null,
+    email: 'disbudparekraf@jatengprov.go.id',
   },
   'desa-candirejo': {
-    password: 'candirejo2026',
+    passwordHash:
+      'pbkdf2$10000$6fde02819f2067cf107e71e76012f7e8$7bb40e4812a5d17613f1b0d77fe0b210c3f8958482047a562530f3ab627422c6041ca0c6fd56b197d3f4e1d33b501752c38481fce43d4250575f1b15e0fc9c75',
     role: 'desa',
     fullName: 'Pengelola Desa Wisata Candirejo',
     villageId: 'a0000000-0000-0000-0000-000000000002',
+    email: 'desa-candirejo@jatengprov.go.id',
   },
 };
+
+type LoginPeran = 'desa' | 'admin';
+
+/**
+ * Halaman masuk punya dua "porch": Disbudparekraf (admin) dan pengelola desa.
+ * Jika kredensial valid tetapi peran akun tidak sesuai porch yang dibuka,
+ * tolak masuk dengan pesan yang jelas (bukan diam-diam mendarat di dashboard lain).
+ */
+function peranMismatchMessage(role: string, peran: LoginPeran): string | null {
+  if (peran === 'desa' && role !== 'desa') {
+    return 'Akun ini terdaftar sebagai admin dinas. Silakan masuk lewat halaman Disbudparekraf.';
+  }
+  if (peran === 'admin' && role !== 'disbudparekraf') {
+    return 'Akun ini terdaftar sebagai pengelola desa. Silakan masuk lewat halaman pengelola desa.';
+  }
+  return null;
+}
 
 export async function loginAction(
   _prevState: any,
   formData: FormData
 ): Promise<AuthActionResult> {
-  const username = String(formData.get('username') || '').trim().toLowerCase();
+  // Satu field menerima email ATAU username (sesuai catatan desain:
+  // "nama@instansi.go.id atau email pengelola").
+  const identifier = String(
+    formData.get('identifier') || formData.get('username') || formData.get('email') || ''
+  )
+    .trim()
+    .toLowerCase();
   const password = String(formData.get('password') || '');
+  const remember = formData.get('remember') === 'on' || formData.get('remember') === 'true';
+  const peran: LoginPeran = formData.get('peran') === 'desa' ? 'desa' : 'admin';
 
-  if (!username || !password) {
-    return { success: false, message: 'Username dan password wajib diisi' };
+  if (!identifier || !password) {
+    return { success: false, message: 'Email dan kata sandi wajib diisi' };
   }
 
   try {
     let sessionUser: SessionUser | null = null;
     let mustChange = false;
+    let dbUserId: string | null = null;
 
-    // 1. Coba cari di PostgreSQL via Drizzle
+    // 1. Cari di PostgreSQL (email atau username).
     try {
       const foundUsers = await db
         .select()
         .from(users)
-        .where(eq(users.username, username))
+        .where(or(eq(users.email, identifier), eq(users.username, identifier)))
         .limit(1);
 
       if (foundUsers.length > 0) {
         const u = foundUsers[0];
-        if (u.status !== 'AKTIF') {
-          return { success: false, message: 'Akun Anda sedang dinonaktifkan. Hubungi Disbudparekraf.' };
-        }
-
         const valid = verifyPassword(password, u.passwordHash);
         if (valid) {
+          // Gerbang status akun — urutan pesan mengikuti salinan desain.
+          if (u.approvalStatus === 'DITOLAK') {
+            return {
+              success: false,
+              message:
+                'Pengajuan akses Anda ditolak. Hubungi pusat bantuan untuk informasi lanjutan.',
+            };
+          }
+          if (!u.emailVerifiedAt) {
+            // Akun pengelola desa dibuat + diundang oleh Disbudparekraf (bukan
+            // pendaftaran mandiri), jadi pesannya soal undangan, bukan verifikasi.
+            if (u.role === 'desa') {
+              return {
+                success: false,
+                message:
+                  'Akun Anda belum diaktifkan. Buka tautan undangan aktivasi pada email, ' +
+                  'atau minta Disbudparekraf mengirim ulang undangan.',
+              };
+            }
+            return {
+              success: false,
+              message:
+                'Email Anda belum terverifikasi. Buka tautan verifikasi yang kami kirim.',
+              redirectTo: `/daftar/verifikasi?email=${encodeURIComponent(u.email || '')}`,
+            };
+          }
+          if (u.approvalStatus === 'MENUNGGU') {
+            return {
+              success: false,
+              message: 'Pengajuan Anda masih menunggu persetujuan administrator.',
+              redirectTo: '/daftar/ditinjau',
+            };
+          }
+          if (u.status !== 'AKTIF') {
+            return {
+              success: false,
+              message: 'Akun Anda sedang dinonaktifkan. Hubungi Disbudparekraf.',
+            };
+          }
+
           sessionUser = {
             id: u.id,
             username: u.username,
+            email: u.email,
             fullName: u.fullName,
             role: u.role as 'desa' | 'disbudparekraf',
             villageId: u.villageId,
             mustChangePassword: Boolean(u.mustChangePassword),
           };
           mustChange = Boolean(u.mustChangePassword);
-
-          // Update last_login_at
-          await db
-            .update(users)
-            .set({ lastLoginAt: new Date() })
-            .where(eq(users.id, u.id));
+          dbUserId = u.id;
         }
       }
     } catch (dbErr) {
       console.warn('[loginAction] Database query fallback:', dbErr);
     }
 
-    // 2. Coba cari di local file fallback data/demo-users.json (menyimpan akun yang baru saja diterbitkan)
+    // 2. Fallback file data/demo-users.json (akun yang baru diterbitkan).
     if (!sessionUser) {
       try {
         const fs = await import('fs');
@@ -99,20 +168,26 @@ export async function loginAction(
         const usersFilePath = path.join(process.cwd(), 'data', 'demo-users.json');
         if (fs.existsSync(usersFilePath)) {
           const list: any[] = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
-          const found = list.find((u) => u.username?.toLowerCase() === username);
+          const found = list.find(
+            (u) =>
+              u.username?.toLowerCase() === identifier ||
+              u.email?.toLowerCase() === identifier
+          );
           if (found) {
             if (found.status !== 'AKTIF') {
-              return { success: false, message: 'Akun Anda sedang dinonaktifkan. Hubungi Disbudparekraf.' };
+              return {
+                success: false,
+                message: 'Akun Anda sedang dinonaktifkan. Hubungi Disbudparekraf.',
+              };
             }
-            // Validasi kecocokan kata sandi
             const isMatch =
-              (found.password && found.password === password) ||
-              (found.passwordHash && verifyPassword(password, found.passwordHash));
+              Boolean(found.passwordHash) && verifyPassword(password, found.passwordHash);
 
             if (isMatch) {
               sessionUser = {
                 id: found.id,
                 username: found.username,
+                email: found.email ?? null,
                 fullName: found.fullName,
                 role: found.role,
                 villageId: found.villageId,
@@ -127,13 +202,17 @@ export async function loginAction(
       }
     }
 
-    // 3. Fallback akun demo statis jika DB offline atau belum di-seed
-    if (!sessionUser && FALLBACK_USERS[username]) {
-      const fb = FALLBACK_USERS[username];
-      if (fb.password === password) {
+    // 3. Fallback akun demo statis.
+    if (!sessionUser && FALLBACK_USERS[identifier]) {
+      const fb = FALLBACK_USERS[identifier];
+      if (verifyPassword(password, fb.passwordHash)) {
         sessionUser = {
-          id: username === 'disbudparekraf' ? 'e0000000-0000-0000-0000-000000000001' : 'e0000000-0000-0000-0000-000000000002',
-          username,
+          id:
+            identifier === 'disbudparekraf'
+              ? 'e0000000-0000-0000-0000-000000000001'
+              : 'e0000000-0000-0000-0000-000000000002',
+          username: identifier,
+          email: fb.email,
           fullName: fb.fullName,
           role: fb.role,
           villageId: fb.villageId,
@@ -143,17 +222,33 @@ export async function loginAction(
     }
 
     if (!sessionUser) {
-      return { success: false, message: 'Username atau kata sandi tidak sesuai' };
+      return { success: false, message: 'Email atau kata sandi tidak sesuai' };
     }
 
-    // Simpan ke session cookie
+    const mismatch = peranMismatchMessage(sessionUser.role, peran);
+    if (mismatch) {
+      return { success: false, message: mismatch };
+    }
+
+    if (dbUserId) {
+      try {
+        await db
+          .update(users)
+          .set({ lastLoginAt: new Date() })
+          .where(eq(users.id, dbUserId));
+      } catch (touchErr) {
+        console.warn('[loginAction] lastLoginAt warning:', touchErr);
+      }
+    }
+
     try {
-      await setSessionCookie(sessionUser);
+      await setSessionCookie(sessionUser, remember);
     } catch (cookieErr) {
-      console.warn('[loginAction] setSessionCookie warning (misal di luar request context):', cookieErr);
+      console.warn('[loginAction] setSessionCookie warning:', cookieErr);
     }
 
-    const redirectTo = sessionUser.role === 'disbudparekraf' ? '/disbudparekraf' : '/pengelola';
+    const redirectTo =
+      sessionUser.role === 'disbudparekraf' ? '/disbudparekraf' : '/pengelola';
     return {
       success: true,
       redirectTo,
@@ -187,8 +282,9 @@ export async function changePasswordAction(
   const newPassword = String(formData.get('newPassword') || '');
   const confirmPassword = String(formData.get('confirmPassword') || '');
 
-  if (!newPassword || newPassword.length < 8) {
-    return { success: false, message: 'Kata sandi baru minimal 8 karakter' };
+  const check = validateNewPassword(newPassword);
+  if (!check.valid) {
+    return { success: false, message: check.message };
   }
 
   if (newPassword !== confirmPassword) {
@@ -218,7 +314,6 @@ export async function changePasswordAction(
         .where(eq(users.id, currentSession.id));
     }
 
-    // Perbarui session cookie
     await setSessionCookie({
       ...currentSession,
       mustChangePassword: false,

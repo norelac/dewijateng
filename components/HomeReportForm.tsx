@@ -78,6 +78,10 @@ const KNOWN_LOCATIONS: Record<string, LocationCoord> = {
   },
 };
 
+// 15 MB: mendukung foto kamera resolusi tinggi, dikompresi otomatis ke WebP sebelum unggah.
+const MAX_FILE_BYTES = 15 * 1024 * 1024;
+const MAX_FILES = 3;
+
 export default function HomeReportForm() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [address, setAddress] = useState('Nama Desa, Kecamatan, Kabupaten');
@@ -309,8 +313,6 @@ export default function HomeReportForm() {
   const handleFileDrop = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    const MAX_FILE_BYTES = 15 * 1024 * 1024; // Mendukung foto kamera resolusi tinggi (akan otomatis dikompresi ke WebP)
-    const MAX_FILES = 3;
     const incoming = Array.from(e.target.files);
 
     const tooBig = incoming.find((f) => f.size > MAX_FILE_BYTES);
@@ -414,7 +416,10 @@ export default function HomeReportForm() {
       }
 
       if (rawFiles.length > 0) {
-        formData.append('photo', rawFiles[0]);
+        // Kirim semua lampiran (maks 3) sebagai field 'photo' berulang.
+        rawFiles.slice(0, MAX_FILES).forEach((file) => {
+          formData.append('photo', file);
+        });
       }
 
       const res = await submitReportAction(formData);
@@ -581,7 +586,7 @@ export default function HomeReportForm() {
                 Unggah Foto / Video
               </span>
               <span className="text-[13px] text-[#767676] mt-0.5 block leading-tight">
-                JPG, PNG, WEBP, MP4, MOV (maks 5 MB per file,<br />maksimal 3 file)
+                JPG, PNG, WEBP, MP4, MOV (maks 15 MB per file,<br />maksimal 3 file)
               </span>
             </label>
 

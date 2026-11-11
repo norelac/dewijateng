@@ -1,15 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronDown, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { VillageBudgetData } from './types';
+import { useVillageName } from './usePengelolaData';
+import FiscalYearSelect from './FiscalYearSelect';
 
 interface UbahAnggaranViewProps {
   budget: VillageBudgetData;
   onBack: () => void;
-  onSaveBudget: (updated: Partial<VillageBudgetData>) => void;
-  /** Belum ada endpoint tulis anggaran di BE; nonaktifkan simpan sampai tersedia. */
+  onSaveBudget: (
+    updated: Partial<VillageBudgetData>
+  ) => Promise<{ success: boolean; error?: string } | void> | void;
+  /** Aktifkan tombol simpan; backend tulis anggaran sudah tersedia. */
   saveEnabled?: boolean;
+  /** Tahun anggaran yang sedang diedit (dikendalikan halaman). */
+  fiscalYear?: number;
+  onYearChange?: (year: number) => void;
 }
 
 function formatRupiah(num: number): string {
@@ -35,10 +42,12 @@ export default function UbahAnggaranView({
   budget,
   onBack,
   onSaveBudget,
-  saveEnabled = false,
+  saveEnabled = true,
+  fiscalYear,
+  onYearChange,
 }: UbahAnggaranViewProps) {
-  const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
-  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const selectedYear = fiscalYear ?? budget.year ?? 2026;
+  const villageName = useVillageName();
 
   const [apbdesStr, setApbdesStr] = useState<string>(
     formatNumberInput(budget.apbdes)
@@ -51,6 +60,19 @@ export default function UbahAnggaranView({
   );
 
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Data anggaran dimuat asinkron (INITIAL_BUDGET_DATA → data grant asli).
+  // Sinkronkan nilai form selama pengguna belum mengubah apa pun, agar tidak
+  // tersimpan dengan angka placeholder.
+  useEffect(() => {
+    if (isDirty) return;
+    setApbdesStr(formatNumberInput(budget.apbdes));
+    setBanprovStr(formatNumberInput(budget.banprov));
+    setPadesStr(formatNumberInput(budget.pades));
+  }, [budget.year, budget.apbdes, budget.banprov, budget.pades, isDirty]);
 
   // Live dynamic calculations
   const apbdesNum = parseNumberInput(apbdesStr);
@@ -66,6 +88,7 @@ export default function UbahAnggaranView({
   ) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value.replace(/\D/g, '');
+      setIsDirty(true);
       if (!raw) {
         setter('0');
       } else {
@@ -74,20 +97,32 @@ export default function UbahAnggaranView({
     };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!saveEnabled) return;
-    onSaveBudget({
-      year: selectedYear,
-      apbdes: apbdesNum,
-      banprov: banprovNum,
-      pades: padesNum,
-      lastUpdatedStr: `Diperbarui TA ${selectedYear} · Total ${formatRupiah(totalPendanaan)} dipublikasikan.`,
-    });
-    setIsSaved(true);
-    setTimeout(() => {
-      onBack();
-    }, 600);
+    if (!saveEnabled || isSaving) return;
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      const result = await onSaveBudget({
+        year: selectedYear,
+        apbdes: apbdesNum,
+        banprov: banprovNum,
+        pades: padesNum,
+        lastUpdatedStr: `Diperbarui TA ${selectedYear} · Total ${formatRupiah(totalPendanaan)} dipublikasikan.`,
+      });
+      if (result && result.success === false) {
+        setSaveError(result.error || 'Gagal menyimpan anggaran.');
+        return;
+      }
+      setIsSaved(true);
+      setTimeout(() => {
+        onBack();
+      }, 600);
+    } catch {
+      setSaveError('Terjadi kesalahan sistem saat menyimpan.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -108,7 +143,7 @@ export default function UbahAnggaranView({
           Ubah anggaran
         </h1>
         <p className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
-          Perbarui sumber pendanaan Desa Candirejo. Nilai awal sesuai anggaran tersimpan.
+          Perbarui sumber pendanaan {villageName}. Nilai awal sesuai anggaran tersimpan.
         </p>
       </div>
 
@@ -125,46 +160,21 @@ export default function UbahAnggaranView({
             </h2>
 
             {/* Isian: Tahun Anggaran Dropdown */}
-            <div className="flex flex-col gap-[7px] relative">
+            <div className="flex flex-col gap-[7px]">
               <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
                 Tahun anggaran
               </label>
-              <button
-                type="button"
-                onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
-                className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] p-[12px] flex items-center justify-between text-left text-[13px] text-[#0d2453] hover:border-slate-400 transition-colors cursor-pointer"
-              >
-                <span>{selectedYear}</span>
-                <ChevronDown className="w-[16px] h-[16px] text-[#64748b]" />
-              </button>
-
-              {yearDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setYearDropdownOpen(false)}
-                  />
-                  <div className="absolute top-[72px] left-0 right-0 bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
-                    {[2026, 2025, 2024].map((yr) => (
-                      <button
-                        key={yr}
-                        type="button"
-                        onClick={() => {
-                          setSelectedYear(yr);
-                          setYearDropdownOpen(false);
-                        }}
-                        className={`w-full px-4 py-2.5 text-left text-[13px] hover:bg-slate-50 ${
-                          selectedYear === yr
-                            ? 'text-[#0d2453] font-semibold bg-slate-50'
-                            : 'text-[#64748b]'
-                        }`}
-                      >
-                        {yr}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+              <div className="relative">
+                <FiscalYearSelect
+                  value={selectedYear}
+                  onChange={(year) => onYearChange?.(year)}
+                  variant="button"
+                  labelPrefix=""
+                  align="left"
+                  fullWidth
+                  disabled={!onYearChange}
+                />
+              </div>
             </div>
 
             {/* Isian: APBDes (Rp) */}
@@ -177,7 +187,7 @@ export default function UbahAnggaranView({
                   type="text"
                   value={apbdesStr}
                   onChange={handleInputChange(setApbdesStr)}
-                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] tabular-nums text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
                 />
               </div>
             </div>
@@ -192,7 +202,7 @@ export default function UbahAnggaranView({
                   type="text"
                   value={banprovStr}
                   onChange={handleInputChange(setBanprovStr)}
-                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] tabular-nums text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
                 />
               </div>
             </div>
@@ -207,7 +217,7 @@ export default function UbahAnggaranView({
                   type="text"
                   value={padesStr}
                   onChange={handleInputChange(setPadesStr)}
-                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] tabular-nums text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
                 />
               </div>
             </div>
@@ -218,7 +228,7 @@ export default function UbahAnggaranView({
             {/* Total Pendanaan Dinamis */}
             <div className="flex items-center justify-between text-[#0d2453] leading-[1.5] w-full">
               <span className="text-[13px] font-semibold">Total pendanaan</span>
-              <span className="text-[22px] font-semibold font-mono tracking-tight">
+              <span className="text-[22px] font-semibold tracking-tight tabular-nums">
                 {formatRupiah(totalPendanaan)}
               </span>
             </div>
@@ -227,19 +237,31 @@ export default function UbahAnggaranView({
               Total adalah penjumlahan ketiga sumber dana.
             </p>
 
+            {saveError && (
+              <p className="text-[12px] text-[#B3261E] bg-[#FDECEA] border border-[#F7C9C4] rounded-[8px] px-3 py-2">
+                {saveError}
+              </p>
+            )}
+
             {/* Tindakan Formulir */}
             <div className="flex items-center gap-[10px] pt-[6px]">
               <button
                 type="submit"
-                disabled={!saveEnabled}
-                title={saveEnabled ? undefined : 'Penyimpanan anggaran belum tersedia'}
+                disabled={!saveEnabled || isSaving}
+                title={saveEnabled ? undefined : 'Pilih desa terlebih dahulu'}
                 className={`border-2 rounded-full h-[40px] px-[18px] text-[12px] font-semibold transition-all shadow-2xs ${
                   saveEnabled
-                    ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer'
+                    ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed'
                     : 'bg-slate-200 border-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                {saveEnabled ? (isSaved ? 'Tersimpan!' : 'Simpan perubahan') : 'Belum tersedia'}
+                {!saveEnabled
+                  ? 'Pilih desa'
+                  : isSaving
+                    ? 'Menyimpan...'
+                    : isSaved
+                      ? 'Tersimpan!'
+                      : 'Simpan perubahan'}
               </button>
 
               <button
@@ -252,7 +274,7 @@ export default function UbahAnggaranView({
             </div>
             {!saveEnabled && (
               <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
-                Penyimpanan perubahan anggaran belum tersedia sampai endpoint tulis anggaran disiapkan di backend.
+                Pilih desa dan sumber dana terlebih dahulu sebelum menyimpan perubahan.
               </p>
             )}
           </div>
@@ -276,7 +298,7 @@ export default function UbahAnggaranView({
               <span className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
                 Dana terpakai tetap
               </span>
-              <span className="text-[#0d2453] text-[20px] font-semibold font-mono leading-[1.5]">
+              <span className="text-[#0d2453] text-[20px] font-semibold leading-[1.5] tabular-nums">
                 {formatRupiah(danaTerpakaiTetap)}
               </span>
             </div>
@@ -287,7 +309,7 @@ export default function UbahAnggaranView({
                 Sisa kas dengan isian saat ini
               </span>
               <span
-                className={`text-[20px] font-semibold font-mono leading-[1.5] ${
+                className={`text-[20px] font-semibold leading-[1.5] tabular-nums ${
                   sisaKasSaatIni < 0 ? 'text-red-600' : 'text-[#0d2453]'
                 }`}
               >
@@ -313,7 +335,7 @@ export default function UbahAnggaranView({
       {/* 4. Sub-Footer Layanan */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-[8px] text-[#64748b] text-[10px] leading-[1.5]">
         <span>© 2026 DEWI JATENG</span>
-        <span>Desa Candirejo · Per 28 Oktober 2026</span>
+        <span>{villageName} · Per 28 Oktober 2026</span>
       </div>
     </div>
   );

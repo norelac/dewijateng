@@ -146,7 +146,7 @@ export default function AnggaranSection({
                   <span className="font-normal">APBDes</span>
                   <span className="font-semibold">{apbdesPct}%</span>
                 </div>
-                <span className="text-[#64748B] text-[11px] font-normal font-mono">
+                <span className="text-[#64748B] text-[11px] font-normal tabular-nums">
                   {formatRupiah(budget.apbdes)}
                 </span>
               </div>
@@ -160,7 +160,7 @@ export default function AnggaranSection({
                   <span className="font-normal">Bantuan Provinsi</span>
                   <span className="font-semibold">{banprovPct}%</span>
                 </div>
-                <span className="text-[#64748B] text-[11px] font-normal font-mono">
+                <span className="text-[#64748B] text-[11px] font-normal tabular-nums">
                   {formatRupiah(budget.banprov)}
                 </span>
               </div>
@@ -174,7 +174,7 @@ export default function AnggaranSection({
                   <span className="font-normal">PADes Wisata</span>
                   <span className="font-semibold">{padesPct}%</span>
                 </div>
-                <span className="text-[#64748B] text-[11px] font-normal font-mono">
+                <span className="text-[#64748B] text-[11px] font-normal tabular-nums">
                   {formatRupiah(budget.pades)}
                 </span>
               </div>
@@ -233,7 +233,7 @@ export default function AnggaranSection({
             <span className="text-[#64748B] text-[11px] font-normal leading-none">
               Dana terpakai · {usedPct}%
             </span>
-            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-semibold font-mono leading-tight">
+            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-semibold leading-tight tabular-nums">
               {formatRupiah(budget.usedAmount)}
             </span>
           </div>
@@ -242,7 +242,7 @@ export default function AnggaranSection({
             <span className="text-[#64748B] text-[11px] font-normal leading-none">
               Sisa kas · {sisaPct}%
             </span>
-            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-semibold font-mono leading-tight">
+            <span className="text-[#0D2453] text-[17px] sm:text-[18px] font-semibold leading-tight tabular-nums">
               {formatRupiah(sisaKas)}
             </span>
           </div>

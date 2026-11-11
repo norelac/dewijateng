@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   FileCheck2,
   FileText,
@@ -14,6 +13,8 @@ import {
   Clock,
   ShieldAlert,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import { reviewLpjAction } from '@/app/actions/villageActions';
@@ -37,6 +38,16 @@ interface LpjVerificationQueueProps {
   onStatusChange?: () => void;
 }
 
+/** Jumlah baris per halaman antrean LPJ. */
+const PAGE_SIZE = 25;
+
+/**
+ * Data cadangan bila komponen dipakai tanpa `initialItems` (mis. pratinjau).
+ * Sumber utama antrean adalah `listLpjQueue()` di server (lihat
+ * `app/disbudparekraf/aktivitas/page.tsx`). ID grant di bawah harus cocok
+ * dengan baris nyata pada `village_grants` agar aksi Setujui/Revisi tidak
+ * diam-diam tidak mengubah apa pun.
+ */
 const DEFAULT_LPJ_ITEMS: LpjItem[] = [
   {
     grantId: 'b0000000-0000-0000-0000-000000000002',
@@ -46,40 +57,44 @@ const DEFAULT_LPJ_ITEMS: LpjItem[] = [
     totalAllocated: 150000000,
     totalRealized: 142000000,
     lpjStatus: 'SUBMITTED',
-    uploadedAt: '2026-10-28T10:30:00Z',
+    lpjDocumentUrl: '/documents/lpj-candirejo-magelang-2026.pdf',
+    uploadedAt: '2026-10-26T10:30:00Z',
     hasAnomaly: true,
   },
   {
-    grantId: 'b0000000-0000-0000-0000-000000000004',
+    grantId: 'b0000006-0000-0000-0000-000000000000',
     villageName: 'Desa Wisata Dieng Kulon',
     regency: 'Kabupaten Banjarnegara',
     fiscalYear: 2026,
     totalAllocated: 1000000000,
     totalRealized: 850000000,
     lpjStatus: 'VERIFIED',
-    uploadedAt: '2026-10-25T14:15:00Z',
+    lpjDocumentUrl: '/documents/lpj-dieng-kulon-banjarnegara-2026.pdf',
+    uploadedAt: '2026-11-05T14:15:00Z',
     hasAnomaly: false,
   },
   {
-    grantId: 'b0000000-0000-0000-0000-000000000007',
-    villageName: 'Desa Wisata Lerep',
-    regency: 'Kabupaten Semarang',
+    grantId: 'b0000004-0000-0000-0000-000000000000',
+    villageName: 'Desa Wisata Dawuhan',
+    regency: 'Kabupaten Banjarnegara',
     fiscalYear: 2026,
     totalAllocated: 500000000,
-    totalRealized: 435000000,
+    totalRealized: 425000000,
     lpjStatus: 'SUBMITTED',
+    lpjDocumentUrl: '/documents/lpj-dawuhan-banjarnegara-2026.pdf',
     uploadedAt: '2026-10-27T09:00:00Z',
     hasAnomaly: false,
   },
   {
     grantId: 'b0000000-0000-0000-0000-000000000001',
-    villageName: 'Desa Wisata Getas',
+    villageName: 'Desa Wisata Getas (Curug Kembar)',
     regency: 'Kabupaten Semarang',
     fiscalYear: 2026,
     totalAllocated: 100000000,
     totalRealized: 70500000,
     lpjStatus: 'REVISION',
-    uploadedAt: '2026-10-20T11:00:00Z',
+    lpjDocumentUrl: '/documents/lpj-getas-semarang-2026.pdf',
+    uploadedAt: '2026-10-31T11:00:00Z',
     hasAnomaly: true,
   },
 ];
@@ -91,6 +106,7 @@ export default function LpjVerificationQueue({
   const [items, setItems] = useState<LpjItem[]>(initialItems);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'SUBMITTED' | 'VERIFIED' | 'REVISION'>('ALL');
+  const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const [revisionModal, setRevisionModal] = useState<{
@@ -155,6 +171,14 @@ export default function LpjVerificationQueue({
     return matchesSearch && matchesFilter;
   });
 
+  // Antrean bisa ratusan baris; tampilkan 25 per halaman agar tetap ringan.
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filteredItems.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   return (
     <div className="bg-white rounded-[20px] sm:rounded-3xl border border-[#E6ECF5] p-5 sm:p-7 shadow-xs space-y-5">
       {/* Header & Controls */}
@@ -175,8 +199,11 @@ export default function LpjVerificationQueue({
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
-            onClick={() => setFilter('ALL')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            onClick={() => {
+              setFilter('ALL');
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'ALL'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -186,8 +213,11 @@ export default function LpjVerificationQueue({
           </button>
           <button
             type="button"
-            onClick={() => setFilter('SUBMITTED')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            onClick={() => {
+              setFilter('SUBMITTED');
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'SUBMITTED'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -197,8 +227,11 @@ export default function LpjVerificationQueue({
           </button>
           <button
             type="button"
-            onClick={() => setFilter('VERIFIED')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            onClick={() => {
+              setFilter('VERIFIED');
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'VERIFIED'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -208,8 +241,11 @@ export default function LpjVerificationQueue({
           </button>
           <button
             type="button"
-            onClick={() => setFilter('REVISION')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            onClick={() => {
+              setFilter('REVISION');
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'REVISION'
                 ? 'bg-[#0D2453] text-white'
                 : 'bg-[#F3F5F8] text-[#64748B] hover:text-[#0D2453]'
@@ -225,7 +261,10 @@ export default function LpjVerificationQueue({
             type="text"
             placeholder="Cari desa atau nomor LPJ..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full h-9 px-3 pl-8 rounded-xl bg-white border border-[#E6ECF5] text-xs text-[#0D2453] placeholder-slate-400 focus:outline-none focus:border-[#0D2453] transition-all"
           />
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
@@ -245,7 +284,7 @@ export default function LpjVerificationQueue({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F8FAFC] text-xs">
-            {filteredItems.map((item) => {
+            {pageItems.map((item) => {
               const isPending = item.lpjStatus === 'SUBMITTED';
               const isVerified = item.lpjStatus === 'VERIFIED';
               const isRevision = item.lpjStatus === 'REVISION';
@@ -346,14 +385,21 @@ export default function LpjVerificationQueue({
                           </button>
                         </>
                       )}
-                      <Link
-                        href={`/transparansi?slug=desa-wisata-candirejo`}
-                        target="_blank"
-                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#0D2453] font-semibold text-[11px] transition-colors inline-flex items-center gap-1"
-                      >
-                        <span>Berkas</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
+                      {item.lpjDocumentUrl ? (
+                        <a
+                          href={item.lpjDocumentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#0D2453] font-semibold text-[11px] transition-colors inline-flex items-center gap-1"
+                        >
+                          <span>Berkas</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-50 text-[#94A3B8] font-semibold text-[11px] inline-flex items-center gap-1 cursor-not-allowed">
+                          <span>Belum ada berkas</span>
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -361,6 +407,41 @@ export default function LpjVerificationQueue({
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Paginasi antrean */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        <p className="text-[11px] text-[#64748B]">
+          {filteredItems.length === 0
+            ? 'Tidak ada LPJ yang cocok dengan filter.'
+            : `Menampilkan ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(
+                currentPage * PAGE_SIZE,
+                filteredItems.length
+              )} dari ${filteredItems.length} LPJ`}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-lg border border-[#E6ECF5] bg-white text-[11px] font-semibold text-[#0D2453] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Sebelumnya
+          </button>
+          <span className="text-[11px] text-[#64748B] whitespace-nowrap">
+            Halaman {currentPage} dari {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-lg border border-[#E6ECF5] bg-white text-[11px] font-semibold text-[#0D2453] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Berikutnya
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Modal Dialog: Kirim Catatan Revisi ke Desa */}

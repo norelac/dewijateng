@@ -7,25 +7,14 @@ import { Menu, X } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Beranda' },
-  { href: '/transparansi', label: 'Transparansi Dana' },
   { href: '/lapor', label: 'Telusuri Laporan' },
+  { href: '/transparansi', label: 'Transparansi Dana' },
   { href: '/edukasi', label: 'Edukasi & Panduan' },
 ];
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    // ponytail: passive window scroll listener. Upgrade to intersection observer if deep nesting needed.
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40);
-    };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Tutup menu mobile tiap ganti rute
   useEffect(() => {
@@ -37,25 +26,17 @@ export default function Navbar() {
       {/* Spacer keeps content position when header goes floating */}
       <div className="w-full h-[76px]" aria-hidden="true" />
 
+      {/* Opaque backdrop: konten yang digulir tidak tembus di belakang header */}
+      <div
+        className="fixed inset-x-0 top-0 z-40 h-[104px] bg-[#F7F9FC] pointer-events-none"
+        aria-hidden="true"
+      />
+
       {/* Floating Header Wrapper */}
-      <header
-        className={`fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4 sm:px-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isScrolled ? 'top-3.5 sm:top-4' : 'top-6'
-        }`}
-      >
-        <div
-          className={`pointer-events-auto flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-            isScrolled
-              ? 'w-full max-w-[1060px] rounded-3xl sm:rounded-full bg-white/95 backdrop-blur-md border border-[#E6ECF5] shadow-[0_12px_36px_rgba(13,36,83,0.09)] text-[#0D2453]'
-              : 'w-full max-w-[1280px] rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]'
-          }`}
-        >
+      <header className="fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4 sm:px-6 top-6">
+        <div className="pointer-events-auto flex flex-col w-full max-w-[1280px] rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]">
           {/* Main Bar */}
-          <div
-            className={`flex items-center justify-between px-5 sm:px-8 transition-all duration-300 ${
-              isScrolled ? 'h-[64px] sm:h-[68px]' : 'h-[72px] sm:h-[76px]'
-            }`}
-          >
+          <div className="flex items-center justify-between px-5 sm:px-8 h-[72px] sm:h-[76px]">
             {/* Brand Logo with Pemprov Jateng Image */}
             <Link href="/" className="flex items-center gap-3 group shrink-0">
               <img

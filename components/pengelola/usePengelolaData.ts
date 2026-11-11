@@ -68,6 +68,52 @@ export function useDashboardTickets() {
  * Ambil data transparansi desa (village, grant, expenses) dari GET /api/transparansi.
  * Terikat ke session desa yang login, atau fallback ke candirejo-magelang jika belum login.
  */
+/**
+ * Nama desa wisata milik akun pengelola yang sedang login.
+ *
+ * Banyak sub-view Figma menampilkan nama desa di sub-judul/footer. Nilai itu
+ * dulu ditulis statis "Desa Candirejo" sehingga salah untuk desa lain. Hook ini
+ * membacanya sekali dari `/api/transparansi` (pakai village_id sesi) dan
+ * membagikan hasilnya lewat cache module-level agar tidak fetch berulang.
+ */
+let villageNameCache = new Map<string, Promise<string | null>>();
+
+function loadVillageName(): Promise<string | null> {
+  return (async () => {
+    const sess = await getSessionAction().catch(() => null);
+    const key = sess?.villageId ?? 'anon';
+    if (!villageNameCache.has(key)) {
+      const qs = sess?.villageId
+        ? `village_id=${sess.villageId}`
+        : 'slug=candirejo-magelang';
+      villageNameCache.set(
+        key,
+        fetch(`/api/transparansi?${qs}`)
+          .then((r) => r.json())
+          .then((j) => j?.data?.village?.name ?? null)
+          .catch(() => null)
+      );
+    }
+    return villageNameCache.get(key)!;
+  })();
+}
+
+export function useVillageName(fallback = 'Desa wisata'): string {
+  const [name, setName] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadVillageName().then((n) => {
+      if (!cancelled) setName(n);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return name ?? fallback;
+}
+
 export function useBudgetData(fiscalYear = 2026, villageSlug = 'candirejo-magelang') {
   const [budget, setBudget] = useState<VillageBudgetData>(INITIAL_BUDGET_DATA);
   const [village, setVillage] = useState<TransparansiVillage | null>(null);
@@ -77,58 +123,50 @@ export function useBudgetData(fiscalYear = 2026, villageSlug = 'candirejo-magela
   const [isLive, setIsLive] = useState(false);
   const [session, setSession] = useState<SessionUser | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const reload = useCallback(async () => {
+    try {
+      const sess = await getSessionAction();
+      setSession(sess);
 
-    async function loadData() {
-      try {
-        const sess = await getSessionAction();
-        if (cancelled) return;
-        setSession(sess);
+      const url = sess?.villageId
+        ? `/api/transparansi?fiscal_year=${fiscalYear}&village_id=${sess.villageId}`
+        : `/api/transparansi?fiscal_year=${fiscalYear}&slug=${villageSlug}`;
 
-        const url = sess?.villageId
-          ? `/api/transparansi?fiscal_year=${fiscalYear}&village_id=${sess.villageId}`
-          : `/api/transparansi?fiscal_year=${fiscalYear}&slug=${villageSlug}`;
+      const r = await fetch(url);
+      const json = await r.json();
 
-        const r = await fetch(url);
-        const json = await r.json();
-
-        if (cancelled) return;
-        if (json?.success && json.data) {
-          const g = json.data.grant;
-          setVillage(json.data.village || null);
-          setGrant(g || null);
-          setExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
-          if (g) {
-            setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
-          } else {
-            // Desa baru belum memiliki data usulan/realisasi anggaran
-            setBudget({
-              year: fiscalYear,
-              dateStr: `Tahun Anggaran ${fiscalYear}`,
-              apbdes: 0,
-              banprov: 0,
-              pades: 0,
-              usedAmount: 0,
-              usedActivitiesCount: 0,
-              lastUpdatedStr: 'Belum ada usulan anggaran belanja',
-            });
-          }
-          setIsLive(true);
+      if (json?.success && json.data) {
+        const g = json.data.grant;
+        setVillage(json.data.village || null);
+        setGrant(g || null);
+        setExpenses(Array.isArray(json.data.expenses) ? json.data.expenses : []);
+        if (g) {
+          setBudget(mapGrantToBudget(g, json.data.expenses?.length || 0));
+        } else {
+          // Desa baru belum memiliki data usulan/realisasi anggaran
+          setBudget({
+            year: fiscalYear,
+            dateStr: `Tahun Anggaran ${fiscalYear}`,
+            apbdes: 0,
+            banprov: 0,
+            pades: 0,
+            usedAmount: 0,
+            usedActivitiesCount: 0,
+            lastUpdatedStr: 'Belum ada usulan anggaran belanja',
+          });
         }
-      } catch (err) {
-        console.error('[useBudgetData]', err);
-      } finally {
-        if (!cancelled) setLoading(false);
+        setIsLive(true);
       }
+    } catch (err) {
+      console.error('[useBudgetData]', err);
+    } finally {
+      setLoading(false);
     }
-
-    loadData();
-
-    return () => {
-      cancelled = true;
-    };
   }, [fiscalYear, villageSlug]);
 
-  return { budget, village, grant, expenses, loading, isLive, session };
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  return { budget, village, grant, expenses, loading, isLive, session, reload };
 }

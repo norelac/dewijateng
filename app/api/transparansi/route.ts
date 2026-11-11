@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { derivePhotoUrl, receiptUrlFor } from '@/lib/services/evidenceService';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,9 @@ export async function GET(req: NextRequest) {
     // Ambil data bantuan keuangan (village_grants)
     const grantRes = await query(
       `SELECT
-         id, fiscal_year, funding_source, total_allocated, total_realized,
+         id, fiscal_year, funding_source,
+         apbdes_amount, banprov_amount, pades_amount,
+         total_allocated, total_realized,
          remaining_balance, lpj_document_url, lpj_status, uploaded_at, created_at
        FROM village_grants
        WHERE village_id = $1 AND fiscal_year = $2
@@ -95,6 +98,9 @@ export async function GET(req: NextRequest) {
               id: grant.id,
               fiscal_year: grant.fiscal_year,
               funding_source: grant.funding_source,
+              apbdes_amount: parseInt(grant.apbdes_amount || '0', 10),
+              banprov_amount: parseInt(grant.banprov_amount || '0', 10),
+              pades_amount: parseInt(grant.pades_amount || '0', 10),
               total_allocated: parseInt(grant.total_allocated, 10),
               total_realized: parseInt(grant.total_realized, 10),
               remaining_balance: parseInt(grant.remaining_balance, 10),
@@ -116,6 +122,10 @@ export async function GET(req: NextRequest) {
           ai_anomaly_flag: exp.ai_anomaly_flag,
           anomaly_note: exp.anomaly_note,
           created_at: exp.created_at,
+          // Bukti diturunkan dari data (tanpa kolom unggahan): nota dirender dari
+          // baris ini, foto fisik dipetakan dari jenis kegiatan.
+          receipt_url: receiptUrlFor(exp.id),
+          photo_url: derivePhotoUrl(exp.activity_name, exp.category),
         })),
       },
     });
@@ -189,6 +199,8 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: false,
                 anomaly_note: 'Harga sesuai standar wajar SSH Jateng 2026',
                 created_at: '2026-03-01T00:00:00Z',
+                receipt_url: null,
+                photo_url: derivePhotoUrl('Paving Block K-300 Area Parkir Wisata', 'MATERIAL_FISIK'),
               },
               {
                 id: 'exp-demo-2',
@@ -203,6 +215,8 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: false,
                 anomaly_note: 'Sesuai batas wajar Standar Satuan Harga',
                 created_at: '2026-03-05T00:00:00Z',
+                receipt_url: null,
+                photo_url: derivePhotoUrl('Kanstin Beton Precast Pembatas Parkir', 'MATERIAL_FISIK'),
               },
               {
                 id: 'exp-demo-3',
@@ -217,6 +231,8 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: true,
                 anomaly_note: 'Terdeteksi deviasi +75% melebihi batas atas SSH Jateng (Rp 200.000)',
                 created_at: '2026-03-10T00:00:00Z',
+                receipt_url: null,
+                photo_url: derivePhotoUrl('Pengadaan APD & Rambu K3 Pejalan Kaki (Mark-up Test)', 'KESELAMATAN_K3'),
               },
             ],
           },

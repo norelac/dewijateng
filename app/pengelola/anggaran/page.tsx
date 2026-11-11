@@ -8,12 +8,17 @@ import AnggaranDesaView from '@/components/pengelola/AnggaranDesaView';
 import UbahAnggaranView from '@/components/pengelola/UbahAnggaranView';
 import { TAB_ROUTES } from '@/components/pengelola/navRoutes';
 import { useBudgetData } from '@/components/pengelola/usePengelolaData';
+import { normalizeFiscalYear } from '@/components/pengelola/FiscalYearSelect';
+import { updateGrantAllocationAction } from '@/app/actions/grantActions';
 
 function AnggaranContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
-  const { budget } = useBudgetData();
+  const [fiscalYear, setFiscalYear] = useState<number>(
+    normalizeFiscalYear(searchParams.get('tahun'))
+  );
+  const { budget, village, loading, reload } = useBudgetData(fiscalYear);
 
   const initialView = (searchParams.get('view') as 'view' | 'edit') || 'view';
   const [anggaranSubView, setAnggaranSubView] = useState<'view' | 'edit'>(initialView);
@@ -21,7 +26,16 @@ function AnggaranContent() {
   useEffect(() => {
     const viewParam = searchParams.get('view') as 'view' | 'edit' | null;
     if (viewParam) setAnggaranSubView(viewParam);
+    const tahunParam = searchParams.get('tahun');
+    if (tahunParam) setFiscalYear(normalizeFiscalYear(tahunParam));
   }, [searchParams]);
+
+  const handleYearChange = (year: number) => {
+    setFiscalYear(year);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tahun', String(year));
+    router.replace(`/pengelola/anggaran?${params.toString()}`, { scroll: false });
+  };
 
   const handleTabChange = (tabId: string) => {
     if (tabId === 'anggaran') {
@@ -52,6 +66,9 @@ function AnggaranContent() {
           {anggaranSubView === 'view' ? (
             <AnggaranDesaView
               budget={budget}
+              fiscalYear={fiscalYear}
+              onYearChange={handleYearChange}
+              isLoading={loading}
               onOpenEdit={() => {
                 setAnggaranSubView('edit');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -63,13 +80,34 @@ function AnggaranContent() {
           ) : (
             <UbahAnggaranView
               budget={budget}
-              saveEnabled={false}
+              saveEnabled
+              fiscalYear={fiscalYear}
+              onYearChange={handleYearChange}
               onBack={() => {
                 setAnggaranSubView('view');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              onSaveBudget={() => {
-                // ponytail: tanpa endpoint tulis anggaran; simpan dinonaktifkan di UI.
+              onSaveBudget={async (updated) => {
+                if (!village?.id) {
+                  return { success: false, error: 'Data desa belum tersedia. Muat ulang halaman.' };
+                }
+                const fiscalYear = updated.year || budget.year;
+                // Kirim rincian tiga sumber dana; total dihitung dari jumlahnya di server.
+                const res = await updateGrantAllocationAction({
+                  villageId: village.id,
+                  fiscalYear,
+                  totalAllocated:
+                    (updated.apbdes ?? 0) + (updated.banprov ?? 0) + (updated.pades ?? 0),
+                  apbdesAmount: updated.apbdes ?? 0,
+                  banprovAmount: updated.banprov ?? 0,
+                  padesAmount: updated.pades ?? 0,
+                });
+
+                if (res.success) {
+                  await reload();
+                  return { success: true };
+                }
+                return { success: false, error: res.error };
               }}
             />
           )}
