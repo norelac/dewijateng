@@ -391,7 +391,10 @@ export async function checkExpenseAnomalies(items: AnomalyCheckItem[]): Promise<
       const amountRealized =
         Number(item.amount_realized) > 0 ? Number(item.amount_realized) : Math.round(volume * claimedPrice);
 
-      const evaluation = await matchAndCheckSSH(item.activity_name, claimedPrice, item.regency);
+      const evaluation = await matchAndCheckSSH(item.activity_name, claimedPrice, {
+        regency: item.regency,
+        useLlmSemantic: true,
+      });
 
       return {
         activity_name: item.activity_name,

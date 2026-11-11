@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -136,57 +136,6 @@ function mapExpense(exp: ApiExpense): ExpenditureItem {
   };
 }
 
-const EXPENDITURES: ExpenditureItem[] = [
-  {
-    id: 'exp-1',
-    date: '16 Okt 2026',
-    title: 'Perbaikan jalur pejalan kaki',
-    sub: 'Akses wisata & pagar pengaman',
-    amount: '320.000.000',
-    sshRef: '5.02.01.05.002',
-    sshAmount: '300.000.000',
-    deviation: 6.7,
-    receiptImg: 'https://images.unsplash.com/photo-1554415707-9e4966a6e483?w=1000&auto=format&fit=crop&q=85',
-    photoImg: '/img/figma/curug-sesudah.png',
-  },
-  {
-    id: 'exp-2',
-    date: '12 Okt 2026',
-    title: 'Penataan area parkir wisata',
-    sub: 'Permukaan & marka area parkir',
-    amount: '240.000.000',
-    sshRef: '5.02.01.06.001',
-    sshAmount: '170.000.000',
-    deviation: 41.2,
-    receiptImg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1000&auto=format&fit=crop&q=85',
-    photoImg: 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=1000&auto=format&fit=crop&q=85',
-  },
-  {
-    id: 'exp-3',
-    date: '08 Okt 2026',
-    title: 'Pengelolaan kebersihan desa',
-    sub: 'Tempat sampah & sarana kebersihan',
-    amount: '180.000.000',
-    sshRef: '5.02.02.01.003',
-    sshAmount: '175.000.000',
-    deviation: 2.9,
-    receiptImg: 'https://images.unsplash.com/photo-1554415707-9e4966a6e483?w=1000&auto=format&fit=crop&q=85',
-    photoImg: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1000&auto=format&fit=crop&q=85',
-  },
-  {
-    id: 'exp-4',
-    date: '05 Okt 2026',
-    title: 'Pemeliharaan toilet wisata',
-    sub: 'Sanitasi & perbaikan fasilitas',
-    amount: '100.000.000',
-    sshRef: '5.02.03.01.002',
-    sshAmount: '95.000.000',
-    deviation: 5.3,
-    receiptImg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1000&auto=format&fit=crop&q=85',
-    photoImg: '/img/figma/toilet-sesudah.png',
-  },
-];
-
 export default function TransparansiPage() {
   const [selectedKabupaten, setSelectedKabupaten] = useState('Kabupaten Magelang');
   const [selectedDesa, setSelectedDesa] = useState('Desa Candirejo');
@@ -315,65 +264,53 @@ export default function TransparansiPage() {
 
   const isLive = liveExpenses !== null;
   const expenses = useMemo(
-    () => (isLive ? liveExpenses!.map(mapExpense) : EXPENDITURES),
-    [isLive, liveExpenses]
+    () => (liveExpenses ? liveExpenses.map(mapExpense) : []),
+    [liveExpenses]
   );
 
-  const totalPendanaan = isLive ? (grant?.total_allocated ?? 0) : 1_200_000_000;
-  const totalTerpakai = isLive ? (grant?.total_realized ?? 0) : 840_000_000;
-  const sisaSaldo = isLive ? (grant?.remaining_balance ?? 0) : 360_000_000;
+  const totalPendanaan = grant?.total_allocated ?? 0;
+  const totalTerpakai = grant?.total_realized ?? 0;
+  const sisaSaldo = grant?.remaining_balance ?? 0;
   const persenTerpakai =
     totalPendanaan > 0 ? Math.round((totalTerpakai / totalPendanaan) * 100) : 0;
   const persenSisa = Math.max(0, 100 - persenTerpakai);
 
   const totalBelanja = useMemo(() => {
-    if (!isLive) return 840_000_000;
-    return liveExpenses!.reduce((sum, e) => sum + (e.amount_realized || 0), 0);
-  }, [isLive, liveExpenses]);
+    if (!liveExpenses) return 0;
+    return liveExpenses.reduce((sum, e) => sum + (e.amount_realized || 0), 0);
+  }, [liveExpenses]);
 
-  // Rincian sumber pendanaan untuk donut: dari DB saat live, dari data contoh
-  // saat basis data belum terhubung. Persentase dihitung dari total agar donut
-  // selalu utuh walau komposisi tiap desa berbeda.
+  // Rincian sumber pendanaan untuk donut: bersumber dari data grant aktif
   const [activeFunding, setActiveFunding] = useState<string | null>(null);
   const fundingSources = useMemo(() => {
-    const raw = isLive
-      ? (() => {
-          const apbdes = grant?.apbdes_amount ?? 0;
-          const banprov = grant?.banprov_amount ?? 0;
-          const pades = grant?.pades_amount ?? 0;
-          // Sebagian grant lama / LPJ baru belum memecah sumber dana
-          // (apbdes/banprov/pades = 0). Pakai komposisi baku 40/50/10 dari pagu
-          // supaya donut tetap terisi, bukan kosong.
-          if (apbdes + banprov + pades === 0 && (grant?.total_allocated ?? 0) > 0) {
-            const total = grant!.total_allocated;
-            return [
-              { key: 'apbdes', label: 'APBDes', amount: Math.round(total * 0.4), color: '#0D2453' },
-              { key: 'banprov', label: 'Bantuan Provinsi', amount: Math.round(total * 0.5), color: '#5A8CD4' },
-              {
-                key: 'pades',
-                label: 'PADes Wisata',
-                amount: total - Math.round(total * 0.4) - Math.round(total * 0.5),
-                color: '#B8D3F7',
-              },
-            ];
-          }
-          return [
-            { key: 'apbdes', label: 'APBDes', amount: apbdes, color: '#0D2453' },
-            { key: 'banprov', label: 'Bantuan Provinsi', amount: banprov, color: '#5A8CD4' },
-            { key: 'pades', label: 'PADes Wisata', amount: pades, color: '#B8D3F7' },
-          ];
-        })()
-      : [
-          { key: 'apbdes', label: 'APBDes', amount: 720_000_000, color: '#0D2453' },
-          { key: 'banprov', label: 'Bantuan Provinsi', amount: 300_000_000, color: '#5A8CD4' },
-          { key: 'pades', label: 'PADes Wisata', amount: 180_000_000, color: '#B8D3F7' },
-        ];
+    const apbdes = grant?.apbdes_amount ?? 0;
+    const banprov = grant?.banprov_amount ?? 0;
+    const pades = grant?.pades_amount ?? 0;
+    if (apbdes + banprov + pades === 0 && (grant?.total_allocated ?? 0) > 0) {
+      const total = grant!.total_allocated;
+      return [
+        { key: 'apbdes', label: 'APBDes', amount: Math.round(total * 0.4), color: '#0D2453', percent: 40 },
+        { key: 'banprov', label: 'Bantuan Provinsi', amount: Math.round(total * 0.5), color: '#5A8CD4', percent: 50 },
+        {
+          key: 'pades',
+          label: 'PADes Wisata',
+          amount: total - Math.round(total * 0.4) - Math.round(total * 0.5),
+          color: '#B8D3F7',
+          percent: 10,
+        },
+      ];
+    }
+    const raw = [
+      { key: 'apbdes', label: 'APBDes', amount: apbdes, color: '#0D2453' },
+      { key: 'banprov', label: 'Bantuan Provinsi', amount: banprov, color: '#5A8CD4' },
+      { key: 'pades', label: 'PADes Wisata', amount: pades, color: '#B8D3F7' },
+    ];
     const total = raw.reduce((sum, item) => sum + item.amount, 0);
     return raw.map((item) => ({
       ...item,
       percent: total > 0 ? (item.amount / total) * 100 : 0,
     }));
-  }, [isLive, grant]);
+  }, [grant]);
 
   const activeFundingItem =
     fundingSources.find((item) => item.key === activeFunding) ?? null;

@@ -58,8 +58,8 @@ export default function ResetLinkSentClient() {
   return (
     <AuthCard
       eyebrow="PEMULIHAN AKUN"
-      title="Buka tautan dari DEWI JATENG"
-      description="Tautan pemulihan kata sandi telah kami kirim ke email terdaftar."
+      title="Tautan Pemulihan Kata Sandi"
+      description="Tautan pemulihan akun Anda telah dibuat."
     >
       {error && (
         <AuthNote tone="warning" className="!p-3">
@@ -68,21 +68,18 @@ export default function ResetLinkSentClient() {
       )}
       {notice && <AuthNote tone="success">{notice}</AuthNote>}
 
-      <AuthNote title="Tautan pemulihan terkirim">
-        <span className="break-all">{email || 'alamat email terdaftar'}</span>
+      <AuthNote title="Akun Pengguna">
+        <span className="break-all">{email || 'Akun terdaftar'}</span>
       </AuthNote>
 
       <div className="flex flex-col gap-2 text-[13px] text-[#64748B] leading-[1.5]">
         <p>
-          Buka email tersebut, lalu pilih &ldquo;Buat kata sandi baru&rdquo;. Tautan berlaku
+          Gunakan tombol di bawah ini untuk langsung mereset kata sandi Anda. Tautan berlaku
           selama 30 menit dan hanya dapat dipakai satu kali.
-        </p>
-        <p>
-          Tidak menemukan email? Periksa folder spam, atau kirim ulang tautan di bawah ini.
         </p>
       </div>
 
-      {devLink && <DemoLink href={devLink} label="Buka tautan pemulihan" />}
+      {devLink && <DemoLink href={devLink} label="Buat Kata Sandi Baru" />}
 
       <div className="flex flex-col gap-3">
         <AuthButton type="button" onClick={handleResend} disabled={loading || !email}>

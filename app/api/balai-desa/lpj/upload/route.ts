@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { saveLpjSubmission } from '@/lib/services/lpjService';
+import { getSession } from '@/lib/auth';
 
 /**
  * POST /api/balai-desa/lpj/upload
- * Public / Balai Desa REST API Endpoint untuk menerima berkas PDF resmi LPJ
+ * REST API Endpoint untuk menerima berkas PDF resmi LPJ
  * bantuan sarpras, mengekstrak pos belanja, mengaudit terhadap katalog SSH Jateng,
- * dan merefresh Trust Score desa wisata.
+ * dan merefresh Trust Score desa wisata. Dilindungi autentikasi sesi per desa / dinas.
  */
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak: Sesi tidak ditemukan. Silakan masuk terlebih dahulu.' },
+        { status: 401 }
+      );
+    }
     const formData = await req.formData();
     const villageId =
       (formData.get('village_id') as string) ||
@@ -36,6 +44,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'village_id wajib disertakan' },
         { status: 422 }
+      );
+    }
+
+    if (session.role === 'desa' && session.villageId !== villageId) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak: Anda hanya dapat mengunggah LPJ untuk desa Anda sendiri.' },
+        { status: 403 }
       );
     }
 

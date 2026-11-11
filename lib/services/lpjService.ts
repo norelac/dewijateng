@@ -111,8 +111,11 @@ export async function saveLpjSubmission(input: SaveLpjInput): Promise<SaveLpjRes
 
       calculatedTotalRealized += amountRealized;
 
-      // Pencocokan harga dengan standar satuan harga
-      const sshEval = await matchAndCheckSSH(item.activity_name, claimedPrice, village.regency);
+      // Pencocokan harga dengan standar satuan harga (aktifkan AI semantic matching)
+      const sshEval = await matchAndCheckSSH(item.activity_name, claimedPrice, {
+        regency: village.regency,
+        useLlmSemantic: true,
+      });
       if (sshEval.isAnomaly) {
         anomaliesCount++;
       }
@@ -167,16 +170,17 @@ export async function saveLpjSubmission(input: SaveLpjInput): Promise<SaveLpjRes
 
     grantId = grantRes.rows[0].id;
 
-    // 5. Simpan Rincian Pos Belanja ke grant_expenses (Hapus rincian lama dalam transaksi yang sama)
+    // 5. Simpan Rincian Pos Belanja ke grant_expenses & sinkronisasi ke village_transactions
     await client.query(`DELETE FROM grant_expenses WHERE grant_id = $1`, [grantId]);
 
     for (const exp of enrichedExpenses) {
-      await client.query(
+      const expRes = await client.query<{ id: string }>(
         `INSERT INTO grant_expenses (
            grant_id, activity_name, category, volume, unit,
            claimed_unit_price, budget_allocated, amount_realized,
            remaining_amount, ai_anomaly_flag, anomaly_note
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10)`,
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10)
+         RETURNING id`,
         [
           grantId,
           exp.activity_name,
@@ -187,6 +191,30 @@ export async function saveLpjSubmission(input: SaveLpjInput): Promise<SaveLpjRes
           exp.amount_realized,
           exp.amount_realized,
           exp.ai_anomaly_flag,
+          exp.anomaly_note,
+        ]
+      );
+
+      const expenseId = expRes.rows[0].id;
+      const refCode = `EXP-${expenseId.slice(0, 8).toUpperCase()}`;
+
+      await client.query(
+        `INSERT INTO village_transactions (
+           village_id, type, reference_code, title, category,
+           transaction_date, amount, payment_method, counterparty,
+           note, recorded_by, recorded_at
+         ) VALUES ($1, 'PENGELUARAN', $2, $3, $4, CURRENT_DATE, $5, 'TRANSFER', 'Penyedia Desa', $6, 'Pengelola LPJ', NOW())
+         ON CONFLICT (reference_code) DO UPDATE SET
+           title = EXCLUDED.title,
+           category = EXCLUDED.category,
+           amount = EXCLUDED.amount,
+           note = EXCLUDED.note`,
+        [
+          villageId,
+          refCode,
+          exp.activity_name,
+          exp.category,
+          exp.amount_realized,
           exp.anomaly_note,
         ]
       );

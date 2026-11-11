@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getReportByCode, markReportInProgress } from '@/lib/services/reportService';
+import { getSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,14 @@ export async function PATCH(
   { params }: { params: { report_code: string } }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak: Anda harus masuk terlebih dahulu.' },
+        { status: 401 }
+      );
+    }
+
     const reportCode = params.report_code?.toUpperCase()?.trim();
 
     if (!reportCode) {

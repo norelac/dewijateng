@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveIncidentReport } from '@/lib/services/resolutionService';
+import { getSession } from '@/lib/auth';
 
 /**
  * POST /api/pokdarwis/reports/[report_code]/resolve
- * Public / Pokdarwis API Endpoint untuk menyelesaikan laporan aduan fasilitas
+ * Endpoint untuk menyelesaikan laporan aduan fasilitas
  * dengan bukti foto fisik (Proof-of-Fix) dan validasi EXIF timestamp.
  */
 export async function POST(
@@ -11,6 +12,14 @@ export async function POST(
   { params }: { params: { report_code: string } }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak: Anda harus masuk terlebih dahulu.' },
+        { status: 401 }
+      );
+    }
+
     const reportCode = params.report_code?.toUpperCase()?.trim();
     if (!reportCode) {
       return NextResponse.json(
@@ -47,6 +56,7 @@ export async function POST(
       photoName,
       actionSummary,
       officerName,
+      actorVillageId: session.role === 'desa' ? session.villageId : null,
     });
 
     return NextResponse.json({

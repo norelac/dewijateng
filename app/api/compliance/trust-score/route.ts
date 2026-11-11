@@ -3,6 +3,7 @@ import {
   calculateVillageTrustScore,
   recalculateAllVillages,
 } from '@/lib/services/trustScoreCalculator';
+import { getSession } from '@/lib/auth';
 
 /**
  * GET /api/compliance/trust-score
@@ -35,8 +36,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Batch mode: rekalkulasi seluruh desa wisata
+    // Batch mode: rekalkulasi seluruh desa wisata (hanya Disbudparekraf)
     if (body.batch === true) {
+      const session = await getSession();
+      if (!session || session.role !== 'disbudparekraf') {
+        return NextResponse.json(
+          { success: false, error: 'Akses ditolak: Rekalkulasi massal hanya diizinkan untuk Admin Disbudparekraf.' },
+          { status: 403 }
+        );
+      }
       const result = await recalculateAllVillages();
       return NextResponse.json({
         success: true,

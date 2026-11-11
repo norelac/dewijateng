@@ -124,6 +124,8 @@ function revalidateAll(): void {
     revalidatePath('/pengelola');
     revalidatePath('/pengelola/pengeluaran');
     revalidatePath('/transparansi');
+    revalidatePath('/disbudparekraf');
+    revalidatePath('/disbudparekraf/monitoring');
     revalidatePath('/');
   } catch {
     // Abaikan di luar context request Next.js
@@ -137,7 +139,10 @@ export async function createExpenseAction(input: ExpenseInput): Promise<ActionRe
     const { villageId, regency } = await loadGrantContext(input.grantId);
     await assertVillageScope(villageId);
 
-    const evaluation = await matchAndCheckSSH(data.activityName, data.claimedUnitPrice, regency);
+    const evaluation = await matchAndCheckSSH(data.activityName, data.claimedUnitPrice, {
+      regency,
+      useLlmSemantic: true,
+    });
 
     const client = await pool.connect();
     let id = '';
@@ -165,6 +170,30 @@ export async function createExpenseAction(input: ExpenseInput): Promise<ActionRe
         ]
       );
       id = insertRes.rows[0].id;
+
+      // Sinkronisasi otomatis ke village_transactions (monitoring dinas)
+      const refCode = `EXP-${id.slice(0, 8).toUpperCase()}`;
+      await client.query(
+        `INSERT INTO village_transactions (
+           village_id, type, reference_code, title, category,
+           transaction_date, amount, payment_method, counterparty,
+           note, recorded_by, recorded_at
+         ) VALUES ($1, 'PENGELUARAN', $2, $3, $4, CURRENT_DATE, $5, 'TRANSFER', 'Penyedia Desa', $6, 'Pengelola Desa', NOW())
+         ON CONFLICT (reference_code) DO UPDATE SET
+           title = EXCLUDED.title,
+           category = EXCLUDED.category,
+           amount = EXCLUDED.amount,
+           note = EXCLUDED.note`,
+        [
+          villageId,
+          refCode,
+          data.activityName,
+          data.category,
+          data.amountRealized,
+          evaluation.note,
+        ]
+      );
+
       await syncGrantTotals(client, input.grantId);
       await client.query('COMMIT');
     } catch (err) {
@@ -197,7 +226,10 @@ export async function updateExpenseAction(
     const { villageId, regency } = await loadGrantContext(input.grantId);
     await assertVillageScope(villageId);
 
-    const evaluation = await matchAndCheckSSH(data.activityName, data.claimedUnitPrice, regency);
+    const evaluation = await matchAndCheckSSH(data.activityName, data.claimedUnitPrice, {
+      regency,
+      useLlmSemantic: true,
+    });
 
     const client = await pool.connect();
     try {
@@ -227,6 +259,30 @@ export async function updateExpenseAction(
       if (updateRes.rows.length === 0) {
         throw new Error('Pos belanja tidak ditemukan');
       }
+
+      // Sinkronisasi otomatis ke village_transactions
+      const refCode = `EXP-${expenseId.slice(0, 8).toUpperCase()}`;
+      await client.query(
+        `INSERT INTO village_transactions (
+           village_id, type, reference_code, title, category,
+           transaction_date, amount, payment_method, counterparty,
+           note, recorded_by, recorded_at
+         ) VALUES ($1, 'PENGELUARAN', $2, $3, $4, CURRENT_DATE, $5, 'TRANSFER', 'Penyedia Desa', $6, 'Pengelola Desa', NOW())
+         ON CONFLICT (reference_code) DO UPDATE SET
+           title = EXCLUDED.title,
+           category = EXCLUDED.category,
+           amount = EXCLUDED.amount,
+           note = EXCLUDED.note`,
+        [
+          villageId,
+          refCode,
+          data.activityName,
+          data.category,
+          data.amountRealized,
+          evaluation.note,
+        ]
+      );
+
       await syncGrantTotals(client, input.grantId);
       await client.query('COMMIT');
     } catch (err) {
@@ -268,6 +324,8 @@ export async function deleteExpenseAction(expenseId: string): Promise<ActionResp
     try {
       await client.query('BEGIN');
       await client.query(`DELETE FROM grant_expenses WHERE id = $1`, [expenseId]);
+      const refCode = `EXP-${expenseId.slice(0, 8).toUpperCase()}`;
+      await client.query(`DELETE FROM village_transactions WHERE reference_code = $1`, [refCode]);
       await syncGrantTotals(client, grantId);
       await client.query('COMMIT');
     } catch (err) {

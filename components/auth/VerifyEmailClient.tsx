@@ -98,7 +98,7 @@ export default function VerifyEmailClient() {
   return (
     <AuthCard
       eyebrow="PENDAFTARAN · LANGKAH 1 DARI 2"
-      title="Verifikasi email Anda"
+      title="Verifikasi Akun Anda"
       description="Satu langkah lagi untuk mengajukan akses admin dinas."
     >
       {error && (
@@ -108,22 +108,17 @@ export default function VerifyEmailClient() {
       )}
       {notice && <AuthNote tone="success">{notice}</AuthNote>}
 
-      <AuthNote title="Tautan verifikasi telah dikirim">
-        <span className="break-all">{email || 'alamat email Anda'}</span>
+      <AuthNote title="Identitas Akun Pendaftar">
+        <span className="break-all">{email || 'akun instansi Anda'}</span>
       </AuthNote>
 
       <div className="flex flex-col gap-2 text-[13px] text-[#64748B] leading-[1.5]">
         <p>
-          Buka email dari DEWI JATENG, lalu pilih &ldquo;Verifikasi email&rdquo;. Tautan berlaku
-          selama 24 jam.
-        </p>
-        <p>
-          Belum menerima email? Periksa folder spam dan pastikan alamat email yang digunakan sudah
-          benar.
+          Buka tautan verifikasi di bawah ini untuk mengonfirmasi pengajuan akun dinas Anda.
         </p>
       </div>
 
-      {devLink && <DemoLink href={devLink} label="Buka tautan verifikasi" />}
+      {devLink && <DemoLink href={devLink} label="Verifikasi Akun Sekarang" />}
 
       {changingEmail ? (
         <form onSubmit={handleResend} className="flex flex-col gap-[18px]">
@@ -137,7 +132,7 @@ export default function VerifyEmailClient() {
             required
           />
           <AuthButton type="submit" disabled={loading}>
-            {loading ? 'Mengirim...' : 'Kirim ulang email verifikasi'}
+            {loading ? 'Memproses...' : 'Buat ulang tautan verifikasi'}
           </AuthButton>
           <button
             type="button"
@@ -150,7 +145,7 @@ export default function VerifyEmailClient() {
       ) : (
         <form onSubmit={handleResend} className="flex flex-col gap-3">
           <AuthButton type="submit" disabled={loading || !email}>
-            {loading ? 'Mengirim...' : 'Kirim ulang email verifikasi'}
+            {loading ? 'Memproses...' : 'Buat ulang tautan verifikasi'}
           </AuthButton>
           <button
             type="button"

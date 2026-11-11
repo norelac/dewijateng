@@ -358,6 +358,7 @@ export default function HomeReportForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMessage(null);
 
     const cleanTitle = selectedTitle.trim();

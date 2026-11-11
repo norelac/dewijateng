@@ -12,7 +12,6 @@ import {
   type SessionUser,
 } from '@/lib/auth';
 import { consumeAuthToken, issueAuthToken, peekAuthToken } from '@/lib/authTokens';
-import { sendMail } from '@/lib/mailer';
 import { getRequestBaseUrl } from '@/lib/requestUrl';
 
 // ==============================================================================
@@ -563,28 +562,18 @@ async function buildVillageUsername(slug: string): Promise<string> {
   return `${base}-${Date.now().toString(36)}`;
 }
 
-/** Terbitkan token undangan lalu kirim email (mode demo: tautan dikembalikan). */
+/** Terbitkan token undangan lalu siapkan tautan aktivasi langsung. */
 async function sendInvitation(
   userId: string,
-  email: string,
-  fullName: string,
-  villageName: string
+  _email: string,
+  _fullName: string,
+  _villageName: string
 ): Promise<{ devLink?: string; expiresAt: Date }> {
   const { token, expiresAt } = await issueAuthToken(userId, 'UNDANGAN_AKTIVASI');
   const baseUrl = await getRequestBaseUrl();
   const actionUrl = `${baseUrl}/aktivasi?token=${token}`;
 
-  const mail = await sendMail({
-    to: email,
-    subject: `Undangan aktivasi akun pengelola ${villageName}`,
-    heading: 'Undangan aktivasi akun DEWI JATENG',
-    body: `Halo ${fullName}, Disbudparekraf Provinsi Jawa Tengah mengundang Anda sebagai pengelola resmi ${villageName}. Buka tautan di bawah untuk menetapkan kata sandi dan mengaktifkan akun.`,
-    actionUrl,
-    actionLabel: 'Aktifkan akun pengelola',
-    footnote: 'Tautan aktivasi berlaku selama 24 jam sejak email ini dikirim.',
-  });
-
-  return { devLink: mail.devLink, expiresAt };
+  return { devLink: actionUrl, expiresAt };
 }
 
 export async function createVillageAccountAction(

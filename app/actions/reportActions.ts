@@ -13,6 +13,7 @@ import {
   type CreateReportDTO,
   type IncidentReportDetail,
 } from '@/lib/services/reportService';
+import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export interface ActionResponse<T = any> {
@@ -146,6 +147,11 @@ export async function markReportInProgressAction(
   reportCode: string
 ): Promise<ActionResponse<{ success: boolean; reportCode: string }>> {
   try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: 'Akses ditolak: Anda harus masuk terlebih dahulu.' };
+    }
+
     if (!reportCode || !reportCode.trim()) {
       return { success: false, error: 'Kode tiket tidak boleh kosong' };
     }

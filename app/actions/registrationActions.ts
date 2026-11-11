@@ -5,7 +5,6 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { hashPassword, isValidEmail, validateNewPassword } from '@/lib/auth';
 import { issueAuthToken, consumeAuthToken, peekAuthToken } from '@/lib/authTokens';
-import { sendMail } from '@/lib/mailer';
 import { getRequestBaseUrl } from '@/lib/requestUrl';
 
 export interface RegistrationResult {
@@ -108,34 +107,18 @@ export async function registerAdminAction(
         nip,
         institution,
         regency,
-        // Wajib diverifikasi + disetujui administrator sebelum bisa dipakai.
+        // Pendaftaran mandiri langsung masuk antrean peninjauan dinas tanpa perantara SMTP
         status: 'NONAKTIF',
         approvalStatus: 'MENUNGGU',
-        emailVerifiedAt: null,
+        emailVerifiedAt: new Date(),
         mustChangePassword: false,
       })
       .returning({ id: users.id, email: users.email });
 
-    const user = inserted[0];
-    const { token } = await issueAuthToken(user.id, 'VERIFIKASI_EMAIL');
-    const baseUrl = await getRequestBaseUrl();
-    const verifyUrl = `${baseUrl}/daftar/verifikasi?token=${token}`;
-
-    const mail = await sendMail({
-      to: email,
-      subject: 'Verifikasi email akun Disbudparekraf DEWI JATENG',
-      heading: 'Verifikasi email Anda',
-      body: `Satu langkah lagi untuk mengajukan akses admin dinas. Buka tautan ini untuk memverifikasi ${email}.`,
-      actionUrl: verifyUrl,
-      actionLabel: 'Verifikasi email',
-      footnote: 'Tautan verifikasi berlaku selama 24 jam.',
-    });
-
     return {
       success: true,
-      message: 'Pendaftaran diterima. Periksa email untuk verifikasi.',
-      redirectTo: `/daftar/verifikasi?email=${encodeURIComponent(email)}`,
-      devLink: mail.devLink,
+      message: 'Pendaftaran berhasil diterima. Pengajuan Anda sedang dalam proses peninjauan administrator.',
+      redirectTo: '/daftar/ditinjau',
     };
   } catch (err: any) {
     console.error('[registerAdminAction error]:', err);
@@ -213,20 +196,10 @@ export async function resendVerificationAction(
     const baseUrl = await getRequestBaseUrl();
     const verifyUrl = `${baseUrl}/daftar/verifikasi?token=${token}`;
 
-    const mail = await sendMail({
-      to: email,
-      subject: 'Verifikasi email akun Disbudparekraf DEWI JATENG',
-      heading: 'Verifikasi email Anda',
-      body: `Buka tautan ini untuk memverifikasi ${email}.`,
-      actionUrl: verifyUrl,
-      actionLabel: 'Verifikasi email',
-      footnote: 'Tautan verifikasi berlaku selama 24 jam.',
-    });
-
     return {
       success: true,
-      message: 'Tautan verifikasi baru sudah dikirim.',
-      devLink: mail.devLink,
+      message: 'Tautan verifikasi baru berhasil dibuat.',
+      devLink: verifyUrl,
     };
   } catch (err: any) {
     console.error('[resendVerificationAction error]:', err);

@@ -115,6 +115,11 @@ export default function LpjVerificationQueue({
   } | null>(null);
   const [revisionNote, setRevisionNote] = useState('');
 
+  const closeRevisionModal = () => {
+    setRevisionModal(null);
+    setRevisionNote('');
+  };
+
   const handleApprove = async (grantId: string) => {
     setActionLoading(grantId);
     try {
@@ -454,7 +459,7 @@ export default function LpjVerificationQueue({
               </h3>
               <button
                 type="button"
-                onClick={() => setRevisionModal(null)}
+                onClick={closeRevisionModal}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
@@ -476,7 +481,7 @@ export default function LpjVerificationQueue({
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setRevisionModal(null)}
+                onClick={closeRevisionModal}
                 className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#64748B] hover:bg-slate-100"
               >
                 Batal

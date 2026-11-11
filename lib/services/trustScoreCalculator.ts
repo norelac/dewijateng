@@ -42,7 +42,7 @@ export function classifyTrustStatus(score: number): 'GREEN' | 'YELLOW' | 'RED' {
 export async function calculateVillageTrustScore(
   villageId: string
 ): Promise<TrustScoreBreakdown> {
-  // 1. Cek Kepatuhan Finansial LPJ
+  // 1. Cek Kepatuhan Finansial LPJ & Anomali Belanja AI
   const lpjRes = await query<{ total_grants: string; verified_grants: string }>(
     `SELECT
        COUNT(*) as total_grants,
@@ -58,6 +58,27 @@ export async function calculateVillageTrustScore(
   let sLpj = 80.0; // Default jika desa belum menerima bantuan khusus
   if (totalGrants > 0) {
     sLpj = (verifiedGrants / totalGrants) * 100.0;
+
+    // Evaluasi penalti jika terdapat anomali harga belanja (AI Anomaly Flag)
+    const anomalyRes = await query<{ total_expenses: string; anomaly_expenses: string }>(
+      `SELECT
+         COUNT(ge.id) as total_expenses,
+         COUNT(CASE WHEN ge.ai_anomaly_flag = true THEN 1 END) as anomaly_expenses
+       FROM grant_expenses ge
+       JOIN village_grants vg ON vg.id = ge.grant_id
+       WHERE vg.village_id = $1`,
+      [villageId]
+    );
+
+    const totalExpenses = parseInt(anomalyRes.rows[0]?.total_expenses || '0', 10);
+    const anomalyExpenses = parseInt(anomalyRes.rows[0]?.anomaly_expenses || '0', 10);
+
+    if (totalExpenses > 0 && anomalyExpenses > 0) {
+      // Penalti proporsional hingga 35 poin terhadap kepatuhan anggaran
+      const penaltyRate = anomalyExpenses / totalExpenses;
+      const penalty = penaltyRate * 35.0;
+      sLpj = Math.max(0, sLpj - penalty);
+    }
   }
 
   // 2. Cek Responsivitas Aduan Warga
@@ -114,6 +135,8 @@ export async function recalculateAllVillages(): Promise<BatchRecalcResult> {
          tv.id,
          COALESCE(g.total_grants, 0) as total_grants,
          COALESCE(g.verified_grants, 0) as verified_grants,
+         COALESCE(e.total_expenses, 0) as total_expenses,
+         COALESCE(e.anomaly_expenses, 0) as anomaly_expenses,
          COALESCE(r.total_reports, 0) as total_reports,
          COALESCE(r.resolved_reports, 0) as resolved_reports
        FROM tourist_villages tv
@@ -122,6 +145,14 @@ export async function recalculateAllVillages(): Promise<BatchRecalcResult> {
                 COUNT(CASE WHEN lpj_status IN ('VERIFIED', 'SUBMITTED') THEN 1 END) as verified_grants
          FROM village_grants GROUP BY village_id
        ) g ON g.village_id = tv.id
+       LEFT JOIN (
+         SELECT vg.village_id,
+                COUNT(ge.id) as total_expenses,
+                COUNT(CASE WHEN ge.ai_anomaly_flag = true THEN 1 END) as anomaly_expenses
+         FROM grant_expenses ge
+         JOIN village_grants vg ON vg.id = ge.grant_id
+         GROUP BY vg.village_id
+       ) e ON e.village_id = tv.id
        LEFT JOIN (
          SELECT village_id, COUNT(*) as total_reports,
                 COUNT(CASE WHEN status = 'RESOLVED' THEN 1 END) as resolved_reports
@@ -132,7 +163,13 @@ export async function recalculateAllVillages(): Promise<BatchRecalcResult> {
        SELECT
          id,
          ROUND(
-           (0.50 * (CASE WHEN total_grants > 0 THEN (verified_grants::numeric / total_grants) * 100 ELSE 80.00 END) +
+           (0.50 * (
+             CASE
+               WHEN total_grants > 0 THEN
+                 GREATEST(0, ((verified_grants::numeric / total_grants) * 100) - (CASE WHEN total_expenses > 0 THEN (anomaly_expenses::numeric / total_expenses) * 35 ELSE 0 END))
+               ELSE 80.00
+             END
+           ) +
             0.50 * (CASE WHEN total_reports > 0 THEN (resolved_reports::numeric / total_reports) * 100 ELSE 80.00 END))::numeric,
            2
          ) as calculated_score

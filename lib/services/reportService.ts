@@ -163,10 +163,11 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
     photoUrls[0] || input.photoFallbackUrl || DEFAULT_FALLBACK_PHOTO;
 
   // 4. Enkripsi hash satu arah nomor WhatsApp pelapor jika opsi anonim dipilih
+  const sanitizedPhone = (reporterPhone || '').trim().slice(0, 32);
   const contactHash =
-    isAnonymous && reporterPhone
-      ? hashReporterPhone(reporterPhone)
-      : (reporterPhone || null);
+    isAnonymous && sanitizedPhone
+      ? hashReporterPhone(sanitizedPhone)
+      : (sanitizedPhone || null);
 
   // 5. Terbitkan kode tiket unik standar: LP-JTG-{TAHUN}-{URUT}
   const reportCode = await generateReportCode();

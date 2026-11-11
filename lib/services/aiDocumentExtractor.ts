@@ -416,11 +416,18 @@ export async function extractLpjFromPdf(
         if (llmResult.fundingSource) metadata.fundingSource = llmResult.fundingSource;
         if (llmResult.totalAllocated) metadata.totalAllocated = llmResult.totalAllocated;
       } else {
-        rawItems = localRows.length > 0 ? localRows : DEFAULT_LPJ_EXPENSE_SAMPLE;
+        rawItems = localRows.length > 0 ? localRows : [];
       }
     } else {
-      rawItems = localRows.length > 0 ? localRows : DEFAULT_LPJ_EXPENSE_SAMPLE;
+      rawItems = localRows.length > 0 ? localRows : [];
     }
+  }
+
+  // 3b. Validasi hasil ekstraksi: Jangan diam-diam mengisi data fiktif
+  if (!rawItems || rawItems.length === 0) {
+    throw new Error(
+      'Gagal mengekstrak rincian belanja: Dokumen PDF tidak memuat tabel teks digital resmi yang dapat dibaca. Pastikan dokumen bukan hasil scan gambar tanpa lapisan teks.'
+    );
   }
 
   // 4. Normalisasi dan kalkulasi integritas neraca belanja

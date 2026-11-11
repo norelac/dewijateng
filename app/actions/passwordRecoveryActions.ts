@@ -5,7 +5,6 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { hashPassword, isValidEmail, validateNewPassword } from '@/lib/auth';
 import { issueAuthToken, consumeAuthToken, peekAuthToken } from '@/lib/authTokens';
-import { sendMail } from '@/lib/mailer';
 import { getRequestBaseUrl } from '@/lib/requestUrl';
 
 export interface PasswordRecoveryResult {
@@ -43,18 +42,7 @@ export async function requestPasswordResetAction(
     if (rows.length > 0 && rows[0].status === 'AKTIF') {
       const { token } = await issueAuthToken(rows[0].id, 'RESET_SANDI');
       const baseUrl = await getRequestBaseUrl();
-      const resetUrl = `${baseUrl}/reset-sandi?token=${token}`;
-
-      const mail = await sendMail({
-        to: email,
-        subject: 'Tautan pemulihan kata sandi DEWI JATENG',
-        heading: 'Buka tautan dari DEWI JATENG',
-        body: `Kami menerima permintaan pemulihan kata sandi untuk ${email}. Demi keamanan, tautan hanya dapat digunakan satu kali.`,
-        actionUrl: resetUrl,
-        actionLabel: 'Buat kata sandi baru',
-        footnote: 'Tautan pemulihan berlaku selama 30 menit.',
-      });
-      devLink = mail.devLink;
+      devLink = `${baseUrl}/reset-sandi?token=${token}`;
     }
 
     return {

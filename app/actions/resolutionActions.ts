@@ -9,6 +9,7 @@ import {
   resolveIncidentReport,
   type ResolveIncidentResult,
 } from '@/lib/services/resolutionService';
+import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export interface ActionResponse<T = any> {
@@ -26,6 +27,11 @@ export async function resolveReportAction(
   formData: FormData
 ): Promise<ActionResponse<ResolveIncidentResult>> {
   try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: 'Akses ditolak: Anda harus masuk terlebih dahulu.' };
+    }
+
     const reportCode =
       (formData.get('report_code') as string) ||
       (formData.get('reportCode') as string) ||
@@ -57,6 +63,7 @@ export async function resolveReportAction(
       photoName,
       actionSummary,
       officerName,
+      actorVillageId: session.role === 'desa' ? session.villageId : null,
     });
 
     // Revalidasi jalur halaman Pokdarwis, pelacakan aduan publik, dan beranda

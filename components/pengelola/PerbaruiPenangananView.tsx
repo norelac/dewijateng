@@ -60,12 +60,13 @@ export default function PerbaruiPenangananView({
     setResolvedImage(ticket.resolvedImage || null);
   }, [ticket.id, ticket.status, ticket.notes, ticket.resolvedImage]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const optimized = file.type.startsWith('image/') ? await convertImageToWebP(file) : file;
-      setResolvedFile(optimized);
-      setResolvedImage(URL.createObjectURL(optimized));
+      // Pertahankan file asli agar metadata EXIF timestamp terbaca oleh validator server
+      // Kompresi WebP dilakukan di server oleh sharp setelah verifikasi EXIF selesai.
+      setResolvedFile(file);
+      setResolvedImage(URL.createObjectURL(file));
       setErrorMessage(null);
     }
   };

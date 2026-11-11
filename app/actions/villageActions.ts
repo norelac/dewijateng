@@ -48,7 +48,7 @@ export async function registerVillageAction(
     // Sesi tidak tersedia atau dijalankan di luar context HTTP request
   }
   // Validasi sesi: Hanya Disbudparekraf yang berhak mendaftarkan desa
-  if (session && session.role !== 'disbudparekraf') {
+  if (!session || session.role !== 'disbudparekraf') {
     return {
       success: false,
       message: 'Akses ditolak: Hanya Admin Disbudparekraf yang dapat mendaftarkan desa baru.',
@@ -227,8 +227,8 @@ export async function reviewLpjAction(params: {
   reviewNotes?: string;
 }): Promise<{ success: boolean; message: string }> {
   const session = await getSession();
-  if (session && session.role !== 'disbudparekraf') {
-    return { success: false, message: 'Hanya Disbudparekraf yang berhak memverifikasi LPJ' };
+  if (!session || session.role !== 'disbudparekraf') {
+    return { success: false, message: 'Akses ditolak: Hanya Disbudparekraf yang berhak memverifikasi LPJ' };
   }
 
   const { grantId, status, reviewNotes } = params;

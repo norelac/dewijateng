@@ -15,6 +15,7 @@ export interface ResolveIncidentInput {
   photoFallbackUrl?: string;
   actionSummary: string;
   officerName: string;
+  actorVillageId?: string | null;
 }
 
 export interface ResolveIncidentResult {
@@ -73,6 +74,11 @@ export async function resolveIncidentReport(
   }
 
   const report = reportRes.rows[0];
+
+  if (input.actorVillageId && report.village_id !== input.actorVillageId) {
+    throw new Error('Akses ditolak: Anda hanya dapat menyelesaikan laporan untuk desa Anda sendiri.');
+  }
+
   const reportCreatedAt = new Date(report.created_at);
 
   // 2. Evaluasi bukti foto fisik & verifikasi EXIF
