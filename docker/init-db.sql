@@ -42,22 +42,7 @@ CREATE INDEX idx_villages_geom ON tourist_villages USING GIST(geom);
 CREATE INDEX idx_villages_trust_score ON tourist_villages(trust_score);
 
 -- ==============================================================================
--- TABEL 2: official_tariffs (Tarif Resmi Sesuai Perdes / JADESTA Kemenparekraf)
--- ==============================================================================
-CREATE TABLE official_tariffs (
-    id BIGSERIAL PRIMARY KEY,
-    village_id UUID NOT NULL REFERENCES tourist_villages(id) ON DELETE CASCADE,
-    item_name VARCHAR(100) NOT NULL,
-    tariff_type VARCHAR(30) CHECK (tariff_type IN ('ENTRY_TICKET', 'PARKING_MOTOR', 'PARKING_CAR', 'PACKAGE_TOUR')) NOT NULL,
-    price DECIMAL(12, 2) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_tariffs_village ON official_tariffs(village_id);
-
--- ==============================================================================
--- TABEL 3: village_grants (Dokumen LPJ Bantuan Keuangan Pemprov / APBDes)
+-- TABEL 2: village_grants (Dokumen LPJ Bantuan Keuangan Pemprov / APBDes)
 -- ==============================================================================
 CREATE TABLE village_grants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -226,20 +211,6 @@ UPDATE tourist_villages SET updated_at = CURRENT_TIMESTAMP;
 
 
 -- ==============================================================================
--- SEED DATA: Tarif Resmi Sesuai Perdes Desa Wisata
--- ==============================================================================
-INSERT INTO official_tariffs (village_id, item_name, tariff_type, price, is_active) VALUES
-('a0000000-0000-0000-0000-000000000001', 'Tiket Masuk Kawasan Curug Kembar', 'ENTRY_TICKET', 10000.00, true),
-('a0000000-0000-0000-0000-000000000001', 'Parkir Sepeda Motor Resmi', 'PARKING_MOTOR', 2000.00, true),
-('a0000000-0000-0000-0000-000000000001', 'Parkir Mobil Pribadi Resmi', 'PARKING_CAR', 5000.00, true),
-('a0000000-0000-0000-0000-000000000002', 'Tiket Masuk Desa Candirejo', 'ENTRY_TICKET', 15000.00, true),
-('a0000000-0000-0000-0000-000000000002', 'Parkir Motor Wisatawan', 'PARKING_MOTOR', 3000.00, true),
-('a0000000-0000-0000-0000-000000000002', 'Paket Keliling Dokar Wisata', 'PACKAGE_TOUR', 150000.00, true),
-('a0000000-0000-0000-0000-000000000003', 'Tiket Masuk Watu Mujur', 'ENTRY_TICKET', 7000.00, true),
-('a0000000-0000-0000-0000-000000000003', 'Parkir Motor', 'PARKING_MOTOR', 2000.00, true);
-
-
--- ==============================================================================
 -- SEED DATA: Standar Satuan Harga (SSH) Acuan Pemprov Jawa Tengah 2026
 -- ==============================================================================
 INSERT INTO ssh_reference_rates (item_code, item_name, category, unit, standard_price, regency, effective_year) VALUES
@@ -335,7 +306,6 @@ CREATE OR REPLACE FUNCTION auth.role() RETURNS text
     LANGUAGE sql STABLE AS $$ SELECT current_setting('role', true) $$;
 
 ALTER TABLE tourist_villages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE official_tariffs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE village_grants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE grant_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ssh_reference_rates ENABLE ROW LEVEL SECURITY;
@@ -348,11 +318,7 @@ CREATE POLICY "tourist_villages_insert_auth" ON tourist_villages FOR INSERT TO a
 CREATE POLICY "tourist_villages_update_auth" ON tourist_villages FOR UPDATE TO authenticated, service_role USING (true) WITH CHECK (true);
 CREATE POLICY "tourist_villages_delete_auth" ON tourist_villages FOR DELETE TO authenticated, service_role USING (true);
 
--- 2. official_tariffs
-CREATE POLICY "official_tariffs_select_public" ON official_tariffs FOR SELECT TO public USING (is_active = true OR auth.role() IN ('authenticated', 'service_role'));
-CREATE POLICY "official_tariffs_all_auth" ON official_tariffs FOR ALL TO authenticated, service_role USING (true) WITH CHECK (true);
-
--- 3. village_grants
+-- 2. village_grants
 CREATE POLICY "village_grants_select_public" ON village_grants FOR SELECT TO public USING (true);
 CREATE POLICY "village_grants_all_auth" ON village_grants FOR ALL TO authenticated, service_role USING (true) WITH CHECK (true);
 

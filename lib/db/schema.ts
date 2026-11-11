@@ -56,24 +56,7 @@ export const touristVillages = pgTable('tourist_villages', {
 });
 
 // ------------------------------------------------------------------------------
-// 2. Tabel Tarif Resmi (official_tariffs)
-// ------------------------------------------------------------------------------
-export const officialTariffs = pgTable('official_tariffs', {
-  id: serial('id').primaryKey(),
-  villageId: uuid('village_id')
-    .references(() => touristVillages.id, { onDelete: 'cascade' })
-    .notNull(),
-  itemName: varchar('item_name', { length: 150 }).notNull(),
-  tariffType: varchar('tariff_type', { length: 50 }).notNull(),
-  price: integer('price').notNull(),
-  isActive: boolean('is_active').default(true).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-// ------------------------------------------------------------------------------
-// 3. Tabel Bantuan Hibah / APBDes (village_grants)
+// 2. Tabel Bantuan Hibah / APBDes (village_grants)
 // ------------------------------------------------------------------------------
 export const villageGrants = pgTable('village_grants', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -99,7 +82,7 @@ export const villageGrants = pgTable('village_grants', {
 });
 
 // ------------------------------------------------------------------------------
-// 4. Tabel Rincian Pos Belanja Modal LPJ (grant_expenses)
+// 3. Tabel Rincian Pos Belanja Modal LPJ (grant_expenses)
 // ------------------------------------------------------------------------------
 export const grantExpenses = pgTable('grant_expenses', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -124,7 +107,7 @@ export const grantExpenses = pgTable('grant_expenses', {
 });
 
 // ------------------------------------------------------------------------------
-// 5. Tabel Acuan Standar Satuan Harga Pemprov Jateng (ssh_reference_rates)
+// 4. Tabel Acuan Standar Satuan Harga Pemprov Jateng (ssh_reference_rates)
 // ------------------------------------------------------------------------------
 export const sshReferenceRates = pgTable('ssh_reference_rates', {
   id: serial('id').primaryKey(),
@@ -141,7 +124,7 @@ export const sshReferenceRates = pgTable('ssh_reference_rates', {
 });
 
 // ------------------------------------------------------------------------------
-// 6. Tabel Laporan Aduan Masyarakat (incident_reports)
+// 5. Tabel Laporan Aduan Masyarakat (incident_reports)
 // ------------------------------------------------------------------------------
 export const incidentReports = pgTable('incident_reports', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -168,7 +151,7 @@ export const incidentReports = pgTable('incident_reports', {
 });
 
 // ------------------------------------------------------------------------------
-// 7. Tabel Bukti Hasil Perbaikan Fisik / Proof-of-Fix (report_resolutions)
+// 6. Tabel Bukti Hasil Perbaikan Fisik / Proof-of-Fix (report_resolutions)
 // ------------------------------------------------------------------------------
 export const reportResolutions = pgTable('report_resolutions', {
   id: serial('id').primaryKey(),
@@ -189,7 +172,7 @@ export const reportResolutions = pgTable('report_resolutions', {
 });
 
 // ------------------------------------------------------------------------------
-// 8. Tabel Pengguna Sistem (users) - Akun Disbudparekraf & Desa
+// 7. Tabel Pengguna Sistem (users) - Akun Disbudparekraf & Desa
 // ------------------------------------------------------------------------------
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -212,7 +195,6 @@ export const users = pgTable('users', {
 // Drizzle Relations Mapping
 // ------------------------------------------------------------------------------
 export const touristVillagesRelations = relations(touristVillages, ({ many }) => ({
-  tariffs: many(officialTariffs),
   grants: many(villageGrants),
   reports: many(incidentReports),
   users: many(users),
@@ -221,13 +203,6 @@ export const touristVillagesRelations = relations(touristVillages, ({ many }) =>
 export const usersRelations = relations(users, ({ one }) => ({
   village: one(touristVillages, {
     fields: [users.villageId],
-    references: [touristVillages.id],
-  }),
-}));
-
-export const officialTariffsRelations = relations(officialTariffs, ({ one }) => ({
-  village: one(touristVillages, {
-    fields: [officialTariffs.villageId],
     references: [touristVillages.id],
   }),
 }));

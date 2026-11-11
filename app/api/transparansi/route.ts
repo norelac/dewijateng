@@ -77,15 +77,6 @@ export async function GET(req: NextRequest) {
       expenses = expRes.rows;
     }
 
-    // Ambil juga tarif resmi desa
-    const tariffsRes = await query(
-      `SELECT id, item_name, tariff_type, price, is_active
-       FROM official_tariffs
-       WHERE village_id = $1 AND is_active = true
-       ORDER BY tariff_type ASC`,
-      [village.id]
-    );
-
     return NextResponse.json({
       success: true,
       data: {
@@ -125,12 +116,6 @@ export async function GET(req: NextRequest) {
           ai_anomaly_flag: exp.ai_anomaly_flag,
           anomaly_note: exp.anomaly_note,
           created_at: exp.created_at,
-        })),
-        tariffs: tariffsRes.rows.map((t) => ({
-          id: t.id,
-          item_name: t.item_name,
-          tariff_type: t.tariff_type,
-          price: t.price,
         })),
       },
     });
@@ -232,20 +217,6 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: true,
                 anomaly_note: 'Terdeteksi deviasi +75% melebihi batas atas SSH Jateng (Rp 200.000)',
                 created_at: '2026-03-10T00:00:00Z',
-              },
-            ],
-            tariffs: [
-              {
-                id: 1,
-                item_name: 'Tiket Masuk Kawasan Wisata',
-                tariff_type: 'ENTRY_TICKET',
-                price: 15000,
-              },
-              {
-                id: 2,
-                item_name: 'Parkir Sepeda Motor Resmi',
-                tariff_type: 'PARKING_MOTOR',
-                price: 3000,
               },
             ],
           },

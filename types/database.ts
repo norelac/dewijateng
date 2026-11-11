@@ -13,7 +13,6 @@ export type Json =
 
 // --- ENUMS ---
 export type VillageClassification = 'RINTISAN' | 'BERKEMBANG' | 'MAJU' | 'MANDIRI';
-export type TariffType = 'ENTRY_TICKET' | 'PARKING_MOTOR' | 'PARKING_CAR' | 'PACKAGE_TOUR';
 export type LpjStatus = 'PENDING_UPLOAD' | 'SUBMITTED' | 'VERIFIED' | 'REVISION';
 export type UserRole = 'desa' | 'disbudparekraf';
 export type ExpenseCategory = 'MATERIAL_FISIK' | 'UPAH_TENAGA' | 'KESELAMATAN_K3' | 'OPERASIONAL';
@@ -36,16 +35,6 @@ export interface TouristVillageRow {
   trust_score: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface OfficialTariffRow {
-  id: number;
-  village_id: string;
-  item_name: string;
-  tariff_type: TariffType;
-  price: number;
-  is_active: boolean;
-  created_at: string;
 }
 
 export interface VillageGrantRow {
@@ -174,35 +163,6 @@ export interface Database {
           updated_at: string;
         }>;
         Relationships: [];
-      };
-      official_tariffs: {
-        Row: OfficialTariffRow;
-        Insert: {
-          id?: number;
-          village_id: string;
-          item_name: string;
-          tariff_type: TariffType;
-          price: number;
-          is_active?: boolean;
-          created_at?: string;
-        };
-        Update: Partial<{
-          id: number;
-          village_id: string;
-          item_name: string;
-          tariff_type: TariffType;
-          price: number;
-          is_active: boolean;
-          created_at: string;
-        }>;
-        Relationships: [
-          {
-            foreignKeyName: 'official_tariffs_village_id_fkey';
-            columns: ['village_id'];
-            referencedRelation: 'tourist_villages';
-            referencedColumns: ['id'];
-          }
-        ];
       };
       village_grants: {
         Row: VillageGrantRow;
@@ -394,7 +354,6 @@ export interface Database {
     };
     Enums: {
       village_classification: VillageClassification;
-      tariff_type: TariffType;
       lpj_status: LpjStatus;
       expense_category: ExpenseCategory;
       report_category: ReportCategory;
