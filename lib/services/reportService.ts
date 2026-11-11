@@ -124,6 +124,7 @@ export async function createIncidentReport(input: CreateReportDTO): Promise<{
   if (!villageId) {
     const nearestRes = await query<{ id: string }>(
       `SELECT id FROM tourist_villages
+       WHERE geom IS NOT NULL
        ORDER BY geom <-> ST_SetSRID(ST_MakePoint($1::double precision, $2::double precision), 4326)
        LIMIT 1`,
       [longitude, latitude]
