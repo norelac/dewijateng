@@ -26,6 +26,12 @@ export default function Navbar() {
       {/* Spacer keeps content position when header goes floating */}
       <div className="w-full h-[76px]" aria-hidden="true" />
 
+      {/* Opaque backdrop: konten yang digulir tidak tembus di belakang header */}
+      <div
+        className="fixed inset-x-0 top-0 z-40 h-[104px] bg-[#F7F9FC] pointer-events-none"
+        aria-hidden="true"
+      />
+
       {/* Floating Header Wrapper */}
       <header className="fixed inset-x-0 z-50 flex justify-center pointer-events-none px-4 sm:px-6 top-6">
         <div className="pointer-events-auto flex flex-col w-full max-w-[1280px] rounded-[20px] bg-white border border-[#E6ECF5] shadow-[0_4px_20px_rgba(0,0,0,0.06)] text-[#0D2453]">

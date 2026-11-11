@@ -11,8 +11,11 @@ function wilayahShort(regency: string): string {
 
 /**
  * Tabel ringkasan keuangan per desa pada dashboard (Figma 422:1068).
- * Hanya desa yang sudah melapor yang ditampilkan.
+ * Hanya desa yang sudah melapor yang ditampilkan, dibatasi beberapa baris
+ * teratas; daftar lengkap ada di menu Monitoring keuangan.
  */
+const DASHBOARD_ROW_LIMIT = 8;
+
 export default function KeuanganDesaTable({
   rows,
   desaMelapor,
@@ -24,6 +27,9 @@ export default function KeuanganDesaTable({
   desaTotal: number;
   periode: string;
 }) {
+  const visibleRows = rows.slice(0, DASHBOARD_ROW_LIMIT);
+  const hiddenCount = rows.length - visibleRows.length;
+
   return (
     <div className="w-full bg-white border border-[#E6ECF5] rounded-[14px] p-6 shadow-xs">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -63,7 +69,7 @@ export default function KeuanganDesaTable({
                 </td>
               </tr>
             )}
-            {rows.map((row) => (
+            {visibleRows.map((row) => (
               <tr key={row.villageId}>
                 <td className="py-3.5 px-3">
                   <div className="flex flex-col leading-tight">
@@ -104,6 +110,19 @@ export default function KeuanganDesaTable({
       <p className="text-[#64748B] text-[11px] mt-4">
         Saldo akhir = saldo awal + pemasukan − pengeluaran. Data yang belum dilengkapi tidak
         dianggap final.
+        {hiddenCount > 0 && (
+          <>
+            {' '}
+            Menampilkan {visibleRows.length} dari {rows.length} desa yang sudah melapor —{' '}
+            <Link
+              href={`/disbudparekraf/monitoring?periode=${periode}`}
+              className="font-semibold text-[#0D2453] hover:underline"
+            >
+              lihat seluruhnya
+            </Link>
+            .
+          </>
+        )}
       </p>
     </div>
   );

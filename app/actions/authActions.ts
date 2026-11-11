@@ -25,7 +25,7 @@ export interface AuthActionResult {
 const FALLBACK_USERS: Record<
   string,
   {
-    password: string;
+    passwordHash: string;
     role: 'desa' | 'disbudparekraf';
     fullName: string;
     villageId: string | null;
@@ -33,14 +33,16 @@ const FALLBACK_USERS: Record<
   }
 > = {
   disbudparekraf: {
-    password: 'disbudparekraf2026',
+    passwordHash:
+      'pbkdf2$10000$e58dc314ed70c131ce69c379f86cfca4$d4790cd40500033c292632e0bcbb1ab0854a28362ec38e8e057973ad04017be9f60b95b59b5fadef51ae68c525538e8063f836ead832b171a6fc872099915123',
     role: 'disbudparekraf',
     fullName: 'Admin Eksekutif Disbudparekraf Jateng',
     villageId: null,
     email: 'disbudparekraf@jatengprov.go.id',
   },
   'desa-candirejo': {
-    password: 'candirejo2026',
+    passwordHash:
+      'pbkdf2$10000$6fde02819f2067cf107e71e76012f7e8$7bb40e4812a5d17613f1b0d77fe0b210c3f8958482047a562530f3ab627422c6041ca0c6fd56b197d3f4e1d33b501752c38481fce43d4250575f1b15e0fc9c75',
     role: 'desa',
     fullName: 'Pengelola Desa Wisata Candirejo',
     villageId: 'a0000000-0000-0000-0000-000000000002',
@@ -179,8 +181,7 @@ export async function loginAction(
               };
             }
             const isMatch =
-              (found.password && found.password === password) ||
-              (found.passwordHash && verifyPassword(password, found.passwordHash));
+              Boolean(found.passwordHash) && verifyPassword(password, found.passwordHash);
 
             if (isMatch) {
               sessionUser = {
@@ -204,7 +205,7 @@ export async function loginAction(
     // 3. Fallback akun demo statis.
     if (!sessionUser && FALLBACK_USERS[identifier]) {
       const fb = FALLBACK_USERS[identifier];
-      if (fb.password === password) {
+      if (verifyPassword(password, fb.passwordHash)) {
         sessionUser = {
           id:
             identifier === 'disbudparekraf'

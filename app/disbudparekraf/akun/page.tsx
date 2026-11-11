@@ -83,7 +83,15 @@ export default async function AkunDesaPage({
 
       <div className="w-full flex items-center justify-between text-[11px] text-[#94A3B8] border-t border-[#E6ECF5] pt-4 pb-2">
         <span>© 2026 DEWI JATENG</span>
-        <span>Diperbarui 9 November 2026</span>
+        <span>
+          Diperbarui{' '}
+          {new Intl.DateTimeFormat('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'Asia/Jakarta',
+          }).format(new Date())}
+        </span>
       </div>
     </div>
   );

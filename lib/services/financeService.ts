@@ -25,6 +25,9 @@ import {
   type VillageFinanceSummary,
 } from '@/lib/finance';
 
+// Nilai (bukan tipe) yang dipakai untuk menyusun opsi filter.
+import { desaOptionLabel } from '@/lib/finance';
+
 // Tipe dan pemformat ringkasan ada di `@/lib/finance` (tanpa impor basis data,
 // aman untuk komponen klien). Diekspor ulang agar pemanggil lama tetap bekerja.
 export * from '@/lib/finance';
@@ -84,7 +87,7 @@ const MONITORED_SQL = `
          u.full_name AS manager_name,
          u.email     AS manager_email
     FROM tourist_villages tv
-    JOIN users u ON u.village_id = tv.id AND u.role = 'desa'
+    LEFT JOIN users u ON u.village_id = tv.id AND u.role = 'desa'
    ORDER BY tv.id, u.created_at ASC
 `;
 
@@ -142,9 +145,9 @@ function sumTotals(rows: VillageFinanceRow[]): FinanceRecap['totals'] {
 /**
  * Rekap per desa untuk satu periode.
  *
- * ponytail: agregasi diambil untuk semua desa terpantau (hanya belasan baris)
- * lalu disaring di memori, karena `kelengkapan` adalah nilai turunan. Kalau
- * kelak cakupan desa naik ke ratusan, pindahkan penyaringan ke SQL.
+ * ponytail: agregasi diambil untuk seluruh desa terdaftar (868 baris) lalu
+ * disaring di memori, karena `kelengkapan` adalah nilai turunan. Kalau kelak
+ * jumlah desa naik ke puluhan ribu, pindahkan penyaringan ke SQL.
  */
 export async function getFinanceRecap(options: {
   periode?: string;
@@ -175,7 +178,6 @@ export async function getFinanceRecap(options: {
              AND vt.transaction_date < $2::date
        LEFT JOIN village_opening_balances ob
               ON ob.village_id = tv.id AND ob.period = $3
-      WHERE tv.id IN (SELECT village_id FROM users WHERE role = 'desa' AND village_id IS NOT NULL)
       GROUP BY tv.id, ob.amount`,
     [start, end, periode]
   );
@@ -205,11 +207,23 @@ export async function getFinanceRecap(options: {
 
   const totals = sumTotals(rows);
 
+  // Desa yang sudah melapor tampil lebih dulu supaya halaman pertama rekap
+  // tidak penuh baris kosong ketika cakupan sudah mencakup seluruh desa.
+  const rowsSorted = [...rows].sort((a, b) => {
+    const aKosong = a.kelengkapan === 'BELUM_LAPOR' ? 1 : 0;
+    const bKosong = b.kelengkapan === 'BELUM_LAPOR' ? 1 : 0;
+    if (aKosong !== bKosong) return aKosong - bKosong;
+    if (aKosong === 0 && b.jumlahTransaksi !== a.jumlahTransaksi) {
+      return b.jumlahTransaksi - a.jumlahTransaksi;
+    }
+    return a.shortName.localeCompare(b.shortName);
+  });
+
   const wilayah = options.wilayah || '';
   const desa = options.desa || '';
   const kelengkapan = options.kelengkapan || 'SEMUA';
 
-  const filtered = rows.filter((row) => {
+  const filtered = rowsSorted.filter((row) => {
     if (wilayah && row.regency !== wilayah) return false;
     if (desa && row.slug !== desa) return false;
     if (kelengkapan !== 'SEMUA' && row.kelengkapan !== kelengkapan) return false;
@@ -235,7 +249,10 @@ export async function getFinanceRecap(options: {
     totals,
     filteredTotals: sumTotals(filtered),
     wilayahOptions: Array.from(new Set(villages.map((v) => v.regency))).sort(),
-    desaOptions: villages.map((v) => ({ slug: v.slug, name: v.shortName })),
+    desaOptions: villages.map((v) => ({
+      slug: v.slug,
+      name: desaOptionLabel(v.shortName, v.regency),
+    })),
     active: { periode, wilayah, desa, kelengkapan },
     page,
     perPage,
@@ -560,7 +577,8 @@ export async function getTransactionByReference(
 // ------------------------------------------------------------------------------
 
 export async function getDashboardFinance(): Promise<DashboardFinance> {
-  const recap = await getFinanceRecap({ perPage: 100 });
+  // perPage besar: dashboard butuh seluruh baris untuk memilah desa yang melapor.
+  const recap = await getFinanceRecap({ perPage: 5000 });
   const rows = recap.rows;
 
   const monthStart = `${recap.active.periode}-01`;

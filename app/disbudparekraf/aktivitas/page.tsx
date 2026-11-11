@@ -16,7 +16,8 @@ export const dynamic = 'force-dynamic';
  * Fase 1 dipindahkan ke sini agar fitur verifikasi tetap dapat diakses.
  */
 export default async function AktivitasPage() {
-  const items = await listLpjQueue(2026, 12);
+  // Seluruh antrean TA 2026 dimuat agar angka tab sama dengan lonceng notifikasi.
+  const items = await listLpjQueue(2026, 2000);
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 w-full max-w-[1440px] mx-auto">

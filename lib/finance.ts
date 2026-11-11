@@ -168,6 +168,16 @@ export function wilayahLabel(district: string, regency: string): string {
   return `${d}, ${r}`;
 }
 
+/**
+ * Label opsi filter desa: "Karangrejo · Magelang".
+ * 40 nama desa di data demo dipakai lebih dari satu desa, jadi kabupaten/kota
+ * harus ikut ditampilkan agar pilihannya bisa dibedakan.
+ */
+export function desaOptionLabel(shortName: string, regency: string): string {
+  const r = regency.replace(/^(Kabupaten|Kota)\s+/i, '');
+  return `${shortName} · ${r}`;
+}
+
 /** "Oktober 2026" dari "2026-10". */
 export function periodeLabel(period: string): string {
   const [y, m] = period.split('-').map((v) => Number.parseInt(v, 10));

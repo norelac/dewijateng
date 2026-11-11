@@ -68,6 +68,52 @@ export function useDashboardTickets() {
  * Ambil data transparansi desa (village, grant, expenses) dari GET /api/transparansi.
  * Terikat ke session desa yang login, atau fallback ke candirejo-magelang jika belum login.
  */
+/**
+ * Nama desa wisata milik akun pengelola yang sedang login.
+ *
+ * Banyak sub-view Figma menampilkan nama desa di sub-judul/footer. Nilai itu
+ * dulu ditulis statis "Desa Candirejo" sehingga salah untuk desa lain. Hook ini
+ * membacanya sekali dari `/api/transparansi` (pakai village_id sesi) dan
+ * membagikan hasilnya lewat cache module-level agar tidak fetch berulang.
+ */
+let villageNameCache = new Map<string, Promise<string | null>>();
+
+function loadVillageName(): Promise<string | null> {
+  return (async () => {
+    const sess = await getSessionAction().catch(() => null);
+    const key = sess?.villageId ?? 'anon';
+    if (!villageNameCache.has(key)) {
+      const qs = sess?.villageId
+        ? `village_id=${sess.villageId}`
+        : 'slug=candirejo-magelang';
+      villageNameCache.set(
+        key,
+        fetch(`/api/transparansi?${qs}`)
+          .then((r) => r.json())
+          .then((j) => j?.data?.village?.name ?? null)
+          .catch(() => null)
+      );
+    }
+    return villageNameCache.get(key)!;
+  })();
+}
+
+export function useVillageName(fallback = 'Desa wisata'): string {
+  const [name, setName] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadVillageName().then((n) => {
+      if (!cancelled) setName(n);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return name ?? fallback;
+}
+
 export function useBudgetData(fiscalYear = 2026, villageSlug = 'candirejo-magelang') {
   const [budget, setBudget] = useState<VillageBudgetData>(INITIAL_BUDGET_DATA);
   const [village, setVillage] = useState<TransparansiVillage | null>(null);

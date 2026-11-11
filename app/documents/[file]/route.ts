@@ -3,14 +3,16 @@ import { getLpjDocumentData } from '@/lib/services/lpjService';
 import { renderLpjPdf } from '@/lib/services/lpjDocumentPdf';
 import { getTransactionByReference } from '@/lib/services/financeService';
 import { renderBuktiPdf } from '@/lib/services/financeDocumentPdf';
+import { getExpenseEvidence, renderNotaSvg } from '@/lib/services/evidenceService';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /documents/lpj-<slug-desa>-<tahun>.pdf  -> dokumen LPJ desa wisata
- * GET /documents/bukti-<kode-referensi>.pdf   -> bukti transaksi keuangan desa
+ * GET /documents/lpj-<slug-desa>-<tahun>.pdf      -> dokumen LPJ desa wisata
+ * GET /documents/bukti-<kode-referensi>.pdf       -> bukti transaksi keuangan desa
+ * GET /documents/nota-<uuid-pos-belanja>.svg      -> nota kuitansi pos belanja
  *
- * Kedua berkas dirender dari basis data (tidak ada ratusan berkas statis), jadi
+ * Semua berkas dirender dari basis data (tidak ada ratusan berkas statis), jadi
  * isinya selalu sinkron. `?unduh=1` memaksa unduhan, tanpa parameter langsung
  * tampil di peramban.
  *
@@ -20,6 +22,7 @@ export const dynamic = 'force-dynamic';
 
 const LPJ_PATTERN = /^lpj-(.+)-(\d{4})\.pdf$/;
 const BUKTI_PATTERN = /^bukti-([A-Za-z]{2}-\d{4}-\d{4})\.pdf$/;
+const NOTA_PATTERN = /^nota-([0-9a-f-]{36})\.svg$/i;
 
 function pdfResponse(
   bytes: Uint8Array<ArrayBuffer>,
@@ -67,6 +70,24 @@ export async function GET(
         );
       }
       return pdfResponse(await renderBuktiPdf(transaction), file, unduh);
+    }
+
+    const notaMatch = NOTA_PATTERN.exec(file);
+    if (notaMatch) {
+      const evidence = await getExpenseEvidence(notaMatch[1]);
+      if (!evidence) {
+        return NextResponse.json(
+          { success: false, error: 'Nota belanja tidak ditemukan' },
+          { status: 404 }
+        );
+      }
+      return new NextResponse(renderNotaSvg(evidence), {
+        headers: {
+          'Content-Type': 'image/svg+xml; charset=utf-8',
+          'Content-Disposition': `${unduh ? 'attachment' : 'inline'}; filename="${file}"`,
+          'Cache-Control': 'public, max-age=300, must-revalidate',
+        },
+      });
     }
 
     return NextResponse.json(

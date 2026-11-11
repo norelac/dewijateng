@@ -13,6 +13,8 @@ import {
   Clock,
   ShieldAlert,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import { reviewLpjAction } from '@/app/actions/villageActions';
@@ -35,6 +37,9 @@ interface LpjVerificationQueueProps {
   initialItems?: LpjItem[];
   onStatusChange?: () => void;
 }
+
+/** Jumlah baris per halaman antrean LPJ. */
+const PAGE_SIZE = 25;
 
 /**
  * Data cadangan bila komponen dipakai tanpa `initialItems` (mis. pratinjau).
@@ -101,6 +106,7 @@ export default function LpjVerificationQueue({
   const [items, setItems] = useState<LpjItem[]>(initialItems);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'SUBMITTED' | 'VERIFIED' | 'REVISION'>('ALL');
+  const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const [revisionModal, setRevisionModal] = useState<{
@@ -165,6 +171,14 @@ export default function LpjVerificationQueue({
     return matchesSearch && matchesFilter;
   });
 
+  // Antrean bisa ratusan baris; tampilkan 25 per halaman agar tetap ringan.
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filteredItems.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   return (
     <div className="bg-white rounded-[20px] sm:rounded-3xl border border-[#E6ECF5] p-5 sm:p-7 shadow-xs space-y-5">
       {/* Header & Controls */}
@@ -185,7 +199,10 @@ export default function LpjVerificationQueue({
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
-            onClick={() => setFilter('ALL')}
+            onClick={() => {
+              setFilter('ALL');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'ALL'
                 ? 'bg-[#0D2453] text-white'
@@ -196,7 +213,10 @@ export default function LpjVerificationQueue({
           </button>
           <button
             type="button"
-            onClick={() => setFilter('SUBMITTED')}
+            onClick={() => {
+              setFilter('SUBMITTED');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'SUBMITTED'
                 ? 'bg-[#0D2453] text-white'
@@ -207,7 +227,10 @@ export default function LpjVerificationQueue({
           </button>
           <button
             type="button"
-            onClick={() => setFilter('VERIFIED')}
+            onClick={() => {
+              setFilter('VERIFIED');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'VERIFIED'
                 ? 'bg-[#0D2453] text-white'
@@ -218,7 +241,10 @@ export default function LpjVerificationQueue({
           </button>
           <button
             type="button"
-            onClick={() => setFilter('REVISION')}
+            onClick={() => {
+              setFilter('REVISION');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
               filter === 'REVISION'
                 ? 'bg-[#0D2453] text-white'
@@ -235,7 +261,10 @@ export default function LpjVerificationQueue({
             type="text"
             placeholder="Cari desa atau nomor LPJ..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full h-9 px-3 pl-8 rounded-xl bg-white border border-[#E6ECF5] text-xs text-[#0D2453] placeholder-slate-400 focus:outline-none focus:border-[#0D2453] transition-all"
           />
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
@@ -255,7 +284,7 @@ export default function LpjVerificationQueue({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F8FAFC] text-xs">
-            {filteredItems.map((item) => {
+            {pageItems.map((item) => {
               const isPending = item.lpjStatus === 'SUBMITTED';
               const isVerified = item.lpjStatus === 'VERIFIED';
               const isRevision = item.lpjStatus === 'REVISION';
@@ -378,6 +407,41 @@ export default function LpjVerificationQueue({
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Paginasi antrean */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        <p className="text-[11px] text-[#64748B]">
+          {filteredItems.length === 0
+            ? 'Tidak ada LPJ yang cocok dengan filter.'
+            : `Menampilkan ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(
+                currentPage * PAGE_SIZE,
+                filteredItems.length
+              )} dari ${filteredItems.length} LPJ`}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-lg border border-[#E6ECF5] bg-white text-[11px] font-semibold text-[#0D2453] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Sebelumnya
+          </button>
+          <span className="text-[11px] text-[#64748B] whitespace-nowrap">
+            Halaman {currentPage} dari {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-lg border border-[#E6ECF5] bg-white text-[11px] font-semibold text-[#0D2453] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Berikutnya
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Modal Dialog: Kirim Catatan Revisi ke Desa */}

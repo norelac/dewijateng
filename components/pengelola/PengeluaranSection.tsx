@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { ExpenseItem } from './types';
+import { useVillageName } from './usePengelolaData';
 
 export default function PengeluaranSection({
   expenses = [],
@@ -18,6 +19,7 @@ export default function PengeluaranSection({
     type: 'nota' | 'foto';
     url: string;
   } | null>(null);
+  const villageName = useVillageName();
 
   const totalTercatat = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
   const totalFormatted = new Intl.NumberFormat('id-ID').format(totalTercatat);
@@ -82,7 +84,7 @@ export default function PengeluaranSection({
               </div>
 
               {/* Nominal */}
-              <div className="w-[155px] shrink-0 text-[#0D2453] font-semibold font-mono">
+              <div className="w-[155px] shrink-0 text-[#0D2453] font-semibold tabular-nums">
                 {item.formattedAmount}
               </div>
 
@@ -201,7 +203,7 @@ export default function PengeluaranSection({
                     Dokumen Salinan Nota LPJ Resmi Tersedia
                   </p>
                   <p className="text-[11px] text-[#64748B]">
-                    Telah diverifikasi oleh Bendahara Balai Desa Candirejo
+                    Telah diverifikasi oleh Bendahara {villageName}
                   </p>
                   <a
                     href={selectedProof.url}

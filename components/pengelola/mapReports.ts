@@ -1,4 +1,5 @@
 import type { IncidentReportDetail } from '@/lib/services/reportService';
+import { derivePhotoUrl, receiptUrlFor } from '@/lib/evidenceLinks';
 import type {
   ActivityHistoryEvent,
   DashboardTicket,
@@ -183,6 +184,11 @@ export function mapGrantExpenseToExpenseItem(
     .filter(Boolean)
     .join(' · ');
 
+  // Nota & foto diturunkan dari baris basis data (deterministik), sehingga
+  // baris buku kas selalu punya bukti yang bisa dibuka.
+  const receipt = receiptUrl ?? receiptUrlFor(exp.id);
+  const photo = derivePhotoUrl(exp.activity_name, exp.category || '');
+
   return {
     id: exp.id,
     date,
@@ -190,11 +196,11 @@ export function mapGrantExpenseToExpenseItem(
     subtitle: subtitle || 'Pos belanja modal',
     amount,
     formattedAmount: new Intl.NumberFormat('id-ID').format(amount),
-    hasReceipt: Boolean(receiptUrl),
-    hasPhoto: false,
+    hasReceipt: Boolean(receipt),
+    hasPhoto: Boolean(photo),
     status: 'Terpublikasi',
-    receiptUrl,
-    photoUrl: undefined,
+    receiptUrl: receipt,
+    photoUrl: photo,
   };
 }
 

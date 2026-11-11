@@ -9,14 +9,15 @@ interface DemoLinkProps {
 }
 
 /**
- * Pengganti kotak masuk email saat SMTP belum dikonfigurasi (mode demo).
- * Tautan di sini persis tautan yang seharusnya dibuka penerima email.
+ * Pengganti kotak masuk email bila pengiriman tidak terjadi (SMTP belum
+ * dikonfigurasi atau gagal). Tautan di sini persis tautan yang seharusnya
+ * dibuka penerima email.
  */
 export default function DemoLink({ href, label }: DemoLinkProps) {
   return (
-    <AuthNote tone="warning" title="Mode demo — email tidak benar-benar dikirim">
+    <AuthNote tone="warning" title="Email belum terkirim — tautan ditampilkan di sini">
       <p className="mb-2">
-        SMTP belum dikonfigurasi, jadi tautan ditampilkan langsung di sini.
+        Tautan yang sama sudah kami siapkan. Buka langsung dari tombol di bawah.
       </p>
       <a
         href={href}

@@ -6,6 +6,7 @@ import {
   getVillageFinance,
   periodeLabel,
   wilayahLabel,
+  desaOptionLabel,
 } from '@/lib/services/financeService';
 import VillageFinanceHeader from '@/components/disbudparekraf/monitoring/VillageFinanceHeader';
 import VillageFinanceSummaryView from '@/components/disbudparekraf/monitoring/VillageFinanceSummaryView';
@@ -48,7 +49,10 @@ export default async function VillageFinancePage({
         managerLabel={managerLabel}
         periode={data.periode}
         periodeOptions={periodeOptions}
-        desaOptions={villages.map((v) => ({ slug: v.slug, name: v.shortName }))}
+        desaOptions={villages.map((v) => ({
+          slug: v.slug,
+          name: desaOptionLabel(v.shortName, v.regency),
+        }))}
         diperbarui={data.diperbarui}
         activeTab="ringkasan"
         jumlahPemasukan={data.jumlahPemasukan}

@@ -57,7 +57,7 @@ const REPORT_CARDS: ReportCardItem[] = [
       {
         time: '16 OKT 2026 · 16.00 WIB',
         title: 'Pemeliharaan ruas jalan tercatat',
-        desc: 'Realisasi Rp 100.000.000 dilengkapi contoh nota dan dokumentasi fisik.',
+        desc: 'Realisasi Rp 100.000.000 dilengkapi nota dan dokumentasi fisik.',
         villageLink: 'Desa Wisata Candirejo - Magelang ↗',
       },
     ],
@@ -84,7 +84,7 @@ const REPORT_CARDS: ReportCardItem[] = [
       {
         time: '16 OKT 2026 · 16.00 WIB',
         title: 'Pemeliharaan ruas jalan tercatat',
-        desc: 'Realisasi Rp 100.000.000 dilengkapi contoh nota dan dokumentasi fisik.',
+        desc: 'Realisasi Rp 100.000.000 dilengkapi nota dan dokumentasi fisik.',
         villageLink: 'Desa Wisata Candirejo - Magelang ↗',
       },
     ],

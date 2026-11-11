@@ -15,8 +15,7 @@ function wilayahShort(regency: string): string {
 /**
  * Rekap keuangan setiap desa (Figma 422:604).
  *
- * ponytail: cakupan desa = desa berakun pengelola (belasan baris), jadi filter dan
- * paginasi dikerjakan di server pada `getFinanceRecap`; di sini hanya menyusun URL.
+ * ponytail: cakupan desa kini seluruh desa wisata terdaftar, paginasi dikerjakan di server pada `getFinanceRecap`; di sini hanya menyusun URL.
  */
 export default function VillageRecapTable({ recap }: { recap: FinanceRecap }) {
   const router = useRouter();

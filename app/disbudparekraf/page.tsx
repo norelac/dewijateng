@@ -7,6 +7,7 @@ import KeuanganDesaTable from '@/components/disbudparekraf/dashboard/KeuanganDes
 import PengelolaanAkunSection from '@/components/disbudparekraf/dashboard/PengelolaanAkunSection';
 import AkunTerbaruTable from '@/components/disbudparekraf/dashboard/AkunTerbaruTable';
 import { getDashboardFinance } from '@/lib/services/financeService';
+import { getVillageAccountStats } from '@/app/actions/villageAccountActions';
 import { formatRupiahShort } from '@/lib/utils';
 
 // Angka keuangan dibaca dari database setiap permintaan (Fase 4).
@@ -14,7 +15,10 @@ export const dynamic = 'force-dynamic';
 
 /** Dashboard Disbudparekraf (Figma 418:561). */
 export default async function DisbudparekrafDashboardPage() {
-  const finance = await getDashboardFinance();
+  const [finance, account] = await Promise.all([
+    getDashboardFinance(),
+    getVillageAccountStats(),
+  ]);
   const { cards: totals } = finance;
   const rasioPengeluaran =
     totals.pemasukan > 0 ? Math.round((totals.pengeluaran / totals.pemasukan) * 100) : 0;
@@ -69,8 +73,8 @@ export default async function DisbudparekrafDashboardPage() {
         desaTotal={totals.desaTotal}
         periode={finance.periode}
       />
-      <PengelolaanAkunSection />
-      <AkunTerbaruTable />
+      <PengelolaanAkunSection stats={account.stats} />
+      <AkunTerbaruTable rows={account.recent} />
 
       <div className="w-full flex items-center justify-between text-[11px] text-[#94A3B8] border-t border-[#E6ECF5] pt-4 pb-2">
         <span>© 2026 DEWI JATENG</span>
