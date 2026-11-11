@@ -3,7 +3,7 @@ import CreateVillageAccountForm from '@/components/disbudparekraf/akun/CreateVil
 import { listRegenciesAction } from '@/app/actions/villageAccountActions';
 
 export const metadata = {
-  title: 'Buat akun desa wisata · DEWI JATENG',
+  title: 'Buat akun desa wisata',
 };
 
 export const dynamic = 'force-dynamic';

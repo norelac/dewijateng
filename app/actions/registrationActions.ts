@@ -3,7 +3,7 @@
 import { and, eq, or } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { hashPassword, isValidEmail, validateNewPassword } from '@/lib/auth';
+import { assertRole, hashPassword, isValidEmail, validateNewPassword } from '@/lib/auth';
 import { issueAuthToken, consumeAuthToken, peekAuthToken } from '@/lib/authTokens';
 import { getRequestBaseUrl } from '@/lib/requestUrl';
 
@@ -236,6 +236,7 @@ export interface PendingAccount {
 
 /** Daftar akun yang menunggu persetujuan administrator. */
 export async function listPendingAccountsAction(): Promise<PendingAccount[]> {
+  await assertRole(['disbudparekraf']);
   const rows = await db
     .select()
     .from(users)
@@ -264,21 +265,22 @@ export async function decideAccountAction(
   decision: 'SETUJUI' | 'TOLAK'
 ): Promise<RegistrationResult> {
   try {
+    await assertRole(['disbudparekraf']);
     if (decision === 'SETUJUI') {
       await db
         .update(users)
         .set({ approvalStatus: 'DISETUJUI', status: 'AKTIF', activatedAt: new Date() })
-        .where(eq(users.id, userId));
+        .where(and(eq(users.id, userId), eq(users.role, 'disbudparekraf')));
       return { success: true, message: 'Akun disetujui dan sudah bisa dipakai.' };
     }
 
     await db
       .update(users)
       .set({ approvalStatus: 'DITOLAK', status: 'NONAKTIF' })
-      .where(eq(users.id, userId));
+      .where(and(eq(users.id, userId), eq(users.role, 'disbudparekraf')));
     return { success: true, message: 'Pengajuan akun ditolak.' };
   } catch (err: any) {
     console.error('[decideAccountAction error]:', err);
-    return { success: false, message: 'Gagal memproses keputusan akun.' };
+    return { success: false, message: err?.message || 'Gagal memproses keputusan akun.' };
   }
 }

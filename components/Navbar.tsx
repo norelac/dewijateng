@@ -75,7 +75,7 @@ export default function Navbar() {
             </nav>
 
             {/* Desktop Actions */}
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <Link
                 href="/#buat-laporan"
                 className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all shadow-xs active:scale-95"
@@ -93,7 +93,7 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Actions: Lapor Ringkas + Hamburger */}
-            <div className="flex sm:hidden items-center gap-2">
+            <div className="flex md:hidden items-center gap-2">
               <Link
                 href="/#buat-laporan"
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[#0D2453] text-white hover:bg-[#132d66] transition-all"
@@ -114,7 +114,7 @@ export default function Navbar() {
 
           {/* Mobile Drawer Accordion */}
           {mobileOpen && (
-            <div className="sm:hidden border-t border-[#E6ECF5] px-5 py-4 flex flex-col gap-2 bg-white rounded-b-3xl">
+            <div className="md:hidden border-t border-[#E6ECF5] px-5 py-4 flex flex-col gap-2 bg-white rounded-b-3xl">
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -136,20 +136,13 @@ export default function Navbar() {
                 );
               })}
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div className="pt-2 border-t border-slate-100">
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all"
+                  className="block w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-[#0D2453] border border-[#0D2453] hover:bg-slate-50 transition-all"
                 >
-                  Portal Masuk
-                </Link>
-                <Link
-                  href="/disbudparekraf"
-                  onClick={() => setMobileOpen(false)}
-                  className="w-full text-center px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all"
-                >
-                  Command Center Disbudparekraf
+                  Masuk
                 </Link>
               </div>
             </div>

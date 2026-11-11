@@ -2,7 +2,7 @@ import React from 'react';
 import TransactionDetailScreen from '@/components/disbudparekraf/monitoring/TransactionDetailScreen';
 
 export const metadata = {
-  title: 'Detail pengeluaran desa · DEWI JATENG',
+  title: 'Detail pengeluaran desa',
 };
 
 export const dynamic = 'force-dynamic';

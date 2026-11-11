@@ -26,6 +26,20 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
   },
+  openGraph: {
+    title: 'DEWI JATENG - Dari Laporan, Menjadi Perbaikan',
+    description:
+      'Platform keterbukaan dokumen LPJ bantuan keuangan sarpras dan tindak lanjut aduan fasilitas desa wisata di Jawa Tengah.',
+    locale: 'id_ID',
+    type: 'website',
+    siteName: 'DEWI JATENG',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DEWI JATENG - Dari Laporan, Menjadi Perbaikan',
+    description:
+      'Platform keterbukaan dokumen LPJ bantuan keuangan sarpras dan tindak lanjut aduan fasilitas desa wisata di Jawa Tengah.',
+  },
 };
 
 export default function RootLayout({

@@ -108,6 +108,7 @@ export default function LpjVerificationQueue({
   const [filter, setFilter] = useState<'ALL' | 'SUBMITTED' | 'VERIFIED' | 'REVISION'>('ALL');
   const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [revisionModal, setRevisionModal] = useState<{
     grantId: string;
@@ -121,6 +122,7 @@ export default function LpjVerificationQueue({
   };
 
   const handleApprove = async (grantId: string) => {
+    setActionError(null);
     setActionLoading(grantId);
     try {
       const res = await reviewLpjAction({ grantId, status: 'VERIFIED' });
@@ -129,7 +131,11 @@ export default function LpjVerificationQueue({
           prev.map((i) => (i.grantId === grantId ? { ...i, lpjStatus: 'VERIFIED' } : i))
         );
         if (onStatusChange) onStatusChange();
+      } else {
+        setActionError(res.message || 'Gagal menyetujui dokumen LPJ.');
       }
+    } catch {
+      setActionError('Terjadi kendala saat menyetujui dokumen LPJ.');
     } finally {
       setActionLoading(null);
     }
@@ -137,6 +143,7 @@ export default function LpjVerificationQueue({
 
   const handleRevisionSubmit = async () => {
     if (!revisionModal) return;
+    setActionError(null);
     setActionLoading(revisionModal.grantId);
     try {
       const res = await reviewLpjAction({
@@ -155,7 +162,11 @@ export default function LpjVerificationQueue({
         setRevisionModal(null);
         setRevisionNote('');
         if (onStatusChange) onStatusChange();
+      } else {
+        setActionError(res.message || 'Gagal mengirim catatan revisi LPJ.');
       }
+    } catch {
+      setActionError('Terjadi kendala saat mengirim catatan revisi LPJ.');
     } finally {
       setActionLoading(null);
     }
@@ -197,6 +208,23 @@ export default function LpjVerificationQueue({
           </p>
         </div>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-medium text-red-700"
+        >
+          <span>{actionError}</span>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="text-red-500 hover:text-red-700"
+            aria-label="Tutup pesan galat"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">

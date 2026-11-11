@@ -13,7 +13,7 @@ import {
   type CreateReportDTO,
   type IncidentReportDetail,
 } from '@/lib/services/reportService';
-import { getSession } from '@/lib/auth';
+import { assertRole, assertVillageScope } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export interface ActionResponse<T = any> {
@@ -147,15 +147,15 @@ export async function markReportInProgressAction(
   reportCode: string
 ): Promise<ActionResponse<{ success: boolean; reportCode: string }>> {
   try {
-    const session = await getSession();
-    if (!session) {
-      return { success: false, error: 'Akses ditolak: Anda harus masuk terlebih dahulu.' };
-    }
-
+    await assertRole(['desa', 'disbudparekraf']);
     if (!reportCode || !reportCode.trim()) {
       return { success: false, error: 'Kode tiket tidak boleh kosong' };
     }
     const cleanCode = reportCode.toUpperCase().trim();
+    const existing = await getReportByCode(cleanCode);
+    if (existing) {
+      await assertVillageScope(existing.villageId);
+    }
     const updated = await markReportInProgress(cleanCode);
     if (!updated) {
       return {

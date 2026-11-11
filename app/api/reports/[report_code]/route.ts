@@ -4,8 +4,8 @@
 // ==============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getReportByCode, markReportInProgress } from '@/lib/services/reportService';
 import { getSession } from '@/lib/auth';
+import { getReportByCode, markReportInProgress } from '@/lib/services/reportService';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +75,14 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, error: 'Kode tiket laporan wajib disertakan' },
         { status: 400 }
+      );
+    }
+
+    const existing = await getReportByCode(reportCode);
+    if (existing && session.role === 'desa' && existing.villageId !== session.villageId) {
+      return NextResponse.json(
+        { success: false, error: 'Akses ditolak: Anda hanya dapat mengelola aduan desa Anda sendiri.' },
+        { status: 403 }
       );
     }
 

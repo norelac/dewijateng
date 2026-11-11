@@ -7,7 +7,7 @@ import {
 } from '@/app/actions/villageAccountActions';
 
 export const metadata = {
-  title: 'Akun desa wisata · DEWI JATENG',
+  title: 'Akun desa wisata',
 };
 
 // Daftar akun + hitungan filter dibaca dari database setiap permintaan.

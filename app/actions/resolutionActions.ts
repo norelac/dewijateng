@@ -9,7 +9,8 @@ import {
   resolveIncidentReport,
   type ResolveIncidentResult,
 } from '@/lib/services/resolutionService';
-import { getSession } from '@/lib/auth';
+import { getReportByCode } from '@/lib/services/reportService';
+import { assertRole, assertVillageScope } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export interface ActionResponse<T = any> {
@@ -27,15 +28,20 @@ export async function resolveReportAction(
   formData: FormData
 ): Promise<ActionResponse<ResolveIncidentResult>> {
   try {
-    const session = await getSession();
+    const session = await assertRole(['desa', 'disbudparekraf']);
     if (!session) {
       return { success: false, error: 'Akses ditolak: Anda harus masuk terlebih dahulu.' };
     }
-
     const reportCode =
       (formData.get('report_code') as string) ||
       (formData.get('reportCode') as string) ||
       '';
+    if (reportCode.trim()) {
+      const existing = await getReportByCode(reportCode.toUpperCase().trim());
+      if (existing) {
+        await assertVillageScope(existing.villageId);
+      }
+    }
     const actionSummary =
       (formData.get('action_summary') as string) ||
       (formData.get('actionSummary') as string) ||

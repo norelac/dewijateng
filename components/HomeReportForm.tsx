@@ -182,7 +182,7 @@ export default function HomeReportForm() {
   useEffect(() => {
     async function loadVillages() {
       try {
-        const res = await fetch('/api/villages');
+        const res = await fetch('/api/villages?limit=1000');
         const json = await res.json();
         const list = Array.isArray(json.data) ? json.data : json.data?.villages || [];
         if (json.success && list.length > 0) {
