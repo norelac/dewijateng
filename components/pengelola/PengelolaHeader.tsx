@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, ChevronDown, Menu, LogOut, User, Shield } from 'lucide-react';
+import { ChevronDown, Menu, LogOut, Shield } from 'lucide-react';
 import { getSessionAction, logoutAction } from '@/app/actions/authActions';
 import type { SessionUser } from '@/lib/auth';
+import NotificationBell from '@/components/shared/NotificationBell';
 
 interface PengelolaHeaderProps {
   onOpenMobile?: () => void;
@@ -17,7 +18,6 @@ export default function PengelolaHeader({
 }: PengelolaHeaderProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hasUnread] = useState(true);
   const [session, setSession] = useState<SessionUser | null>(null);
 
   useEffect(() => {
@@ -64,17 +64,7 @@ export default function PengelolaHeader({
       {/* Right: Notification & Profile */}
       <div className="flex items-center gap-3 sm:gap-5">
         {/* Notification Bell */}
-        <button
-          type="button"
-          className="relative p-2 rounded-full hover:bg-slate-100 text-[#64748B] hover:text-[#0D2453] transition-colors"
-          aria-label="Notifikasi"
-          title="Notifikasi terbaru"
-        >
-          <Bell className="w-[18px] h-[18px]" />
-          {hasUnread && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
-          )}
-        </button>
+        <NotificationBell />
 
         {/* Separator */}
         <div className="h-7 w-px bg-[#E6ECF5] hidden sm:block" />

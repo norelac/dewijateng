@@ -113,6 +113,116 @@ END $$;
 
 
 -- ------------------------------------------------------------------------------
+-- 1b. village_grants - LPJ 2023, 2024, 2025 untuk tiap desa
+--
+--     Halaman Transparansi menampilkan pilihan tahun 2023-2026. Tanpa baris ini
+--     hanya 2026 yang berisi dana. Pola sama dengan 2026, tetapi pagu lebih
+--     kecil untuk tahun yang lebih lama (faktor pertumbuhan ~7%/tahun) dan
+--     diberi jitter deterministik agar tidak seragam.
+--
+--     Rincian pos belanja-nya diisi otomatis oleh blok 2 di bawah (blok itu
+--     memilih semua grant yang belum punya pos belanja).
+-- ------------------------------------------------------------------------------
+DO $$
+DECLARE
+  v         RECORD;
+  y         INT;
+  v_seed    TEXT;
+  v_base    NUMERIC;
+  v_factor  NUMERIC;
+  v_total   NUMERIC;
+  v_realized NUMERIC;
+  v_apbdes  NUMERIC;
+  v_banprov NUMERIC;
+  v_pades   NUMERIC;
+  v_status  VARCHAR(20);
+  v_url     VARCHAR(255);
+  v_uploaded TIMESTAMPTZ;
+  v_roll    INT;
+BEGIN
+  FOR y IN 2023..2025 LOOP
+    FOR v IN
+      SELECT tv.id, tv.slug, tv.category
+        FROM tourist_villages tv
+       WHERE NOT EXISTS (
+               SELECT 1 FROM village_grants vg
+                WHERE vg.village_id = tv.id AND vg.fiscal_year = y)
+       ORDER BY tv.id
+    LOOP
+      v_seed := v.id::text || '-' || y::text;
+
+      v_base := CASE v.category
+                  WHEN 'RINTISAN'   THEN 50000000
+                  WHEN 'BERKEMBANG' THEN 100000000
+                  WHEN 'MAJU'       THEN 150000000
+                  WHEN 'MANDIRI'    THEN 200000000
+                  ELSE 100000000
+                END;
+
+      -- Faktor pertumbuhan: 2023 ~0,83 ; 2024 ~0,89 ; 2025 ~0,95 dari 2026.
+      v_factor := 0.83 + (y - 2023) * 0.06;
+
+      v_total := round((v_base + dewi_seed_int(v_seed, 0, 5) * 10000000)
+                       * v_factor, -6);
+
+      v_apbdes  := round(v_total * 0.40, -6);
+      v_banprov := round(v_total * 0.50, -6);
+      v_pades   := v_total - v_apbdes - v_banprov;
+
+      v_realized := round(v_total * (72 + dewi_seed_int(v_seed, 1, 20)) / 100.0, -5);
+
+      v_roll := dewi_seed_int(v_seed, 2, 100);
+      v_status := CASE
+                    WHEN v_roll < 74 THEN 'VERIFIED'
+                    WHEN v_roll < 88 THEN 'SUBMITTED'
+                    WHEN v_roll < 95 THEN 'PENDING_UPLOAD'
+                    ELSE 'REVISION'
+                  END;
+
+      IF v_status = 'PENDING_UPLOAD' THEN
+        v_url := NULL;
+        v_uploaded := NULL;
+      ELSE
+        v_url := '/documents/lpj-' || v.slug || '-' || y::text || '.pdf';
+        v_uploaded := make_timestamptz(y, 12, 20, 10, 0, 0)
+                      - make_interval(days => dewi_seed_int(v_seed, 3, 60));
+      END IF;
+
+      INSERT INTO village_grants (
+        village_id, fiscal_year, funding_source,
+        apbdes_amount, banprov_amount, pades_amount,
+        total_allocated, total_realized, remaining_balance,
+        lpj_document_url, lpj_status, uploaded_at
+      ) VALUES (
+        v.id, y, 'Bantuan Keuangan Sarpras Pariwisata Pemprov Jateng',
+        v_apbdes, v_banprov, v_pades,
+        v_total, v_realized, v_total - v_realized,
+        v_url, v_status, v_uploaded
+      )
+      ON CONFLICT (village_id, fiscal_year) DO NOTHING;
+    END LOOP;
+  END LOOP;
+END $$;
+
+
+-- ------------------------------------------------------------------------------
+-- 1c. village_grants - pecah sumber dana (APBDes/Banprov/PADes) yang masih nol
+--
+--     Sebagian grant lama hanya menyimpan total_allocated sehingga donut
+--     "Sumber Pendanaan Desa" kosong. Bagi dengan komposisi baku 40/50/10 dan
+--     sisa pembulatan ke PADes. Guard `= 0` membuat blok ini idempoten.
+-- ------------------------------------------------------------------------------
+UPDATE village_grants
+   SET apbdes_amount  = round(total_allocated * 0.40, -6),
+       banprov_amount = round(total_allocated * 0.50, -6),
+       pades_amount   = total_allocated
+                        - round(total_allocated * 0.40, -6)
+                        - round(total_allocated * 0.50, -6)
+ WHERE apbdes_amount + banprov_amount + pades_amount = 0
+   AND total_allocated > 0;
+
+
+-- ------------------------------------------------------------------------------
 -- 2. grant_expenses - rincian pos belanja untuk tiap LPJ yang masih kosong
 --
 --    Jumlah pos 3-6 baris per LPJ. Total budget_allocated / amount_realized
@@ -438,6 +548,9 @@ SELECT setval(
 SELECT
   (SELECT COUNT(*) FROM tourist_villages)                        AS desa_total,
   (SELECT COUNT(*) FROM village_grants)                          AS grants,
+  (SELECT COUNT(DISTINCT fiscal_year) FROM village_grants)       AS tahun_anggaran,
+  (SELECT COUNT(*) FROM village_grants
+    WHERE apbdes_amount + banprov_amount + pades_amount = 0)     AS grant_sumber_dana_kosong,
   (SELECT COUNT(*) FROM grant_expenses)                          AS expenses,
   (SELECT COUNT(*) FROM official_tariffs)                        AS tariffs,
   (SELECT COUNT(*) FROM incident_reports)                        AS reports,
@@ -445,6 +558,9 @@ SELECT
   (SELECT COUNT(*) FROM tourist_villages tv
     WHERE NOT EXISTS (SELECT 1 FROM village_grants vg
                        WHERE vg.village_id = tv.id))             AS desa_tanpa_grant,
+  (SELECT COUNT(*) FROM tourist_villages tv
+    WHERE (SELECT COUNT(DISTINCT vg.fiscal_year) FROM village_grants vg
+            WHERE vg.village_id = tv.id) < 4)                    AS desa_grant_kurang_4_tahun,
   (SELECT COUNT(*) FROM tourist_villages tv
     WHERE NOT EXISTS (SELECT 1 FROM incident_reports r
                        WHERE r.village_id = tv.id))              AS desa_tanpa_aduan,

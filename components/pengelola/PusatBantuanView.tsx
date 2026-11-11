@@ -1,7 +1,17 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Phone, Mail, MessageCircle } from 'lucide-react';
+
+/** Narahubung pendamping desa (data demo). */
+const CONTACT_PERSON = {
+  name: 'Sri Wahyuni',
+  initials: 'SW',
+  role: 'Pendamping Desa Wisata · Disbudparekraf Jateng',
+  phone: '+62 812-3456-7890',
+  waUrl: 'https://wa.me/6281234567890',
+  email: 'pendamping.desa@jatengprov.go.id',
+};
 
 interface GuideItem {
   title: string;
@@ -126,6 +136,51 @@ export default function PusatBantuanView({ villageName = 'desa' }: { villageName
                 <div className="bg-[#e6ecf5] h-px w-full" />
               </div>
             ))}
+          </div>
+
+          {/* Narahubung pendamping desa */}
+          <div className="bg-white rounded-[16px] p-[24px] shadow-xs flex flex-col gap-[16px] items-start w-full">
+            <p className="text-[#0d2453] text-[17px] font-semibold leading-[1.5] w-full">
+              Narahubung pendamping
+            </p>
+
+            <div className="flex items-center gap-[12px] w-full">
+              <div className="w-[44px] h-[44px] rounded-full bg-[#0d2453] text-white text-[14px] font-semibold flex items-center justify-center shrink-0">
+                {CONTACT_PERSON.initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[#0d2453] text-[14px] font-semibold leading-tight">
+                  {CONTACT_PERSON.name}
+                </p>
+                <p className="text-[#64748b] text-[12px] font-normal leading-[1.5]">
+                  {CONTACT_PERSON.role}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-[8px] w-full">
+              <a
+                href={CONTACT_PERSON.waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-[10px] w-full rounded-[10px] border border-[#e6ecf5] px-[12px] py-[10px] text-[#0d2453] text-[13px] font-medium hover:bg-[#f7f9fc] transition-colors"
+              >
+                <MessageCircle className="w-[16px] h-[16px] shrink-0" />
+                <span className="tabular-nums">{CONTACT_PERSON.phone}</span>
+              </a>
+              <a
+                href={`mailto:${CONTACT_PERSON.email}`}
+                className="flex items-center gap-[10px] w-full rounded-[10px] border border-[#e6ecf5] px-[12px] py-[10px] text-[#0d2453] text-[13px] font-medium hover:bg-[#f7f9fc] transition-colors break-all"
+              >
+                <Mail className="w-[16px] h-[16px] shrink-0" />
+                <span>{CONTACT_PERSON.email}</span>
+              </a>
+            </div>
+
+            <p className="text-[#64748b] text-[11px] font-normal leading-[1.5] flex items-start gap-[6px]">
+              <Phone className="w-[14px] h-[14px] shrink-0 mt-[1px]" />
+              <span>Jam layanan Senin–Jumat, 08.00–16.00 WIB.</span>
+            </p>
           </div>
 
           {/* Catatan informasi */}

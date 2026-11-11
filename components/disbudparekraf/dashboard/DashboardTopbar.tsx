@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, Bell, ChevronDown, LogOut } from 'lucide-react';
+import { Menu, ChevronDown, LogOut } from 'lucide-react';
 import { getSessionAction, logoutAction } from '@/app/actions/authActions';
 import type { SessionUser } from '@/lib/auth';
+import NotificationBell from '@/components/shared/NotificationBell';
 
 /** Judul jejak halaman per rute (mengikuti label menu pada desain). */
 const TITLES: { match: (path: string) => boolean; label: string }[] = [
@@ -58,13 +59,7 @@ export default function DashboardTopbar({ onOpenMobile }: DashboardTopbarProps) 
       </div>
 
       <div className="flex items-center gap-5 shrink-0">
-        <button
-          type="button"
-          className="p-1 rounded-lg text-[#0D2453] hover:bg-slate-100 transition-colors cursor-pointer"
-          aria-label="Notifikasi"
-        >
-          <Bell className="w-[18px] h-[18px]" />
-        </button>
+        <NotificationBell buttonClassName="p-1 rounded-lg text-[#0D2453] hover:bg-slate-100 transition-colors cursor-pointer relative" />
 
         <div className="h-[28px] w-px bg-[#E6ECF5]" />
 

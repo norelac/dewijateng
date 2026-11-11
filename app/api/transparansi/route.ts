@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { derivePhotoUrl, receiptUrlFor } from '@/lib/services/evidenceService';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +131,10 @@ export async function GET(req: NextRequest) {
           ai_anomaly_flag: exp.ai_anomaly_flag,
           anomaly_note: exp.anomaly_note,
           created_at: exp.created_at,
+          // Bukti diturunkan dari data (tanpa kolom unggahan): nota dirender dari
+          // baris ini, foto fisik dipetakan dari jenis kegiatan.
+          receipt_url: receiptUrlFor(exp.id),
+          photo_url: derivePhotoUrl(exp.activity_name, exp.category),
         })),
         tariffs: tariffsRes.rows.map((t) => ({
           id: t.id,
@@ -209,6 +214,8 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: false,
                 anomaly_note: 'Harga sesuai standar wajar SSH Jateng 2026',
                 created_at: '2026-03-01T00:00:00Z',
+                receipt_url: null,
+                photo_url: derivePhotoUrl('Paving Block K-300 Area Parkir Wisata', 'MATERIAL_FISIK'),
               },
               {
                 id: 'exp-demo-2',
@@ -223,6 +230,8 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: false,
                 anomaly_note: 'Sesuai batas wajar Standar Satuan Harga',
                 created_at: '2026-03-05T00:00:00Z',
+                receipt_url: null,
+                photo_url: derivePhotoUrl('Kanstin Beton Precast Pembatas Parkir', 'MATERIAL_FISIK'),
               },
               {
                 id: 'exp-demo-3',
@@ -237,6 +246,8 @@ export async function GET(req: NextRequest) {
                 ai_anomaly_flag: true,
                 anomaly_note: 'Terdeteksi deviasi +75% melebihi batas atas SSH Jateng (Rp 200.000)',
                 created_at: '2026-03-10T00:00:00Z',
+                receipt_url: null,
+                photo_url: derivePhotoUrl('Pengadaan APD & Rambu K3 Pejalan Kaki (Mark-up Test)', 'KESELAMATAN_K3'),
               },
             ],
             tariffs: [

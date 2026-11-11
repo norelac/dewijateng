@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ChevronDown, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { VillageBudgetData } from './types';
 import { useVillageName } from './usePengelolaData';
+import FiscalYearSelect from './FiscalYearSelect';
 
 interface UbahAnggaranViewProps {
   budget: VillageBudgetData;
@@ -13,6 +14,9 @@ interface UbahAnggaranViewProps {
   ) => Promise<{ success: boolean; error?: string } | void> | void;
   /** Aktifkan tombol simpan; backend tulis anggaran sudah tersedia. */
   saveEnabled?: boolean;
+  /** Tahun anggaran yang sedang diedit (dikendalikan halaman). */
+  fiscalYear?: number;
+  onYearChange?: (year: number) => void;
 }
 
 function formatRupiah(num: number): string {
@@ -39,9 +43,10 @@ export default function UbahAnggaranView({
   onBack,
   onSaveBudget,
   saveEnabled = true,
+  fiscalYear,
+  onYearChange,
 }: UbahAnggaranViewProps) {
-  const [selectedYear, setSelectedYear] = useState<number>(budget.year || 2026);
-  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const selectedYear = fiscalYear ?? budget.year ?? 2026;
   const villageName = useVillageName();
 
   const [apbdesStr, setApbdesStr] = useState<string>(
@@ -64,7 +69,6 @@ export default function UbahAnggaranView({
   // tersimpan dengan angka placeholder.
   useEffect(() => {
     if (isDirty) return;
-    setSelectedYear(budget.year || 2026);
     setApbdesStr(formatNumberInput(budget.apbdes));
     setBanprovStr(formatNumberInput(budget.banprov));
     setPadesStr(formatNumberInput(budget.pades));
@@ -156,46 +160,21 @@ export default function UbahAnggaranView({
             </h2>
 
             {/* Isian: Tahun Anggaran Dropdown */}
-            <div className="flex flex-col gap-[7px] relative">
+            <div className="flex flex-col gap-[7px]">
               <label className="text-[#0d2453] text-[13px] font-semibold leading-[1.5]">
                 Tahun anggaran
               </label>
-              <button
-                type="button"
-                onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
-                className="bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] p-[12px] flex items-center justify-between text-left text-[13px] text-[#0d2453] hover:border-slate-400 transition-colors cursor-pointer"
-              >
-                <span>{selectedYear}</span>
-                <ChevronDown className="w-[16px] h-[16px] text-[#64748b]" />
-              </button>
-
-              {yearDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setYearDropdownOpen(false)}
-                  />
-                  <div className="absolute top-[72px] left-0 right-0 bg-white border border-[#e6ecf5] rounded-xl shadow-lg py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
-                    {[2026, 2025, 2024].map((yr) => (
-                      <button
-                        key={yr}
-                        type="button"
-                        onClick={() => {
-                          setSelectedYear(yr);
-                          setYearDropdownOpen(false);
-                        }}
-                        className={`w-full px-4 py-2.5 text-left text-[13px] hover:bg-slate-50 ${
-                          selectedYear === yr
-                            ? 'text-[#0d2453] font-semibold bg-slate-50'
-                            : 'text-[#64748b]'
-                        }`}
-                      >
-                        {yr}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+              <div className="relative">
+                <FiscalYearSelect
+                  value={selectedYear}
+                  onChange={(year) => onYearChange?.(year)}
+                  variant="button"
+                  labelPrefix=""
+                  align="left"
+                  fullWidth
+                  disabled={!onYearChange}
+                />
+              </div>
             </div>
 
             {/* Isian: APBDes (Rp) */}
@@ -208,7 +187,7 @@ export default function UbahAnggaranView({
                   type="text"
                   value={apbdesStr}
                   onChange={handleInputChange(setApbdesStr)}
-                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] tabular-nums text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
                 />
               </div>
             </div>
@@ -223,7 +202,7 @@ export default function UbahAnggaranView({
                   type="text"
                   value={banprovStr}
                   onChange={handleInputChange(setBanprovStr)}
-                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] tabular-nums text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
                 />
               </div>
             </div>
@@ -238,7 +217,7 @@ export default function UbahAnggaranView({
                   type="text"
                   value={padesStr}
                   onChange={handleInputChange(setPadesStr)}
-                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] font-mono text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
+                  className="w-full bg-white border border-[#e6ecf5] rounded-[8px] min-h-[44px] px-[12px] py-[10px] text-[13px] tabular-nums text-[#0d2453] outline-none focus:ring-1 focus:ring-[#0d2453] focus:border-[#0d2453] transition-colors"
                 />
               </div>
             </div>
@@ -249,7 +228,7 @@ export default function UbahAnggaranView({
             {/* Total Pendanaan Dinamis */}
             <div className="flex items-center justify-between text-[#0d2453] leading-[1.5] w-full">
               <span className="text-[13px] font-semibold">Total pendanaan</span>
-              <span className="text-[22px] font-semibold font-mono tracking-tight">
+              <span className="text-[22px] font-semibold tracking-tight tabular-nums">
                 {formatRupiah(totalPendanaan)}
               </span>
             </div>
@@ -319,7 +298,7 @@ export default function UbahAnggaranView({
               <span className="text-[#64748b] text-[13px] font-normal leading-[1.5]">
                 Dana terpakai tetap
               </span>
-              <span className="text-[#0d2453] text-[20px] font-semibold font-mono leading-[1.5]">
+              <span className="text-[#0d2453] text-[20px] font-semibold leading-[1.5] tabular-nums">
                 {formatRupiah(danaTerpakaiTetap)}
               </span>
             </div>
@@ -330,7 +309,7 @@ export default function UbahAnggaranView({
                 Sisa kas dengan isian saat ini
               </span>
               <span
-                className={`text-[20px] font-semibold font-mono leading-[1.5] ${
+                className={`text-[20px] font-semibold leading-[1.5] tabular-nums ${
                   sisaKasSaatIni < 0 ? 'text-red-600' : 'text-[#0d2453]'
                 }`}
               >

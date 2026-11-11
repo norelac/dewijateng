@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, Info, Search, Plus, Pencil, Trash2, X, Loader2 } from 'lucide-react';
 import { useBudgetData } from './usePengelolaData';
+import FiscalYearSelect from './FiscalYearSelect';
 import { mapGrantExpenseToExpenseItem, type TransparansiExpense } from './mapReports';
 import {
   createExpenseAction,
@@ -61,8 +62,14 @@ function toNumberInput(value: number | string | null | undefined): string {
 }
 
 /** Halaman buku kas: daftar pos belanja + tambah/ubah/hapus pos. */
-export default function PengeluaranView() {
-  const { village, grant, expenses, budget, loading, reload } = useBudgetData();
+export default function PengeluaranView({
+  fiscalYear = 2026,
+  onYearChange,
+}: {
+  fiscalYear?: number;
+  onYearChange?: (year: number) => void;
+} = {}) {
+  const { village, grant, expenses, budget, loading, reload } = useBudgetData(fiscalYear);
 
   const [query, setQuery] = useState('');
   const [month, setMonth] = useState('');
@@ -217,16 +224,26 @@ export default function PengeluaranView() {
             Buku kas {villageName} · Tahun anggaran {budget.year}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          disabled={!canWrite}
-          title={canWrite ? undefined : 'Data bantuan belum tersedia'}
-          className="self-start sm:self-auto shrink-0 h-[40px] px-[14px] rounded-full bg-[#0D2453] text-white text-[12px] font-semibold inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah pengeluaran
-        </button>
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          {onYearChange && (
+            <FiscalYearSelect
+              value={fiscalYear}
+              onChange={onYearChange}
+              variant="button"
+              disabled={loading}
+            />
+          )}
+          <button
+            type="button"
+            onClick={openCreate}
+            disabled={!canWrite}
+            title={canWrite ? undefined : 'Data bantuan belum tersedia'}
+            className="shrink-0 h-[40px] px-[14px] rounded-full bg-[#0D2453] text-white text-[12px] font-semibold inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah pengeluaran
+          </button>
+        </div>
       </div>
 
       {/* Ringkasan buku kas */}

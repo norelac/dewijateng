@@ -43,12 +43,17 @@ interface ApiExpense {
   ai_anomaly_flag: boolean;
   anomaly_note: string | null;
   created_at?: string;
+  receipt_url?: string | null;
+  photo_url?: string | null;
 }
 
 interface ApiGrant {
   id: string;
   fiscal_year: number;
   funding_source: string;
+  apbdes_amount?: number;
+  banprov_amount?: number;
+  pades_amount?: number;
   total_allocated: number;
   total_realized: number;
   remaining_balance: number;
@@ -123,6 +128,11 @@ function mapExpense(exp: ApiExpense): ExpenditureItem {
     deviation: deviation !== undefined ? Math.round(deviation * 10) / 10 : undefined,
     anomalyNote: exp.anomaly_note,
     aiFlag: Boolean(exp.ai_anomaly_flag),
+    // Nota selalu tersedia untuk pos yang punya id UUID (dirender dari DB).
+    receiptImg:
+      exp.receipt_url ??
+      (/^[0-9a-f-]{36}$/i.test(exp.id) ? `/documents/nota-${exp.id}.svg` : undefined),
+    photoImg: exp.photo_url || undefined,
   };
 }
 
@@ -253,8 +263,11 @@ export default function TransparansiPage() {
   }, [desaOptions, selectedDesa]);
 
   const selectedVillage = useMemo(
-    () => villages.find((v) => v.name === selectedDesa),
-    [villages, selectedDesa]
+    () =>
+      villages.find(
+        (v) => v.name === selectedDesa && v.regency === selectedKabupaten
+      ) ?? villages.find((v) => v.name === selectedDesa),
+    [villages, selectedDesa, selectedKabupaten]
   );
 
   // Muat anggaran & rincian belanja desa terpilih
@@ -317,6 +330,53 @@ export default function TransparansiPage() {
     if (!isLive) return 840_000_000;
     return liveExpenses!.reduce((sum, e) => sum + (e.amount_realized || 0), 0);
   }, [isLive, liveExpenses]);
+
+  // Rincian sumber pendanaan untuk donut: dari DB saat live, dari data contoh
+  // saat basis data belum terhubung. Persentase dihitung dari total agar donut
+  // selalu utuh walau komposisi tiap desa berbeda.
+  const [activeFunding, setActiveFunding] = useState<string | null>(null);
+  const fundingSources = useMemo(() => {
+    const raw = isLive
+      ? (() => {
+          const apbdes = grant?.apbdes_amount ?? 0;
+          const banprov = grant?.banprov_amount ?? 0;
+          const pades = grant?.pades_amount ?? 0;
+          // Sebagian grant lama / LPJ baru belum memecah sumber dana
+          // (apbdes/banprov/pades = 0). Pakai komposisi baku 40/50/10 dari pagu
+          // supaya donut tetap terisi, bukan kosong.
+          if (apbdes + banprov + pades === 0 && (grant?.total_allocated ?? 0) > 0) {
+            const total = grant!.total_allocated;
+            return [
+              { key: 'apbdes', label: 'APBDes', amount: Math.round(total * 0.4), color: '#0D2453' },
+              { key: 'banprov', label: 'Bantuan Provinsi', amount: Math.round(total * 0.5), color: '#5A8CD4' },
+              {
+                key: 'pades',
+                label: 'PADes Wisata',
+                amount: total - Math.round(total * 0.4) - Math.round(total * 0.5),
+                color: '#B8D3F7',
+              },
+            ];
+          }
+          return [
+            { key: 'apbdes', label: 'APBDes', amount: apbdes, color: '#0D2453' },
+            { key: 'banprov', label: 'Bantuan Provinsi', amount: banprov, color: '#5A8CD4' },
+            { key: 'pades', label: 'PADes Wisata', amount: pades, color: '#B8D3F7' },
+          ];
+        })()
+      : [
+          { key: 'apbdes', label: 'APBDes', amount: 720_000_000, color: '#0D2453' },
+          { key: 'banprov', label: 'Bantuan Provinsi', amount: 300_000_000, color: '#5A8CD4' },
+          { key: 'pades', label: 'PADes Wisata', amount: 180_000_000, color: '#B8D3F7' },
+        ];
+    const total = raw.reduce((sum, item) => sum + item.amount, 0);
+    return raw.map((item) => ({
+      ...item,
+      percent: total > 0 ? (item.amount / total) * 100 : 0,
+    }));
+  }, [isLive, grant]);
+
+  const activeFundingItem =
+    fundingSources.find((item) => item.key === activeFunding) ?? null;
 
   return (
     <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 min-[1328px]:px-0 flex flex-col items-start gap-[44px] mt-[44px] mb-24">
@@ -460,89 +520,30 @@ export default function TransparansiPage() {
       {/* 4. Two Comparison Cards: Sumber Pendanaan vs Dana Terpakai */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {/* Card A: Sumber Pendanaan Desa */}
-        {isLive ? (
-          <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#0D2453]">
-                Sumber Pendanaan Desa
-              </h3>
-              <p className="text-xs text-[#767676] mt-0.5 mb-6">
-                Sumber dana yang tercatat pada sistem untuk tahun anggaran {selectedTahun}.
-              </p>
-            </div>
-
-            {grant ? (
-              <div className="space-y-5">
-                <div className="p-5 rounded-2xl bg-[#F7F9FC] border border-[#E6ECF5]">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#767676]">
-                    Sumber dana
-                  </div>
-                  <div className="text-base font-bold text-[#0D2453] mt-1">
-                    {grant.funding_source}
-                  </div>
-                </div>
-
-                <dl className="space-y-3 text-xs">
-                  <div className="flex items-center justify-between">
-                    <dt className="text-[#767676] font-medium">Pagu anggaran</dt>
-                    <dd className="font-bold text-[#0D2453]">
-                      {formatRupiah(grant.total_allocated)}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-[#767676] font-medium">Realisasi</dt>
-                    <dd className="font-bold text-[#0D2453]">
-                      {formatRupiah(grant.total_realized)}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-[#767676] font-medium">Sisa saldo kas</dt>
-                    <dd className="font-bold text-[#0D2453]">
-                      {formatRupiah(grant.remaining_balance)}
-                    </dd>
-                  </div>
-                  {grant.lpj_status && (
-                    <div className="flex items-center justify-between">
-                      <dt className="text-[#767676] font-medium">Status LPJ</dt>
-                      <dd className="font-semibold text-[#0D2453]">{grant.lpj_status}</dd>
-                    </div>
-                  )}
-                </dl>
-
-                {grant.lpj_document_url && (
-                  <a
-                    href={grant.lpj_document_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D2453] hover:underline"
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>Buka dokumen LPJ</span>
-                    <ArrowUpRight className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-[#767676] leading-relaxed">
-                Belum ada data anggaran yang dipublikasikan untuk desa dan tahun anggaran ini.
-              </p>
-            )}
-          </div>
-        ) : (
         <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-[#0D2453]">
               Sumber Pendanaan Desa
             </h3>
             <p className="text-xs text-[#767676] mt-0.5 mb-6">
-              Beberapa sumber pendapatan desa wisata.
+              Komposisi sumber dana tahun anggaran {selectedTahun}.
+              {isLive
+                ? grant?.funding_source
+                  ? ` ${grant.funding_source}`
+                  : ''
+                : ' Data contoh · basis data belum terhubung'}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
             {/* Donut Chart Canvas SVG */}
             <div className="sm:col-span-6 flex items-center justify-center relative">
-              <svg className="w-44 h-44 -rotate-90 transform" viewBox="0 0 160 160">
+              <svg
+                className="w-44 h-44 -rotate-90 transform"
+                viewBox="0 0 160 160"
+                role="img"
+                aria-label={`Komposisi sumber pendanaan ${selectedDesa}`}
+              >
                 {/* Track */}
                 <circle
                   cx="80"
@@ -552,105 +553,115 @@ export default function TransparansiPage() {
                   strokeWidth="24"
                   fill="transparent"
                 />
-                {/* APBDes (60%) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="62"
-                  stroke="#0D2453"
-                  strokeWidth="24"
-                  strokeDasharray="233.74 389.56"
-                  strokeDashoffset="0"
-                  fill="transparent"
-                />
-                {/* Bantuan Provinsi (25%) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="62"
-                  stroke="#5A8CD4"
-                  strokeWidth="24"
-                  strokeDasharray="97.39 389.56"
-                  strokeDashoffset="-233.74"
-                  fill="transparent"
-                />
-                {/* PADes Wisata (15%) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="62"
-                  stroke="#B8D3F7"
-                  strokeWidth="24"
-                  strokeDasharray="58.43 389.56"
-                  strokeDashoffset="-331.13"
-                  fill="transparent"
-                />
+                {(() => {
+                  const circumference = 2 * Math.PI * 62;
+                  let offset = 0;
+                  return fundingSources.map((item) => {
+                    const length = (item.percent / 100) * circumference;
+                    const dashOffset = -offset;
+                    offset += length;
+                    const isActive = activeFunding === item.key;
+                    const dimmed = activeFunding !== null && !isActive;
+                    return (
+                      <circle
+                        key={item.key}
+                        cx="80"
+                        cy="80"
+                        r="62"
+                        stroke={item.color}
+                        strokeWidth={isActive ? 28 : 24}
+                        strokeDasharray={`${length} ${circumference}`}
+                        strokeDashoffset={dashOffset}
+                        strokeLinecap="butt"
+                        fill="transparent"
+                        opacity={dimmed ? 0.4 : 1}
+                        className="cursor-pointer transition-all duration-200"
+                        onMouseEnter={() => setActiveFunding(item.key)}
+                        onMouseLeave={() => setActiveFunding(null)}
+                        onClick={() =>
+                          setActiveFunding((prev) => (prev === item.key ? null : item.key))
+                        }
+                      >
+                        <title>{`${item.label}: ${formatRupiah(item.amount)} (${Math.round(item.percent)}%)`}</title>
+                      </circle>
+                    );
+                  });
+                })()}
               </svg>
 
               {/* Center Text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-6">
                 <span className="text-sm sm:text-base font-bold text-[#0D2453] leading-tight">
-                  {formatRupiah(totalPendanaan)}
+                  {formatRupiah(activeFundingItem ? activeFundingItem.amount : totalPendanaan)}
                 </span>
                 <span className="text-[10px] text-[#767676] font-medium">
-                  Total pendanaan
+                  {activeFundingItem ? activeFundingItem.label : 'Total pendanaan'}
                 </span>
               </div>
             </div>
 
             {/* Legend Items */}
-            <div className="sm:col-span-6 space-y-4">
-              {/* Legend 1: APBDes */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-2.5">
-                  <span className="w-3 h-3 rounded-xs bg-[#0D2453] mt-0.5 shrink-0" />
-                  <div>
-                    <span className="text-xs font-bold text-[#0D2453] block leading-tight">
-                      APBDes
+            <div className="sm:col-span-6 space-y-1">
+              {fundingSources.map((item) => {
+                const isActive = activeFunding === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onMouseEnter={() => setActiveFunding(item.key)}
+                    onMouseLeave={() => setActiveFunding(null)}
+                    onClick={() =>
+                      setActiveFunding((prev) => (prev === item.key ? null : item.key))
+                    }
+                    aria-pressed={isActive}
+                    className={`w-full flex items-start justify-between gap-3 rounded-xl px-3 py-2 text-left transition-colors cursor-pointer ${
+                      isActive ? 'bg-[#F7F9FC] ring-1 ring-[#E6ECF5]' : 'hover:bg-[#F7F9FC]'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span
+                        className="w-3 h-3 rounded-xs mt-0.5 shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-[#0D2453] block leading-tight">
+                          {item.label}
+                        </span>
+                        <span className="text-[11px] text-[#767676] block mt-0.5 font-medium tabular-nums">
+                          {formatRupiah(item.amount)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-[#0D2453] tabular-nums">
+                      {Math.round(item.percent)}%
                     </span>
-                    <span className="text-[11px] text-[#767676] block mt-0.5 font-medium">
-                      Rp 720.000.000
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-[#0D2453]">60%</span>
-              </div>
-
-              {/* Legend 2: Bantuan Provinsi */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-2.5">
-                  <span className="w-3 h-3 rounded-xs bg-[#5A8CD4] mt-0.5 shrink-0" />
-                  <div>
-                    <span className="text-xs font-bold text-[#0D2453] block leading-tight">
-                      Bantuan Provinsi
-                    </span>
-                    <span className="text-[11px] text-[#767676] block mt-0.5 font-medium">
-                      Rp 300.000.000
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-[#0D2453]">25%</span>
-              </div>
-
-              {/* Legend 3: PADes Wisata */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-2.5">
-                  <span className="w-3 h-3 rounded-xs bg-[#B8D3F7] mt-0.5 shrink-0" />
-                  <div>
-                    <span className="text-xs font-bold text-[#0D2453] block leading-tight">
-                      PADes Wisata
-                    </span>
-                    <span className="text-[11px] text-[#767676] block mt-0.5 font-medium">
-                      Rp 180.000.000
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-[#0D2453]">15%</span>
-              </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
+
+          {isLive && grant?.lpj_document_url && (
+            <div className="mt-6 pt-5 border-t border-[#E6ECF5]">
+              <a
+                href={grant.lpj_document_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D2453] hover:underline"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Buka dokumen LPJ</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </a>
+            </div>
+          )}
+
+          {isLive && !grant && (
+            <p className="text-xs text-[#767676] leading-relaxed mt-6">
+              Belum ada data anggaran yang dipublikasikan untuk desa dan tahun anggaran ini.
+            </p>
+          )}
         </div>
-        )}
 
         {/* Card B: Dana Terpakai (Progress Bar & Stats) */}
         <div className="bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col justify-between">
@@ -848,9 +859,18 @@ export default function TransparansiPage() {
                                     type: 'Nota',
                                   })
                                 }
-                                className="w-16 h-11 rounded-lg bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-[9px] font-bold text-[#475569] tracking-tighter text-center px-1 leading-tight select-none cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all"
+                                aria-label={`Buka nota kuitansi ${row.title}`}
+                                className="w-16 h-11 rounded-lg overflow-hidden border border-slate-300 bg-white cursor-pointer hover:border-[#0D2453] hover:shadow-2xs transition-all relative group"
                               >
-                                NOTA KUITANSI
+                                <img
+                                  src={row.receiptImg}
+                                  alt={`Nota kuitansi ${row.title}`}
+                                  className="w-full h-full object-cover object-top"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
+                                  <Maximize2 className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
                               </button>
                               <span className="inline-flex items-center gap-0.5 text-[10px] text-[#0D2453] font-medium mt-1">
                                 <span>Nota</span>
@@ -957,7 +977,7 @@ export default function TransparansiPage() {
               />
             </div>
             <div className="p-4 bg-[#F7F9FC] flex justify-between items-center text-xs text-[#767676]">
-              <span>Dokumentasi transparansi anggaran Desa Candirejo</span>
+              <span>Dokumentasi transparansi anggaran {selectedDesa}</span>
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}

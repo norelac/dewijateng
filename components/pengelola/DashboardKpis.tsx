@@ -3,12 +3,12 @@
 import React from 'react';
 import {
   MapPin,
-  ChevronDown,
   Wallet,
   MessagesSquare,
   CheckCircle2,
   Files,
 } from 'lucide-react';
+import FiscalYearSelect, { normalizeFiscalYear } from './FiscalYearSelect';
 
 interface ReportCounts {
   total: number;
@@ -27,6 +27,8 @@ interface DashboardKpisProps {
   totalFunding?: number;
   reportCounts?: ReportCounts;
   evidence?: { complete: number; total: number };
+  /** Dipanggil saat pengelola memilih tahun anggaran lain di dropdown TA. */
+  onYearChange?: (year: number) => void;
 }
 
 function formatFunding(num: number): string {
@@ -58,6 +60,7 @@ export default function DashboardKpis({
     selesai: 1,
   },
   evidence = { complete: 4, total: 4 },
+  onYearChange,
 }: DashboardKpisProps) {
   const villageShort = villageName.replace(/^Desa\s+/i, '');
   const selesaiPct =
@@ -94,10 +97,12 @@ export default function DashboardKpis({
           <span className="text-[#64748B] text-[11px] font-normal whitespace-nowrap">
             {updatedAt}
           </span>
-          <div className="bg-white border border-[#E6ECF5] rounded-full h-8 px-3 flex items-center gap-2 text-[#0D2453] text-[11px] font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
-            <ChevronDown className="w-3.5 h-3.5 text-[#0D2453]" />
-            <span>{periodYear}</span>
-          </div>
+          <FiscalYearSelect
+            value={normalizeFiscalYear(periodYear.replace(/[^0-9]/g, ''))}
+            onChange={(year) => onYearChange?.(year)}
+            variant="pill"
+            disabled={!onYearChange}
+          />
         </div>
       </div>
 

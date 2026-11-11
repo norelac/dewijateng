@@ -19,6 +19,9 @@ import {
   AlertTriangle,
   Phone,
   HeartPulse,
+  FileText,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
 
 interface GuideItem {
@@ -126,6 +129,28 @@ const FAQS: FaqItem[] = [
 ];
 
 const CATEGORIES = ['Semua panduan', 'Pelaporan', 'Transparansi dana', 'Privasi'] as const;
+
+/** Salinan regulasi yang disajikan dari aplikasi (public/documents/regulasi). */
+const REGULATION_DOCS = [
+  {
+    title: 'UU No. 14 Tahun 2008',
+    meta: 'Keterbukaan Informasi Publik',
+    file: '/documents/regulasi/uu-14-2008-keterbukaan-informasi-publik.pdf',
+    source: 'https://peraturan.bpk.go.id/Download/28425/UU%20Nomor%2014%20Tahun%202008.pdf',
+  },
+  {
+    title: 'PP No. 61 Tahun 2010',
+    meta: 'Pelaksanaan UU Keterbukaan Informasi Publik',
+    file: '/documents/regulasi/pp-61-2010-keterbukaan-informasi-publik.pdf',
+    source: 'https://peraturan.bpk.go.id/Download/36040/PP%2061%20Tahun%202010.pdf',
+  },
+  {
+    title: 'Permendagri No. 20 Tahun 2018',
+    meta: 'Pengelolaan Keuangan Desa',
+    file: '/documents/regulasi/permendagri-20-2018-pengelolaan-keuangan-desa.pdf',
+    source: 'https://peraturan.go.id/files/bn611-2018.pdf',
+  },
+] as const;
 
 export default function EdukasiPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -386,7 +411,7 @@ export default function EdukasiPage() {
                 <div className="pt-1 border-t border-[#F1F5F9]">
                   <p className="text-[11px] text-[#64748B]">
                     <span className="font-semibold text-[#0D2453]">Rujukan:</span>{' '}
-                    UU No. 14/2008 Ps. 4, 7, 9 · PP No. 61/2010 · Permendagri No. 20/2020
+                    UU No. 14/2008 Ps. 4, 7, 9 · PP No. 61/2010 · Permendagri No. 20/2018
                   </p>
                 </div>
               </div>
@@ -410,6 +435,69 @@ export default function EdukasiPage() {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* ── Dokumen regulasi (berkas lokal + sumber resmi) ── */}
+          <div className="bg-white rounded-[20px] border border-[#E6ECF5] shadow-[0_1px_2px_rgba(13,36,83,0.04),0_8px_16px_-6px_rgba(13,36,83,0.07)] p-7 flex flex-col gap-5">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-[10px] bg-[#EDF3FC] flex items-center justify-center text-[#0D2453] shrink-0">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0D2453] leading-snug">
+                  Unduh dokumen regulasi
+                </h3>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Berkas resmi yang menjadi dasar hak informasi dan pengelolaan keuangan desa.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col divide-y divide-[#F1F5F9]">
+              {REGULATION_DOCS.map((doc) => (
+                <div
+                  key={doc.file}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-3.5 first:pt-0 last:pb-0"
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <FileText className="w-4 h-4 text-[#0D2453] mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-sm font-semibold text-[#0D2453] block leading-snug">
+                        {doc.title}
+                      </span>
+                      <span className="text-[11px] text-[#64748B] block mt-0.5">
+                        {doc.meta} · PDF
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={doc.file}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-[#0D2453] text-white text-[11px] font-semibold hover:bg-[#163574] transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Buka PDF
+                    </a>
+                    <a
+                      href={doc.source}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-[#E6ECF5] text-[#0D2453] text-[11px] font-semibold hover:bg-[#F7F9FC] transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Sumber resmi
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-[#64748B] leading-relaxed">
+              Salinan disajikan untuk kemudahan pembacaan. Untuk keperluan hukum, gunakan tautan
+              sumber resmi pada masing-masing dokumen.
+            </p>
           </div>
 
           {/* ── Modul 2: SOP 4-Tahap — horizontal stepper ── */}

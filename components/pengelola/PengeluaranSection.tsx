@@ -84,7 +84,7 @@ export default function PengeluaranSection({
               </div>
 
               {/* Nominal */}
-              <div className="w-[155px] shrink-0 text-[#0D2453] font-semibold font-mono">
+              <div className="w-[155px] shrink-0 text-[#0D2453] font-semibold tabular-nums">
                 {item.formattedAmount}
               </div>
 

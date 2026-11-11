@@ -1148,11 +1148,11 @@ function LaporContent() {
             </div>
           </div>
 
-          {/* Right Column: Selected Report Detail */}
+          {/* Right Column: Selected Report Detail (sticky + scroll internal di desktop) */}
           {filteredReports.length > 0 && (
             <div
               key={activeReport.id}
-              className="detail-swap w-full lg:flex-1 bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_3px_rgba(13,36,83,0.05),0_10px_20px_-8px_rgba(13,36,83,0.10),0_32px_56px_-24px_rgba(13,36,83,0.16)] flex flex-col gap-6"
+              className="detail-swap w-full lg:flex-1 lg:sticky lg:top-[112px] lg:max-h-[calc(100vh-128px)] lg:overflow-y-auto overscroll-contain bg-white rounded-[24px] border border-[#E6ECF5] p-6 sm:p-8 shadow-[0_1px_3px_rgba(13,36,83,0.05),0_10px_20px_-8px_rgba(13,36,83,0.10),0_32px_56px_-24px_rgba(13,36,83,0.16)] flex flex-col gap-6"
             >
               {/* 1. Header & Status */}
               <div className="flex items-center justify-between">
