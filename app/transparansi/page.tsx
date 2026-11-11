@@ -11,7 +11,7 @@ import {
   Maximize2,
   AlertTriangle,
 } from 'lucide-react';
-import { formatRupiah } from '@/lib/utils';
+import { formatRupiah, formatRupiahShort } from '@/lib/utils';
 
 interface ExpenditureItem {
   id: string;
@@ -539,7 +539,7 @@ export default function TransparansiPage() {
             {/* Donut Chart Canvas SVG */}
             <div className="sm:col-span-6 flex items-center justify-center relative">
               <svg
-                className="w-44 h-44 -rotate-90 transform"
+                className="w-44 h-44 sm:w-48 sm:h-48 -rotate-90 transform"
                 viewBox="0 0 160 160"
                 role="img"
                 aria-label={`Komposisi sumber pendanaan ${selectedDesa}`}
@@ -589,12 +589,15 @@ export default function TransparansiPage() {
                 })()}
               </svg>
 
-              {/* Center Text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-6">
-                <span className="text-sm sm:text-base font-bold text-[#0D2453] leading-tight">
-                  {formatRupiah(activeFundingItem ? activeFundingItem.amount : totalPendanaan)}
+              {/* Center Text — dibatasi selebar lubang donut agar tidak menabrak ring */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span
+                  className="w-[104px] sm:w-[116px] text-[13px] sm:text-sm font-bold text-[#0D2453] leading-tight tabular-nums whitespace-nowrap"
+                  title={formatRupiah(activeFundingItem ? activeFundingItem.amount : totalPendanaan)}
+                >
+                  {formatRupiahShort(activeFundingItem ? activeFundingItem.amount : totalPendanaan)}
                 </span>
-                <span className="text-[10px] text-[#767676] font-medium">
+                <span className="w-[104px] sm:w-[116px] text-[10px] text-[#767676] font-medium leading-tight">
                   {activeFundingItem ? activeFundingItem.label : 'Total pendanaan'}
                 </span>
               </div>
