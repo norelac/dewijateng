@@ -16,6 +16,7 @@ services:
       - ./docker/seed-villages-867.sql:/docker-entrypoint-initdb.d/03-seed-villages-867.sql:ro
       - ./docker/seed-hsd-2026.sql:/docker-entrypoint-initdb.d/04-seed-hsd-2026.sql:ro
       - ./docker/seed-demo-full.sql:/docker-entrypoint-initdb.d/05-seed-demo-full.sql:ro
+      - ./docker/seed-finance-bulk.sql:/docker-entrypoint-initdb.d/06-seed-finance-bulk.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dewijateng}"]
       interval: 3s

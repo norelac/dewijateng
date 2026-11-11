@@ -80,35 +80,8 @@ export async function getExpenseEvidence(
   };
 }
 
-/** Foto fisik contoh: dipilih dari jenis kegiatan, bukan dari id acak. */
-export function derivePhotoUrl(
-  activityName: string,
-  category: string
-): string {
-  const name = activityName.toLowerCase();
-
-  if (/parkir|kanstin|paving/.test(name)) return '/img/figma/aduan-parkir.png';
-  if (/sampah|kebersihan|gazebo|taman/.test(name)) return '/img/figma/aduan-sampah.png';
-  if (/toilet|sanitasi|air|wastafel|pipa/.test(name)) return '/img/figma/aduan-wastafel.png';
-  if (/curug|jalur|pejalan|pagar|gazebo/.test(name)) return '/img/figma/curug-sesudah.png';
-
-  switch (category) {
-    case 'MATERIAL_FISIK':
-      return '/img/figma/curug-sesudah.png';
-    case 'KESELAMATAN_K3':
-      return '/img/figma/aduan-wastafel.png';
-    case 'OPERASIONAL':
-      return '/img/figma/aduan-sampah.png';
-    case 'UPAH_TENAGA':
-      return '/img/figma/aduan-parkir.png';
-    default:
-      return '/img/figma/curug-sesudah.png';
-  }
-}
-
-export function receiptUrlFor(expenseId: string): string {
-  return `/documents/nota-${expenseId}.svg`;
-}
+/** Tautan bukti (murni) tinggal di `@/lib/evidenceLinks` agar aman di klien. */
+export { derivePhotoUrl, receiptUrlFor } from '@/lib/evidenceLinks';
 
 function escapeXml(value: string): string {
   return value
@@ -213,8 +186,8 @@ export function renderNotaSvg(data: ExpenseEvidence): string {
     data.amountRealized
   )}</text>
 
-  <text x="${pad}" y="${height - 60}" font-size="10" fill="#94A3B8">Dokumen demo — dirender otomatis dari basis data DEWI JATENG.</text>
-  <text x="${pad}" y="${height - 44}" font-size="10" fill="#94A3B8">Bukan bukti pembayaran resmi.</text>
+  <text x="${pad}" y="${height - 60}" font-size="10" fill="#94A3B8">Dirender otomatis dari basis data DEWI JATENG.</text>
+  <text x="${pad}" y="${height - 44}" font-size="10" fill="#94A3B8">Dicetak ulang kapan saja sesuai data terbaru.</text>
   <text x="${pad + inner}" y="${height - 52}" font-size="10" font-weight="700" fill="#0D2453" text-anchor="end">DEWI JATENG</text>
 </svg>`;
 }

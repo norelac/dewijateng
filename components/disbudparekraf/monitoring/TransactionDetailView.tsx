@@ -67,7 +67,9 @@ export default function TransactionDetailView({ tx }: { tx: TransactionDetail })
           </div>
 
           {tx.note && (
-            <p className="mt-4 text-[12px] text-[#64748B]">Catatan: {tx.note}</p>
+            <p className="mt-4 text-[12px] text-[#64748B]">
+              Catatan: {tx.note.replace(/^Catatan:\s*/i, '')}
+            </p>
           )}
         </div>
 
@@ -88,7 +90,7 @@ export default function TransactionDetailView({ tx }: { tx: TransactionDetail })
               <div className="mt-4 rounded-[10px] border border-[#E6ECF5] bg-[#F7F9FC] p-6 flex justify-center">
                 <div className="bg-white border border-[#E6ECF5] w-full max-w-[420px] p-6 flex flex-col gap-3">
                   <span className="text-[9px] tracking-[0.12em] text-[#94A3B8]">
-                    DOKUMEN CONTOH
+                    PRATINJAU DOKUMEN
                   </span>
                   <span className="text-[15px] font-bold text-[#0D2453]">
                     {pemasukan ? 'REKAP PENERIMAAN' : 'BUKTI PEMBAYARAN'}
@@ -121,7 +123,7 @@ export default function TransactionDetailView({ tx }: { tx: TransactionDetail })
                   </div>
 
                   <span className="text-[9px] italic text-[#94A3B8]">
-                    Ilustrasi dokumen untuk rancangan antarmuka, bukan bukti transaksi nyata.
+                    Pratinjau dirender otomatis dari data transaksi DEWI JATENG.
                   </span>
                 </div>
               </div>

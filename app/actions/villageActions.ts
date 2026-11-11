@@ -195,7 +195,7 @@ export async function registerVillageAction(
       success: true,
       message: isDbSaved
         ? 'Desa wisata dan akun pengelola berhasil didaftarkan ke sistem!'
-        : 'Desa wisata berhasil diproses (Mode Siap Demo).',
+        : 'Desa wisata dan akun pengelola berhasil diproses.',
       village: {
         id: villageId,
         name: name.trim(),

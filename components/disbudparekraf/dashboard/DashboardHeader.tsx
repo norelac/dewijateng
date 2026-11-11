@@ -14,9 +14,9 @@ export default function DashboardHeader() {
         </p>
       </div>
 
-      {/* ponytail: rute /disbudparekraf/akun/buat dibuat pada Fase 3. */}
+      {/* ponytail: tombol ini mengarah langsung ke formulir, bukan daftar akun. */}
       <Link
-        href="/disbudparekraf/akun"
+        href="/disbudparekraf/akun/buat"
         className="h-[40px] px-5 inline-flex items-center justify-center rounded-[999px] bg-[#0D2453] text-white text-[12px] font-semibold whitespace-nowrap"
       >
         Buat akun desa

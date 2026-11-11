@@ -35,13 +35,15 @@ export async function getNotificationsAction(): Promise<AppNotification[]> {
   if (session.role === 'disbudparekraf') {
     const [pendingLpj, needReview, revisi, latestReports] = await Promise.all([
       query<{ c: string }>(
-        `SELECT COUNT(*)::text AS c FROM village_grants WHERE lpj_status = 'SUBMITTED'`
+        `SELECT COUNT(*)::text AS c FROM village_grants
+          WHERE fiscal_year = 2026 AND lpj_status = 'SUBMITTED'`
       ),
       query<{ c: string }>(
         `SELECT COUNT(*)::text AS c FROM incident_reports WHERE status = 'SUBMITTED'`
       ),
       query<{ c: string }>(
-        `SELECT COUNT(*)::text AS c FROM village_grants WHERE lpj_status = 'REVISION'`
+        `SELECT COUNT(*)::text AS c FROM village_grants
+          WHERE fiscal_year = 2026 AND lpj_status = 'REVISION'`
       ),
       query<any>(
         `SELECT r.report_code, r.title, r.created_at, tv.name AS village_name
@@ -59,7 +61,7 @@ export async function getNotificationsAction(): Promise<AppNotification[]> {
     if (lpjCount > 0) {
       items.push({
         id: 'lpj-submitted',
-        title: `${lpjCount} LPJ menunggu verifikasi`,
+        title: `${lpjCount} LPJ TA 2026 menunggu verifikasi`,
         description: 'Dokumen LPJ desa wisata siap diperiksa pada menu Aktivitas.',
         tone: 'warning',
         href: '/disbudparekraf/aktivitas',
@@ -71,7 +73,7 @@ export async function getNotificationsAction(): Promise<AppNotification[]> {
     if (revisiCount > 0) {
       items.push({
         id: 'lpj-revision',
-        title: `${revisiCount} LPJ perlu revisi`,
+        title: `${revisiCount} LPJ TA 2026 perlu revisi`,
         description: 'Dokumen dikembalikan ke desa untuk dilengkapi.',
         tone: 'info',
         href: '/disbudparekraf/aktivitas',

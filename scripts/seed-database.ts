@@ -51,6 +51,16 @@ async function runSeed() {
       }
     }
 
+    // 3c. Transaksi monitoring keuangan untuk banyak desa (turunan pos belanja
+    //     LPJ TA 2026). Idempoten: desa yang sudah punya transaksi dilewati.
+    const financeSqlPath = path.join(process.cwd(), 'docker', 'seed-finance-bulk.sql');
+    if (fs.existsSync(financeSqlPath)) {
+      console.log('📦 Menyiapkan transaksi monitoring keuangan desa...');
+      const sql3c = fs.readFileSync(financeSqlPath, 'utf-8');
+      await client.query(sql3c);
+      console.log('✅ Transaksi monitoring keuangan berhasil di-seed!\n');
+    }
+
     // 4. Update PostGIS Geometries
     console.log('🗺️  Memperbarui geometri koordinat PostGIS...');
     try {

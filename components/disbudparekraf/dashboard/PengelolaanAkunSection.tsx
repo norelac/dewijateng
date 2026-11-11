@@ -36,15 +36,28 @@ function Card({ card }: { card: AksesCard }) {
  * `getVillageAccountStats()`.
  */
 export default function PengelolaanAkunSection({ stats }: { stats: VillageAccountStats }) {
-  const { aktif, menunggu, nonaktif, total, regencyCount } = stats;
+  const { aktif, menunggu, nonaktif, total, regencyCount, villageTotal, regencyTotal } = stats;
   const aktifPct = total > 0 ? Math.round((aktif / total) * 100) : 0;
+  // Cakupan akun terhadap 868 desa masih sangat kecil, jadi pakai satu desimal
+  // supaya tidak tampil sebagai "0%".
+  const cakupanRaw = villageTotal > 0 ? (aktif / villageTotal) * 100 : 0;
+  const cakupanLabel = new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: cakupanRaw > 0 && cakupanRaw < 10 ? 1 : 0,
+    maximumFractionDigits: cakupanRaw > 0 && cakupanRaw < 10 ? 1 : 0,
+  }).format(cakupanRaw);
 
   const cards: AksesCard[] = [
     {
-      label: 'Desa terdaftar',
-      value: String(total),
-      note: `Cakupan ${regencyCount} kabupaten / kota`,
+      label: 'Desa wisata terdata',
+      value: String(villageTotal),
+      note: `Tersebar di ${regencyTotal} kabupaten / kota`,
       variant: 'navy',
+    },
+    {
+      label: 'Akun pengelola',
+      value: String(total),
+      note: `Menjangkau ${regencyCount} kabupaten / kota`,
+      variant: 'white',
     },
     {
       label: 'Akun aktif',
@@ -55,13 +68,7 @@ export default function PengelolaanAkunSection({ stats }: { stats: VillageAccoun
     {
       label: 'Menunggu aktivasi',
       value: String(menunggu),
-      note: 'Kirim ulang undangan bila perlu',
-      variant: 'white',
-    },
-    {
-      label: 'Akun nonaktif',
-      value: String(nonaktif),
-      note: 'Akses pengelola dinonaktifkan',
+      note: nonaktif > 0 ? `${nonaktif} akun nonaktif` : 'Kirim ulang undangan bila perlu',
       variant: 'white',
     },
   ];
@@ -88,7 +95,8 @@ export default function PengelolaanAkunSection({ stats }: { stats: VillageAccoun
             Kesiapan akses pengelola
           </h3>
           <p className="text-[#64748B] text-[13px] leading-[1.5]">
-            {aktif} dari {total} desa sudah memiliki akun aktif.
+            {aktif} dari {total} akun pengelola sudah aktif, menjangkau {cakupanLabel}% dari{' '}
+            {villageTotal} desa wisata terdata.
           </p>
 
           <div className="h-4 w-full rounded-[8px] bg-[#EDF3FC] overflow-hidden">

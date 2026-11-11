@@ -33,8 +33,8 @@ const MENU: NavItem[] = [
 
 const SUPPORT: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { href: '/', label: 'Lihat situs publik', icon: ExternalLink },
-  { href: 'mailto:dewijateng@jatengprov.go.id', label: 'Pusat bantuan', icon: CircleHelp },
-  { href: '#', label: 'Pengaturan', icon: Settings },
+  { href: '/disbudparekraf/pusat-bantuan', label: 'Pusat bantuan', icon: CircleHelp },
+  { href: '/disbudparekraf/pengaturan', label: 'Pengaturan', icon: Settings },
 ];
 
 interface DashboardSidebarProps {
@@ -120,14 +120,15 @@ export default function DashboardSidebar({
         {SUPPORT.map((item) => {
           const Icon = item.icon;
           return (
-            <a
+            <Link
               key={item.label}
               href={item.href}
+              onClick={onCloseMobile}
               className="flex items-center gap-2.5 text-[#64748B] hover:text-[#0D2453] transition-colors"
             >
               <Icon className="w-[17px] h-[17px] shrink-0" />
               <span className="text-[12px]">{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </div>

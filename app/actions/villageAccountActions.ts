@@ -84,7 +84,12 @@ export interface VillageAccountStats {
   aktif: number;
   menunggu: number;
   nonaktif: number;
+  /** Kabupaten/kota yang sudah punya akun pengelola. */
   regencyCount: number;
+  /** Seluruh desa wisata terdata (868 pad demo). */
+  villageTotal: number;
+  /** Seluruh kabupaten/kota pada data desa wisata (31 pad demo). */
+  regencyTotal: number;
 }
 
 /**
@@ -163,7 +168,9 @@ export async function getVillageAccountStats(): Promise<{
         COUNT(*) FILTER (WHERE (${STATUS_EXPR}) = 'AKTIF')::int AS aktif,
         COUNT(*) FILTER (WHERE (${STATUS_EXPR}) = 'MENUNGGU_AKTIVASI')::int AS menunggu,
         COUNT(*) FILTER (WHERE (${STATUS_EXPR}) = 'NONAKTIF')::int AS nonaktif,
-        COUNT(DISTINCT tv.regency)::int AS regency_count
+        COUNT(DISTINCT tv.regency)::int AS regency_count,
+        (SELECT COUNT(*) FROM tourist_villages)::int AS village_total,
+        (SELECT COUNT(DISTINCT regency) FROM tourist_villages)::int AS regency_total
        FROM users u
        JOIN tourist_villages tv ON tv.id = u.village_id
       WHERE u.role = 'desa'`
@@ -201,6 +208,8 @@ export async function getVillageAccountStats(): Promise<{
       menunggu: s.menunggu ?? 0,
       nonaktif: s.nonaktif ?? 0,
       regencyCount: s.regency_count ?? 0,
+      villageTotal: s.village_total ?? 0,
+      regencyTotal: s.regency_total ?? 0,
     },
     recent: recentRes.rows.map(mapVillageAccountRow),
   };

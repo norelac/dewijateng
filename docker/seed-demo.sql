@@ -322,7 +322,7 @@ INSERT INTO village_transactions (
  'bukti-paket-wisata-27-okt-2026.pdf', 265, 'Siti Rahmawati', 'Siti Rahmawati', '2026-10-27 15:55:00+07'),
 ('c1000000-0000-0000-0000-000000000106', 'a0000000-0000-0000-0000-000000000002', 'PEMASUKAN', 'PM-2026-0106',
  'Penjualan tiket akhir bulan', 'Tiket wisata', '2026-10-31', 36000000,
- 'Setoran ke rekening desa', 'Loket tiket desa wisata', 'Catatan: 1.200 tiket x Rp 30.000.',
+ 'Setoran ke rekening desa', 'Loket tiket desa wisata', '1.200 tiket x Rp 30.000.',
  'rekap-tiket-candirejo-31-okt-2026.pdf', 248, 'Siti Rahmawati', 'Siti Rahmawati', '2026-10-31 17:30:00+07'),
 
 -- Desa Wisata Candirejo - pengeluaran (total Rp 84.000.000)
@@ -348,7 +348,7 @@ INSERT INTO village_transactions (
  'bukti-honor-pemandu-25-okt-2026.pdf', 197, 'Siti Rahmawati', 'Siti Rahmawati', '2026-10-25 15:00:00+07'),
 ('c1000000-0000-0000-0000-000000000206', 'a0000000-0000-0000-0000-000000000002', 'PENGELUARAN', 'PK-2026-0206',
  'Perbaikan fasilitas wisata', 'Pemeliharaan', '2026-10-30', 24000000,
- 'Transfer bank', 'CV Sumber Makmur (contoh)', 'Catatan: perbaikan 12 unit bangku x Rp 2.000.000.',
+ 'Transfer bank', 'CV Sumber Makmur', 'perbaikan 12 unit bangku x Rp 2.000.000.',
  'bukti-perbaikan-fasilitas-30-okt-2026.pdf', 312, 'Siti Rahmawati', 'Siti Rahmawati', '2026-10-30 15:00:00+07'),
 
 -- Desa Wisata Lerep - pemasukan Rp 180 jt / pengeluaran Rp 126 jt

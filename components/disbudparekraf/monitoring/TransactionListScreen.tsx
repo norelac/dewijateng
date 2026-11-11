@@ -7,6 +7,7 @@ import {
   listTransactions,
   periodeLabel,
   wilayahLabel,
+  desaOptionLabel,
   type TransactionType,
 } from '@/lib/services/financeService';
 import { formatRupiahShort } from '@/lib/utils';
@@ -106,7 +107,10 @@ export default async function TransactionListScreen({
         managerLabel="Dicatat oleh pengelola desa"
         periode={data.periode}
         periodeOptions={periodeOptions}
-        desaOptions={villages.map((v) => ({ slug: v.slug, name: v.shortName }))}
+        desaOptions={villages.map((v) => ({
+          slug: v.slug,
+          name: desaOptionLabel(v.shortName, v.regency),
+        }))}
         diperbarui={summary?.diperbarui ?? null}
         activeTab={jenis.path === 'pemasukan' ? 'pemasukan' : 'pengeluaran'}
         jumlahPemasukan={summary?.jumlahPemasukan ?? 0}

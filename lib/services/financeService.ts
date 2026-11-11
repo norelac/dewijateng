@@ -25,6 +25,9 @@ import {
   type VillageFinanceSummary,
 } from '@/lib/finance';
 
+// Nilai (bukan tipe) yang dipakai untuk menyusun opsi filter.
+import { desaOptionLabel } from '@/lib/finance';
+
 // Tipe dan pemformat ringkasan ada di `@/lib/finance` (tanpa impor basis data,
 // aman untuk komponen klien). Diekspor ulang agar pemanggil lama tetap bekerja.
 export * from '@/lib/finance';
@@ -246,7 +249,10 @@ export async function getFinanceRecap(options: {
     totals,
     filteredTotals: sumTotals(filtered),
     wilayahOptions: Array.from(new Set(villages.map((v) => v.regency))).sort(),
-    desaOptions: villages.map((v) => ({ slug: v.slug, name: v.shortName })),
+    desaOptions: villages.map((v) => ({
+      slug: v.slug,
+      name: desaOptionLabel(v.shortName, v.regency),
+    })),
     active: { periode, wilayah, desa, kelengkapan },
     page,
     perPage,

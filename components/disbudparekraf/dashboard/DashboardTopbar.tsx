@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, ChevronDown, LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { Menu, ChevronDown, LogOut, Settings } from 'lucide-react';
 import { getSessionAction, logoutAction } from '@/app/actions/authActions';
 import type { SessionUser } from '@/lib/auth';
 import NotificationBell from '@/components/shared/NotificationBell';
@@ -13,6 +14,8 @@ const TITLES: { match: (path: string) => boolean; label: string }[] = [
   { match: (p) => p.startsWith('/disbudparekraf/akun'), label: 'Akun desa wisata' },
   { match: (p) => p.startsWith('/disbudparekraf/monitoring'), label: 'Monitoring keuangan' },
   { match: (p) => p.startsWith('/disbudparekraf/aktivitas'), label: 'Aktivitas' },
+  { match: (p) => p.startsWith('/disbudparekraf/pusat-bantuan'), label: 'Pusat bantuan' },
+  { match: (p) => p.startsWith('/disbudparekraf/pengaturan'), label: 'Pengaturan' },
 ];
 
 interface DashboardTopbarProps {
@@ -30,7 +33,9 @@ export default function DashboardTopbar({ onOpenMobile }: DashboardTopbarProps) 
 
   const title = TITLES.find((t) => t.match(pathname))?.label ?? 'Dashboard';
   const displayName = session?.fullName || 'Admin Disbudparekraf';
-  const roleLabel = session?.role === 'disbudparekraf' ? 'Admin dinas' : 'Pengelola desa';
+  // Bilah atas ini hanya dipakai di ruang admin dinas; jangan tampilkan label
+  // "Pengelola desa" saat sesi belum selesai dimuat.
+  const roleLabel = 'Admin dinas';
 
   const initials =
     (session?.fullName || 'Admin Disbudparekraf')
@@ -87,6 +92,14 @@ export default function DashboardTopbar({ onOpenMobile }: DashboardTopbarProps) 
                 <p className="text-xs font-semibold text-[#0D2453]">{displayName}</p>
                 <p className="text-[10px] text-[#64748B]">{roleLabel}</p>
               </div>
+              <Link
+                href="/disbudparekraf/pengaturan"
+                onClick={() => setMenuOpen(false)}
+                className="px-3 py-2 text-left text-xs font-medium text-[#0D2453] hover:bg-slate-50 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Pengaturan</span>
+              </Link>
               <form action={logoutAction} className="w-full">
                 <button
                   type="submit"
