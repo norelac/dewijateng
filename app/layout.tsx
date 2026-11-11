@@ -1,17 +1,11 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Montserrat, MonteCarlo } from 'next/font/google';
+import { Inter, MonteCarlo } from 'next/font/google';
 import './globals.css';
 import LayoutShell from '@/components/LayoutShell';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-plus-jakarta',
-  display: 'swap',
-});
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  variable: '--font-montserrat',
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -42,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`scroll-smooth ${plusJakartaSans.variable} ${montserrat.variable} ${monteCarlo.variable}`}
+      className={`scroll-smooth ${inter.variable} ${monteCarlo.variable}`}
     >
       <body className="bg-[#F7F9FC] text-[#0D2453] font-sans antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-[#0D2453]">
         <LayoutShell>{children}</LayoutShell>

@@ -62,8 +62,8 @@ export default function PengelolaSidebar({
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col justify-between h-full gap-6">
-      <div className="flex flex-col gap-6">
+    <div className="flex flex-col justify-between h-full gap-3">
+      <div className="flex flex-col gap-3">
         {/* Identitas Platform */}
         <div className="flex items-center justify-between px-2">
           <Link href="/pengelola" className="flex items-center gap-2.5">
@@ -108,7 +108,7 @@ export default function PengelolaSidebar({
         </div>
 
         {/* Menu Utama */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           <span className="text-[#64748B] text-[10px] font-normal tracking-[1px] px-2 mb-1">
             MENU UTAMA
           </span>
@@ -123,7 +123,7 @@ export default function PengelolaSidebar({
                   if (onTabChange) onTabChange(item.id);
                   if (onCloseMobile) onCloseMobile();
                 }}
-                className={`w-full h-11 px-3 rounded-[10px] flex items-center justify-between transition-colors text-left ${
+                className={`w-full h-10 px-3 rounded-[10px] flex items-center justify-between transition-colors text-left ${
                   isActive
                     ? 'bg-[#0D2453] text-white font-semibold'
                     : 'bg-white text-[#64748B] font-normal hover:bg-slate-50'
@@ -206,9 +206,9 @@ export default function PengelolaSidebar({
         </div>
       </div>
 
-      <div className="flex flex-col gap-5">
-        {/* Pengingat Privasi */}
-        <div className="bg-[#EDF3FC] rounded-[14px] p-4 flex flex-col gap-2.5">
+      <div className="flex flex-col gap-4">
+        {/* Pengingat Privasi — disembunyikan di viewport pendek agar menu tidak terpotong */}
+        <div className="hidden [@media(min-height:860px)]:flex bg-[#EDF3FC] rounded-[14px] p-3 flex-col gap-2">
           <ShieldCheck className="w-[18px] h-[18px] text-[#0D2453]" />
           <p className="text-[#0D2453] text-[12px] font-semibold leading-tight">
             Jaga kepercayaan publik
@@ -229,7 +229,7 @@ export default function PengelolaSidebar({
   return (
     <>
       {/* Desktop Sidebar Fixed/Sticky */}
-      <aside className="hidden lg:flex flex-col w-[232px] shrink-0 min-h-screen bg-white border-r border-[#E6ECF5] pt-7 pb-6 px-4 self-stretch">
+      <aside className="hidden lg:flex flex-col w-[232px] shrink-0 bg-white border-r border-[#E6ECF5] pt-5 pb-4 px-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
         {sidebarContent}
       </aside>
 
