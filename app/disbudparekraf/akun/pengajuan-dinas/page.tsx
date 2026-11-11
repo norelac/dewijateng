@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import AccountApprovalPanel from '@/components/disbudparekraf/AccountApprovalPanel';
 
 export const metadata = {
-  title: 'Pengajuan akun dinas · DEWI JATENG',
+  title: 'Pengajuan akun dinas',
 };
 
 /**

@@ -9,6 +9,8 @@ import {
   resolveIncidentReport,
   type ResolveIncidentResult,
 } from '@/lib/services/resolutionService';
+import { getReportByCode } from '@/lib/services/reportService';
+import { assertRole, assertVillageScope } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export interface ActionResponse<T = any> {
@@ -26,10 +28,17 @@ export async function resolveReportAction(
   formData: FormData
 ): Promise<ActionResponse<ResolveIncidentResult>> {
   try {
+    await assertRole(['desa', 'disbudparekraf']);
     const reportCode =
       (formData.get('report_code') as string) ||
       (formData.get('reportCode') as string) ||
       '';
+    if (reportCode.trim()) {
+      const existing = await getReportByCode(reportCode.toUpperCase().trim());
+      if (existing) {
+        await assertVillageScope(existing.villageId);
+      }
+    }
     const actionSummary =
       (formData.get('action_summary') as string) ||
       (formData.get('actionSummary') as string) ||

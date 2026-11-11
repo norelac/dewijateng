@@ -68,7 +68,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Apakah identitas pelapor boleh dicantumkan?',
     answer:
-      'Tidak. Gunakan kode DS-JTG pada komunikasi dan catatan. Identitas serta kontak pelapor harus tetap dilindungi.',
+      'Tidak. Gunakan kode LP-JTG pada komunikasi dan catatan. Identitas serta kontak pelapor harus tetap dilindungi.',
   },
 ];
 

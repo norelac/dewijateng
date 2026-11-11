@@ -11,7 +11,7 @@ import {
   type SaveLpjResult,
 } from '@/lib/services/lpjService';
 import { revalidatePath } from 'next/cache';
-import { getSession } from '@/lib/auth';
+import { assertRole, assertVillageScope } from '@/lib/auth';
 
 export interface ActionResponse<T = any> {
   success: boolean;
@@ -28,10 +28,7 @@ export async function processLpjUploadAction(
   formData: FormData
 ): Promise<ActionResponse<SaveLpjResult>> {
   try {
-    let session = null;
-    try {
-      session = await getSession();
-    } catch {}
+    const session = await assertRole(['desa', 'disbudparekraf']);
 
     let villageId =
       (formData.get('village_id') as string) ||
@@ -39,7 +36,10 @@ export async function processLpjUploadAction(
       '';
 
     // Otoritas ketat: Jika pengguna adalah akun pengelola desa, kunci LPJ ke desa miliknya
-    if (session?.role === 'desa' && session.villageId) {
+    if (session?.role === 'desa') {
+      if (!session.villageId) {
+        return { success: false, error: 'Akun pengelola tidak terhubung ke desa wisata.' };
+      }
       villageId = session.villageId;
     }
     const fiscalYear = parseInt(
@@ -66,6 +66,8 @@ export async function processLpjUploadAction(
         error: 'Pilih desa wisata penerima alokasi dana terlebih dahulu',
       };
     }
+
+    await assertVillageScope(villageId);
 
     if (!file || file.size === 0) {
       return {

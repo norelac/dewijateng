@@ -6,7 +6,7 @@ import VillageAccountDetailView from '@/components/disbudparekraf/akun/VillageAc
 import { getVillageAccountDetail } from '@/app/actions/villageAccountActions';
 
 export const metadata = {
-  title: 'Detail akun desa wisata · DEWI JATENG',
+  title: 'Detail akun desa wisata',
 };
 
 export const dynamic = 'force-dynamic';

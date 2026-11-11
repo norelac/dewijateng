@@ -3,7 +3,7 @@ import LpjVerificationQueue from '@/components/disbudparekraf/LpjVerificationQue
 import { listLpjQueue } from '@/lib/services/lpjService';
 
 export const metadata = {
-  title: 'Aktivitas · DEWI JATENG',
+  title: 'Aktivitas',
 };
 
 // Antrean dibaca langsung dari database setiap permintaan.

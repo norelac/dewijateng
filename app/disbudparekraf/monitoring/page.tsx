@@ -6,7 +6,7 @@ import FinanceSummaryCards from '@/components/disbudparekraf/monitoring/FinanceS
 import VillageRecapTable from '@/components/disbudparekraf/monitoring/VillageRecapTable';
 
 export const metadata = {
-  title: 'Monitoring keuangan · DEWI JATENG',
+  title: 'Monitoring keuangan',
 };
 
 // Rekap dibaca langsung dari database setiap permintaan.

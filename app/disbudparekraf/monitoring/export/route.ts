@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
 import {
   getFinanceRecap,
   getVillageFinance,
@@ -43,6 +44,14 @@ function csvResponse(body: string, filename: string): NextResponse {
 }
 
 export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'Sesi tidak ditemukan' }, { status: 401 });
+  }
+  if (session.role !== 'disbudparekraf') {
+    return NextResponse.json({ success: false, error: 'Akses ditolak' }, { status: 403 });
+  }
+
   const sp = new URL(request.url).searchParams;
   const scope = (sp.get('scope') || 'rekap') as Scope;
   const desa = sp.get('desa') || '';

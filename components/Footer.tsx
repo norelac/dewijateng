@@ -48,8 +48,8 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-white/60 shrink-0" />
-                <a href="tel:+62243546681" className="hover:text-white transition-colors">
-                  (024) 354-6681
+                <a href="tel:+6285819997505" className="hover:text-white transition-colors">
+                  +62 858-1999-7505
                 </a>
               </div>
             </div>
@@ -152,13 +152,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                <Link href="/edukasi" className="flex items-center gap-2.5 hover:text-white transition-colors">
                   <Info className="w-4 h-4 text-white/60" />
                   <span>Tentang Platform</span>
                 </Link>
               </li>
               <li>
-                <Link href="/" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                <Link href="/sitemap.xml" className="flex items-center gap-2.5 hover:text-white transition-colors">
                   <Layout className="w-4 h-4 text-white/60" />
                   <span>Peta Situs</span>
                 </Link>

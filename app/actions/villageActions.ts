@@ -3,7 +3,8 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { touristVillages, users, villageGrants } from '@/lib/db/schema';
-import { hashPassword, generateTemporaryPassword, getSession } from '@/lib/auth';
+import { assertRole, hashPassword, generateTemporaryPassword } from '@/lib/auth';
+import { getRequestBaseUrl } from '@/lib/requestUrl';
 import { revalidatePath } from 'next/cache';
 
 export interface RegisterVillageInput {
@@ -43,15 +44,11 @@ export async function registerVillageAction(
 ): Promise<RegisterVillageResult> {
   let session = null;
   try {
-    session = await getSession();
-  } catch {
-    // Sesi tidak tersedia atau dijalankan di luar context HTTP request
-  }
-  // Validasi sesi: Hanya Disbudparekraf yang berhak mendaftarkan desa
-  if (session && session.role !== 'disbudparekraf') {
+    session = await assertRole(['disbudparekraf']);
+  } catch (err: any) {
     return {
       success: false,
-      message: 'Akses ditolak: Hanya Admin Disbudparekraf yang dapat mendaftarkan desa baru.',
+      message: err?.message || 'Akses ditolak: Hanya Admin Disbudparekraf yang dapat mendaftarkan desa baru.',
     };
   }
 
@@ -189,7 +186,10 @@ export async function registerVillageAction(
       // Ignore when running outside of Next request store
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000';
+    try {
+      appUrl = await getRequestBaseUrl();
+    } catch {}
 
     return {
       success: true,
@@ -226,9 +226,10 @@ export async function reviewLpjAction(params: {
   status: 'VERIFIED' | 'REVISION';
   reviewNotes?: string;
 }): Promise<{ success: boolean; message: string }> {
-  const session = await getSession();
-  if (session && session.role !== 'disbudparekraf') {
-    return { success: false, message: 'Hanya Disbudparekraf yang berhak memverifikasi LPJ' };
+  try {
+    await assertRole(['disbudparekraf']);
+  } catch (err: any) {
+    return { success: false, message: err?.message || 'Hanya Disbudparekraf yang berhak memverifikasi LPJ' };
   }
 
   const { grantId, status, reviewNotes } = params;
