@@ -43,7 +43,7 @@ export default function LoginForm() {
         setError(res.message || null);
         router.push(res.redirectTo);
       } else {
-        setError(res.message || 'Email atau kata sandi tidak sesuai');
+        setError(res.message || 'Nama pengguna (username) atau kata sandi tidak sesuai');
       }
     } catch {
       setError('Terjadi kendala jaringan saat menghubungi server');
@@ -79,6 +79,30 @@ export default function LoginForm() {
             : 'Kelola akun dan pantau desa wisata di wilayah Anda.'
         }
       >
+        {/* Pilihan Peran Masuk (Disbudparekraf / Desa) */}
+        <div className="grid grid-cols-2 p-1 bg-[#F1F5F9] rounded-xl mb-4 gap-1">
+          <Link
+            href="/login"
+            className={`py-2 text-center text-[13px] font-semibold rounded-lg transition-all ${
+              !isDesaEntry
+                ? 'bg-[#0D2453] text-white shadow-sm'
+                : 'text-[#64748B] hover:text-[#0D2453]'
+            }`}
+          >
+            Disbudparekraf
+          </Link>
+          <Link
+            href="/login?peran=desa"
+            className={`py-2 text-center text-[13px] font-semibold rounded-lg transition-all ${
+              isDesaEntry
+                ? 'bg-[#0D2453] text-white shadow-sm'
+                : 'text-[#64748B] hover:text-[#0D2453]'
+            }`}
+          >
+            Pengelola Desa
+          </Link>
+        </div>
+
         {error && (
           <AuthNote tone="warning" className="!p-3">
             {error}
@@ -87,10 +111,10 @@ export default function LoginForm() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
           <AuthField
-            label={isDesaEntry ? 'Email pengelola' : 'Email dinas'}
+            label="Nama pengguna (username)"
             name="identifier"
             type="text"
-            placeholder={isDesaEntry ? 'email pengelola desa' : 'nama@instansi.go.id'}
+            placeholder={isDesaEntry ? 'contoh: desa-candirejo' : 'contoh: disbudparekraf'}
             value={identifier}
             onChange={setIdentifier}
             autoComplete="username"

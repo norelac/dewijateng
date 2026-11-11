@@ -83,7 +83,7 @@ export async function loginAction(
   const peran: LoginPeran = formData.get('peran') === 'desa' ? 'desa' : 'admin';
 
   if (!identifier || !password) {
-    return { success: false, message: 'Email dan kata sandi wajib diisi' };
+    return { success: false, message: 'Nama pengguna (username) dan kata sandi wajib diisi' };
   }
 
   try {
@@ -222,7 +222,7 @@ export async function loginAction(
     }
 
     if (!sessionUser) {
-      return { success: false, message: 'Email atau kata sandi tidak sesuai' };
+      return { success: false, message: 'Nama pengguna (username) atau kata sandi tidak sesuai' };
     }
 
     const mismatch = peranMismatchMessage(sessionUser.role, peran);
