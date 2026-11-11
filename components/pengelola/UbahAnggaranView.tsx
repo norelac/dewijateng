@@ -248,7 +248,7 @@ export default function UbahAnggaranView({
               <button
                 type="submit"
                 disabled={!saveEnabled || isSaving}
-                title={saveEnabled ? undefined : 'Penyimpanan anggaran belum tersedia'}
+                title={saveEnabled ? undefined : 'Pilih desa terlebih dahulu'}
                 className={`border-2 rounded-full h-[40px] px-[18px] text-[12px] font-semibold transition-all shadow-2xs ${
                   saveEnabled
                     ? 'bg-[#0d2453] border-[#0d2453] text-white hover:bg-[#132d66] active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed'
@@ -256,7 +256,7 @@ export default function UbahAnggaranView({
                 }`}
               >
                 {!saveEnabled
-                  ? 'Belum tersedia'
+                  ? 'Pilih desa'
                   : isSaving
                     ? 'Menyimpan...'
                     : isSaved
@@ -274,7 +274,7 @@ export default function UbahAnggaranView({
             </div>
             {!saveEnabled && (
               <p className="text-[#64748b] text-[11px] font-normal leading-[1.5]">
-                Penyimpanan perubahan anggaran belum tersedia sampai endpoint tulis anggaran disiapkan di backend.
+                Pilih desa dan sumber dana terlebih dahulu sebelum menyimpan perubahan.
               </p>
             )}
           </div>

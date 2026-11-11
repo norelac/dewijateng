@@ -132,7 +132,7 @@ export default async function TransactionListScreen({
 
       <div className="w-full flex items-center justify-between text-[11px] text-[#94A3B8] border-t border-[#E6ECF5] pt-4 pb-2">
         <span>© 2026 DEWI JATENG</span>
-        <span>Data contoh · Periode {periodeLabel(data.periode)}</span>
+        <span>Data live · Periode {periodeLabel(data.periode)}</span>
       </div>
     </div>
   );

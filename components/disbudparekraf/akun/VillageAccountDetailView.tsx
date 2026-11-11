@@ -160,7 +160,7 @@ export default function VillageAccountDetailView({
         <div className="bg-[#FFF4DB] rounded-[14px] px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex flex-col gap-1 flex-1">
             <p className="text-[#875B12] text-[12px] font-semibold">
-              Mode demo — email tidak benar-benar dikirim
+              Email belum terkirim — tautan aktivasi ditampilkan di sini
             </p>
             <p className="text-[#875B12] text-[12px] leading-[1.5] break-all">
               Tautan aktivasi untuk pengelola: {linkToShow}
